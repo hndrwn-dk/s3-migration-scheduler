@@ -1,0 +1,176 @@
+import axios from 'axios';
+import {
+  ApiResponse,
+  S3Alias,
+  S3Bucket,
+  BucketInfo,
+  Migration,
+  MigrationConfig,
+  ValidationResult,
+  HealthCheck
+} from '../types';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor for logging
+api.interceptors.request.use(
+  (config) => {
+    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    return config;
+  },
+  (error) => {
+    console.error('API Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    console.error('API Response Error:', error);
+    if (error.response?.status === 404) {
+      throw new Error('Resource not found');
+    } else if (error.response?.status >= 500) {
+      throw new Error('Server error occurred');
+    } else if (error.code === 'ECONNREFUSED') {
+      throw new Error('Cannot connect to server');
+    }
+    throw error;
+  }
+);
+
+export const bucketService = {
+  // Check MinIO client health
+  checkHealth: async (): Promise<HealthCheck> => {
+    const response = await api.get<ApiResponse<HealthCheck>>('/buckets/health');
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Health check failed');
+    }
+    return response.data.data!;
+  },
+
+  // Configure S3 alias
+  configureAlias: async (alias: S3Alias): Promise<{ success: boolean; message: string }> => {
+    const response = await api.post<ApiResponse<{ success: boolean; message: string }>>('/buckets/alias', alias);
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to configure alias');
+    }
+    return response.data.data!;
+  },
+
+  // List buckets for an alias
+  listBuckets: async (aliasName: string): Promise<S3Bucket[]> => {
+    const response = await api.get<ApiResponse<S3Bucket[]>>(`/buckets/list/${aliasName}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to list buckets');
+    }
+    return response.data.data!;
+  },
+
+  // Get bucket information
+  getBucketInfo: async (aliasName: string, bucketName: string): Promise<BucketInfo> => {
+    const response = await api.get<ApiResponse<BucketInfo>>(`/buckets/info/${aliasName}/${bucketName}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to get bucket info');
+    }
+    return response.data.data!;
+  },
+
+  // Test alias connection
+  testConnection: async (aliasName: string): Promise<{ connected: boolean; error?: string; bucketsCount?: number }> => {
+    const response = await api.post<ApiResponse<{ connected: boolean; error?: string; bucketsCount?: number }>>(`/buckets/test/${aliasName}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to test connection');
+    }
+    return response.data.data!;
+  },
+
+  // Analyze bucket for migration
+  analyzeBucket: async (aliasName: string, bucketName: string): Promise<BucketInfo> => {
+    const response = await api.get<ApiResponse<BucketInfo>>(`/buckets/analyze/${aliasName}/${bucketName}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to analyze bucket');
+    }
+    return response.data.data!;
+  },
+};
+
+export const migrationService = {
+  // Get all migrations
+  getAllMigrations: async (): Promise<Migration[]> => {
+    const response = await api.get<ApiResponse<Migration[]>>('/migration');
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to get migrations');
+    }
+    return response.data.data!;
+  },
+
+  // Start a new migration
+  startMigration: async (config: MigrationConfig): Promise<{ migrationId: string; status: string }> => {
+    const response = await api.post<ApiResponse<{ migrationId: string; status: string }>>('/migration/start', config);
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to start migration');
+    }
+    return response.data.data!;
+  },
+
+  // Get migration status
+  getMigrationStatus: async (migrationId: string): Promise<Migration> => {
+    const response = await api.get<ApiResponse<Migration>>(`/migration/${migrationId}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to get migration status');
+    }
+    return response.data.data!;
+  },
+
+  // Get migration logs
+  getMigrationLogs: async (migrationId: string): Promise<string> => {
+    const response = await api.get<ApiResponse<{ logs: string }>>(`/migration/${migrationId}/logs`);
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to get migration logs');
+    }
+    return response.data.data!.logs;
+  },
+
+  // Cancel migration
+  cancelMigration: async (migrationId: string): Promise<{ success: boolean }> => {
+    const response = await api.post<ApiResponse<{ success: boolean }>>(`/migration/${migrationId}/cancel`);
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to cancel migration');
+    }
+    return response.data.data!;
+  },
+
+  // Validate migration configuration
+  validateMigration: async (source: string, destination: string): Promise<ValidationResult> => {
+    const response = await api.post<ApiResponse<ValidationResult>>('/migration/validate', { source, destination });
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to validate migration');
+    }
+    return response.data.data!;
+  },
+};
+
+export const healthService = {
+  // General health check
+  checkHealth: async (): Promise<{ status: string; timestamp: string; version: string }> => {
+    const response = await api.get<ApiResponse<{ status: string; timestamp: string; version: string }>>('/health');
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Health check failed');
+    }
+    return response.data.data!;
+  },
+};
+
+export default api;

@@ -1,1 +1,418 @@
-# s3-management-ui
+# S3 Migration Dashboard
+
+A comprehensive fullstack application for managing S3 bucket migrations using MinIO client with a modern React dashboard interface.
+
+![S3 Migration Dashboard](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![Node.js](https://img.shields.io/badge/Node.js-18.x-green)
+![React](https://img.shields.io/badge/React-18.x-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)
+
+## 🚀 Features
+
+### Dashboard & Monitoring
+- **Real-time Dashboard** - Live migration statistics and progress tracking
+- **Interactive Charts** - Migration trends and status distribution
+- **WebSocket Updates** - Real-time progress updates without page refresh
+- **Comprehensive Logging** - Detailed migration logs with filtering and export
+
+### Migration Management
+- **Easy Configuration** - Simple setup for S3 endpoints (AWS S3, MinIO, etc.)
+- **Bucket Analysis** - Pre-migration analysis with size estimates and recommendations
+- **Advanced Options** - Support for overwrite, remove, and exclude patterns
+- **Data Reconciliation** - Automatic verification after migration completion
+- **Progress Tracking** - Real-time progress bars and transfer statistics
+
+### User Experience
+- **Modern UI** - Clean, responsive interface built with React and Tailwind CSS
+- **Error Handling** - Comprehensive error logging and user feedback
+- **Mobile Responsive** - Works seamlessly on desktop and mobile devices
+- **Accessibility** - WCAG compliant with keyboard navigation support
+
+## 📋 Prerequisites
+
+Before running this application, ensure you have:
+
+- **Node.js** (version 18.x or higher)
+- **npm** (version 8.x or higher)
+- **MinIO Client (mc)** installed and accessible in PATH
+- **S3 Compatible Storage** (AWS S3, MinIO, etc.)
+
+### Installing MinIO Client
+
+#### Linux/macOS
+```bash
+curl https://dl.min.io/client/mc/release/linux-amd64/mc \
+  --create-dirs \
+  -o $HOME/minio-binaries/mc
+
+chmod +x $HOME/minio-binaries/mc
+export PATH=$PATH:$HOME/minio-binaries/
+
+# Or using package managers
+# Ubuntu/Debian: sudo apt install minio-client
+# macOS: brew install minio/stable/mc
+```
+
+#### Windows
+```powershell
+# Download and add to PATH
+Invoke-WebRequest -Uri "https://dl.min.io/client/mc/release/windows-amd64/mc.exe" -OutFile "C:\mc.exe"
+```
+
+## 🛠️ Installation
+
+### Quick Start
+
+1. **Clone the repository**
+```bash
+git clone <repository-url>
+cd s3-migration-dashboard
+```
+
+2. **Install dependencies**
+```bash
+# Install root dependencies
+npm install
+
+# Install all dependencies (server + client)
+npm run install:all
+```
+
+3. **Configure environment**
+```bash
+# Copy server environment file
+cp server/.env.example server/.env
+
+# Edit server/.env with your configuration
+```
+
+4. **Start the application**
+```bash
+# Development mode (runs both server and client)
+npm run dev
+
+# Or start individually
+npm run server:dev  # Backend only
+npm run client:dev  # Frontend only
+```
+
+5. **Access the dashboard**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:5000
+
+### Production Deployment
+
+1. **Build the application**
+```bash
+npm run build
+```
+
+2. **Start in production mode**
+```bash
+npm start
+```
+
+## ⚙️ Configuration
+
+### Environment Variables
+
+Create `server/.env` file with the following variables:
+
+```env
+# Server Configuration
+PORT=5000
+NODE_ENV=production
+
+# MinIO/S3 Configuration
+MC_PATH=/usr/local/bin/mc
+LOG_LEVEL=info
+MAX_CONCURRENT_MIGRATIONS=3
+
+# CORS Configuration
+FRONTEND_URL=http://localhost:3000
+```
+
+### S3 Endpoint Configuration
+
+The application supports any S3-compatible storage:
+
+#### AWS S3
+- **Endpoint**: `https://s3.amazonaws.com`
+- **Access Key**: Your AWS Access Key ID
+- **Secret Key**: Your AWS Secret Access Key
+
+#### MinIO
+- **Endpoint**: `https://your-minio-server.com`
+- **Access Key**: MinIO Access Key
+- **Secret Key**: MinIO Secret Key
+
+#### Other S3-Compatible Services
+- **DigitalOcean Spaces**: `https://region.digitaloceanspaces.com`
+- **Wasabi**: `https://s3.region.wasabisys.com`
+- **Backblaze B2**: `https://s3.region.backblazeb2.com`
+
+## 📖 Usage Guide
+
+### 1. Configure S3 Connections
+
+1. Navigate to the **Configure** tab
+2. Click **Add S3 Connection**
+3. Fill in your S3 endpoint details:
+   - **Alias Name**: A unique identifier (e.g., "source-aws", "dest-minio")
+   - **Endpoint URL**: Your S3 endpoint
+   - **Access Key**: S3 access credentials
+   - **Secret Key**: S3 secret credentials
+4. Click **Test Connection** to verify
+5. Save the configuration
+
+### 2. Start a Migration
+
+1. Go to the **Migrate** tab
+2. Select your **source** connection and bucket
+3. Select your **destination** connection and bucket
+4. Review the bucket analysis (size, objects, estimated time)
+5. Configure migration options:
+   - **Overwrite**: Replace existing files
+   - **Remove**: Delete files not in source
+   - **Exclude patterns**: Skip certain files
+6. Click **Validate** to check configuration
+7. Click **Start Migration**
+
+### 3. Monitor Progress
+
+1. **Dashboard**: Real-time overview of all migrations
+2. **History**: Detailed view of past and current migrations
+3. **Logs**: Live logs with filtering and export options
+
+### 4. Data Reconciliation
+
+After migration completion, the system automatically:
+- Compares source and destination
+- Reports any differences
+- Provides verification status
+
+## 🏗️ Architecture
+
+### Backend (Node.js/Express)
+```
+server/
+├── index.js              # Main server file
+├── routes/
+│   ├── migration.js      # Migration API endpoints
+│   └── buckets.js        # S3 bucket management
+├── services/
+│   ├── minioClient.js    # MinIO client wrapper
+│   └── websocket.js      # Real-time communication
+└── logs/                 # Migration log files
+```
+
+### Frontend (React/TypeScript)
+```
+client/src/
+├── components/           # React components
+│   ├── Dashboard.tsx     # Main dashboard
+│   ├── ConfigureTab.tsx  # S3 configuration
+│   ├── MigrateTab.tsx    # Migration interface
+│   ├── HistoryTab.tsx    # Migration history
+│   └── LogsTab.tsx       # Log viewer
+├── services/
+│   ├── api.ts           # API client
+│   └── websocket.ts     # WebSocket client
+├── types/
+│   └── index.ts         # TypeScript definitions
+└── App.tsx              # Main application
+```
+
+## 🔧 API Reference
+
+### Migration Endpoints
+
+#### Start Migration
+```http
+POST /api/migration/start
+Content-Type: application/json
+
+{
+  "source": "source-alias/bucket-name",
+  "destination": "dest-alias/bucket-name",
+  "options": {
+    "overwrite": false,
+    "remove": false,
+    "exclude": ["*.tmp", "logs/*"]
+  }
+}
+```
+
+#### Get Migration Status
+```http
+GET /api/migration/{migrationId}
+```
+
+#### Cancel Migration
+```http
+POST /api/migration/{migrationId}/cancel
+```
+
+### Bucket Endpoints
+
+#### Configure S3 Alias
+```http
+POST /api/buckets/alias
+Content-Type: application/json
+
+{
+  "aliasName": "my-s3",
+  "endpoint": "https://s3.amazonaws.com",
+  "accessKey": "your-access-key",
+  "secretKey": "your-secret-key"
+}
+```
+
+#### List Buckets
+```http
+GET /api/buckets/list/{aliasName}
+```
+
+## 🚨 Error Handling
+
+### Common Issues
+
+#### MinIO Client Not Found
+```
+Error: MinIO client not detected
+```
+**Solution**: Install MinIO client and ensure it's in your PATH
+
+#### Connection Failed
+```
+Error: Failed to configure alias
+```
+**Solutions**:
+- Verify endpoint URL is correct
+- Check access credentials
+- Ensure network connectivity
+- Validate SSL certificates
+
+#### Permission Denied
+```
+Error: Access denied
+```
+**Solutions**:
+- Verify IAM permissions for source/destination buckets
+- Check bucket policies
+- Ensure cross-region access is configured
+
+### Logs and Debugging
+
+- **Migration Logs**: Available in `server/logs/` directory
+- **Application Logs**: Check console output for detailed errors
+- **Debug Mode**: Set `LOG_LEVEL=debug` in environment variables
+
+## 🧪 Development
+
+### Running Tests
+```bash
+# Backend tests
+cd server && npm test
+
+# Frontend tests
+cd client && npm test
+```
+
+### Code Quality
+```bash
+# Linting
+npm run lint
+
+# Type checking
+npm run type-check
+
+# Formatting
+npm run format
+```
+
+### Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/new-feature`
+3. Commit changes: `git commit -m 'Add new feature'`
+4. Push to branch: `git push origin feature/new-feature`
+5. Submit a pull request
+
+## 📊 Performance
+
+### Optimization Tips
+
+1. **Concurrent Transfers**: Adjust `MAX_CONCURRENT_MIGRATIONS` in environment
+2. **Network Bandwidth**: Monitor network usage during large migrations
+3. **Memory Usage**: Large file lists may require additional memory
+4. **Disk Space**: Ensure sufficient space for log files
+
+### Monitoring
+
+- **WebSocket Connections**: Monitor active connections in production
+- **Memory Usage**: Track Node.js memory consumption
+- **Log Rotation**: Implement log rotation for large deployments
+
+## 🔒 Security
+
+### Best Practices
+
+1. **Credentials**: Store S3 credentials securely (not in source code)
+2. **Network**: Use HTTPS for all endpoints
+3. **Access Control**: Implement proper authentication/authorization
+4. **Logs**: Avoid logging sensitive information
+5. **Updates**: Keep dependencies updated
+
+### Production Checklist
+
+- [ ] Change default ports if needed
+- [ ] Set up SSL/TLS certificates
+- [ ] Configure firewall rules
+- [ ] Set up monitoring and alerting
+- [ ] Implement log rotation
+- [ ] Configure backup procedures
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 Support
+
+### Getting Help
+
+1. **Documentation**: Check this README and inline code comments
+2. **Issues**: Create an issue on GitHub with detailed information
+3. **Discussions**: Use GitHub Discussions for questions and ideas
+
+### Bug Reports
+
+When reporting bugs, please include:
+- Operating system and version
+- Node.js version
+- MinIO client version
+- Complete error messages
+- Steps to reproduce
+
+## 🗺️ Roadmap
+
+### Planned Features
+
+- [ ] **Multi-region Support**: Cross-region migration optimization
+- [ ] **Scheduling**: Cron-based migration scheduling
+- [ ] **Notifications**: Email/Slack notifications for completion
+- [ ] **Bandwidth Limiting**: Rate limiting for network usage
+- [ ] **Encryption**: End-to-end encryption support
+- [ ] **Audit Trail**: Comprehensive audit logging
+- [ ] **REST API**: Complete REST API for integrations
+- [ ] **Docker Support**: Docker containerization
+
+### Version History
+
+- **v1.0.0**: Initial release with core migration features
+- **v1.1.0**: Added data reconciliation and improved UI
+- **v1.2.0**: WebSocket real-time updates and enhanced logging
+
+---
+
+Built with ❤️ using React, Node.js, and MinIO
