@@ -28,37 +28,37 @@ A comprehensive fullstack application for managing S3 bucket migrations using Mi
 ### Dashboard Overview
 *Real-time migration statistics and progress monitoring*
 
-![Dashboard Overview](docs/images/dashboard-overview.svg)
+![Dashboard Overview](https://raw.githubusercontent.com/hndrwn-dk/s3-management-ui/main/docs/images/dashboard-overview.svg)
 > 📊 **Main Dashboard** - Shows migration statistics, recent activity, and visual charts for tracking migration trends and status distribution.
 
 ### Migration Configuration
 *Easy setup for S3 endpoints and connections*
 
-![Configuration](docs/images/configuration.svg)
+![Configuration](https://raw.githubusercontent.com/hndrwn-dk/s3-management-ui/main/docs/images/configuration.svg)
 > ⚙️ **Configuration Tab** - Simple interface to add and manage S3 endpoints with connection testing capabilities.
 
 ### Migration Wizard
 *Step-by-step migration setup with bucket analysis*
 
-![Migration Wizard](docs/images/migration-wizard.svg)
+![Migration Wizard](https://raw.githubusercontent.com/hndrwn-dk/s3-management-ui/main/docs/images/migration-wizard.svg)
 > 🚀 **Migration Tab** - Guided migration setup with bucket analysis, size estimates, and advanced options.
 
 ### Real-time Progress
 *Live migration monitoring with detailed progress*
 
-![Progress Monitoring](docs/images/progress-monitoring.svg)
+![Progress Monitoring](https://raw.githubusercontent.com/hndrwn-dk/s3-management-ui/main/docs/images/progress-monitoring.svg)
 > 📈 **Progress Tracking** - Real-time migration progress with transfer statistics and WebSocket updates.
 
 ### Migration History
 *Complete history with detailed views and filtering*
 
-![Migration History](docs/images/migration-history.svg)
+![Migration History](https://raw.githubusercontent.com/hndrwn-dk/s3-management-ui/main/docs/images/migration-history.svg)
 > 📋 **History Tab** - Comprehensive migration history with filtering, sorting, and detailed modal views.
 
 ### Live Log Viewer
 *Real-time log streaming with filtering and export*
 
-![Log Viewer](docs/images/log-viewer.svg)
+![Log Viewer](https://raw.githubusercontent.com/hndrwn-dk/s3-management-ui/main/docs/images/log-viewer.svg)
 > 📝 **Logs Tab** - Live log streaming with filtering, highlighting, and export capabilities.
 
 > **📷 Note**: The screenshots above are placeholders. To add actual UI screenshots, run the application and use:
