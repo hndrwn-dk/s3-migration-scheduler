@@ -28,47 +28,38 @@ A comprehensive fullstack application for managing S3 bucket migrations using Mi
 ### Dashboard Overview
 *Real-time migration statistics and progress monitoring*
 
-![Dashboard Overview](docs/images/dashboard-overview.svg)
+<!-- ![Dashboard Overview](docs/images/dashboard-overview.png) -->
 > 📊 **Main Dashboard** - Shows migration statistics, recent activity, and visual charts for tracking migration trends and status distribution.
 
 ### Migration Configuration
 *Easy setup for S3 endpoints and connections*
 
-![Configuration](docs/images/configuration.png)
+<!-- ![Configuration](docs/images/configuration.png) -->
 > ⚙️ **Configuration Tab** - Simple interface to add and manage S3 endpoints with connection testing capabilities.
 
 ### Migration Wizard
 *Step-by-step migration setup with bucket analysis*
 
-![Migration Wizard](docs/images/migration-wizard.png)
+<!-- ![Migration Wizard](docs/images/migration-wizard.png) -->
 > 🚀 **Migration Tab** - Guided migration setup with bucket analysis, size estimates, and advanced options.
 
 ### Real-time Progress
 *Live migration monitoring with detailed progress*
 
-![Progress Monitoring](docs/images/progress-monitoring.png)
+<!-- ![Progress Monitoring](docs/images/progress-monitoring.png) -->
 > 📈 **Progress Tracking** - Real-time migration progress with transfer statistics and WebSocket updates.
 
 ### Migration History
 *Complete history with detailed views and filtering*
 
-![Migration History](docs/images/migration-history.png)
+<!-- ![Migration History](docs/images/migration-history.png) -->
 > 📋 **History Tab** - Comprehensive migration history with filtering, sorting, and detailed modal views.
 
 ### Live Log Viewer
 *Real-time log streaming with filtering and export*
 
-![Log Viewer](docs/images/log-viewer.png)
+<!-- ![Log Viewer](docs/images/log-viewer.png) -->
 > 📝 **Logs Tab** - Live log streaming with filtering, highlighting, and export capabilities.
-
-> **📷 Note**: The screenshots above are placeholders. To add actual UI screenshots, run the application and use:
-> ```bash
-> # Generate screenshot guidelines
-> ./scripts/generate-screenshots.sh
-> 
-> # Enable screenshots in README (after taking them)
-> ./scripts/enable-screenshots.sh
-> ```
 
 ## 🚀 Quick Start
 
