@@ -1,0 +1,99 @@
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font: bold 24px sans-serif; fill: #1f2937; }
+      .subtitle { font: 16px sans-serif; fill: #6b7280; }
+      .label { font: 14px sans-serif; fill: #374151; }
+      .card { fill: #f9fafb; stroke: #e5e7eb; stroke-width: 1; }
+      .input { fill: #ffffff; stroke: #d1d5db; stroke-width: 1; }
+      .button { fill: #3b82f6; }
+      .success { fill: #10b981; }
+      .warning { fill: #f59e0b; }
+    </style>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="100%" height="80" fill="#1f2937"/>
+  <text x="40" y="35" class="title" fill="white">S3 Migration Dashboard - Configure</text>
+  <text x="40" y="55" class="subtitle" fill="#9ca3af">Manage S3 endpoint connections and aliases</text>
+  
+  <!-- Main Content Area -->
+  <rect x="40" y="120" width="720" height="600" class="card" rx="8"/>
+  
+  <!-- Add New Alias Form -->
+  <text x="60" y="160" style="font: bold 20px sans-serif; fill: #1f2937;">Add New S3 Endpoint</text>
+  
+  <!-- Form Fields -->
+  <text x="60" y="200" class="label">Alias Name *</text>
+  <rect x="60" y="210" width="300" height="40" class="input" rx="6"/>
+  <text x="70" y="232" style="font: 14px sans-serif; fill: #9ca3af;">e.g., aws-production</text>
+  
+  <text x="60" y="280" class="label">Endpoint URL *</text>
+  <rect x="60" y="290" width="300" height="40" class="input" rx="6"/>
+  <text x="70" y="312" style="font: 14px sans-serif; fill: #9ca3af;">https://s3.amazonaws.com</text>
+  
+  <text x="380" y="200" class="label">Access Key *</text>
+  <rect x="380" y="210" width="300" height="40" class="input" rx="6"/>
+  <text x="390" y="232" style="font: 14px sans-serif; fill: #9ca3af;">Your access key</text>
+  
+  <text x="380" y="280" class="label">Secret Key *</text>
+  <rect x="380" y="290" width="300" height="40" class="input" rx="6"/>
+  <text x="390" y="312" style="font: 14px sans-serif; fill: #9ca3af;">••••••••••••••••</text>
+  
+  <text x="60" y="360" class="label">Region</text>
+  <rect x="60" y="370" width="200" height="40" class="input" rx="6"/>
+  <text x="70" y="392" style="font: 14px sans-serif; fill: #9ca3af;">us-east-1</text>
+  
+  <!-- Buttons -->
+  <rect x="60" y="440" width="100" height="40" class="button" rx="6"/>
+  <text x="85" y="463" style="font: 14px sans-serif; fill: white;">Test Connection</text>
+  
+  <rect x="180" y="440" width="80" height="40" fill="#10b981" rx="6"/>
+  <text x="205" y="463" style="font: 14px sans-serif; fill: white;">Add Alias</text>
+  
+  <!-- Configured Aliases List -->
+  <rect x="800" y="120" width="360" height="600" class="card" rx="8"/>
+  <text x="820" y="160" style="font: bold 20px sans-serif; fill: #1f2937;">Configured Aliases</text>
+  
+  <!-- Alias Item 1 -->
+  <rect x="820" y="190" width="320" height="80" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" rx="6"/>
+  <text x="840" y="215" style="font: bold 16px sans-serif; fill: #1f2937;">aws-production</text>
+  <text x="840" y="235" style="font: 14px sans-serif; fill: #6b7280;">https://s3.amazonaws.com</text>
+  <circle cx="1100" cy="210" r="6" fill="#10b981"/>
+  <text x="1115" y="215" style="font: 12px sans-serif; fill: #10b981;">Connected</text>
+  
+  <rect x="840" y="245" width="60" height="20" fill="#3b82f6" rx="10"/>
+  <text x="850" y="257" style="font: 11px sans-serif; fill: white;">Test</text>
+  
+  <rect x="910" y="245" width="60" height="20" fill="#ef4444" rx="10"/>
+  <text x="920" y="257" style="font: 11px sans-serif; fill: white;">Remove</text>
+  
+  <!-- Alias Item 2 -->
+  <rect x="820" y="290" width="320" height="80" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" rx="6"/>
+  <text x="840" y="315" style="font: bold 16px sans-serif; fill: #1f2937;">minio-local</text>
+  <text x="840" y="335" style="font: 14px sans-serif; fill: #6b7280;">http://localhost:9000</text>
+  <circle cx="1100" cy="310" r="6" fill="#10b981"/>
+  <text x="1115" y="315" style="font: 12px sans-serif; fill: #10b981;">Connected</text>
+  
+  <rect x="840" y="345" width="60" height="20" fill="#3b82f6" rx="10"/>
+  <text x="850" y="357" style="font: 11px sans-serif; fill: white;">Test</text>
+  
+  <rect x="910" y="345" width="60" height="20" fill="#ef4444" rx="10"/>
+  <text x="920" y="357" style="font: 11px sans-serif; fill: white;">Remove</text>
+  
+  <!-- Tips Section -->
+  <rect x="60" y="520" width="620" height="180" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1" rx="6"/>
+  <text x="80" y="550" style="font: bold 16px sans-serif; fill: #1e40af;">💡 Configuration Tips</text>
+  
+  <text x="80" y="580" style="font: 14px sans-serif; fill: #1f2937;">• For AWS S3: Use your IAM access keys and region</text>
+  <text x="80" y="605" style="font: 14px sans-serif; fill: #1f2937;">• For MinIO: Use your MinIO server endpoint and credentials</text>
+  <text x="80" y="630" style="font: 14px sans-serif; fill: #1f2937;">• Test connections before starting migrations</text>
+  <text x="80" y="655" style="font: 14px sans-serif; fill: #1f2937;">• Aliases are stored locally and persist between sessions</text>
+  <text x="80" y="680" style="font: 14px sans-serif; fill: #1f2937;">• Ensure proper IAM permissions for source and destination</text>
+  
+  <!-- Watermark -->
+  <text x="1000" y="790" style="font: 12px sans-serif; fill: #d1d5db;">🖼️ Configuration Tab Placeholder</text>
+</svg>

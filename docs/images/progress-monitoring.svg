@@ -1,0 +1,132 @@
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font: bold 24px sans-serif; fill: #1f2937; }
+      .subtitle { font: 16px sans-serif; fill: #6b7280; }
+      .label { font: 14px sans-serif; fill: #374151; }
+      .card { fill: #f9fafb; stroke: #e5e7eb; stroke-width: 1; }
+      .running { fill: #3b82f6; }
+      .success { fill: #10b981; }
+      .warning { fill: #f59e0b; }
+    </style>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="100%" height="80" fill="#1f2937"/>
+  <text x="40" y="35" class="title" fill="white">S3 Migration Dashboard - Real-time Progress</text>
+  <text x="40" y="55" class="subtitle" fill="#9ca3af">Monitor active migrations with live updates</text>
+  
+  <!-- Real-time indicator -->
+  <circle cx="1100" cy="40" r="8" fill="#10b981"/>
+  <text x="1120" y="45" style="font: 14px sans-serif; fill: white;">Live</text>
+  
+  <!-- Active Migration Card -->
+  <rect x="40" y="120" width="1120" height="200" class="card" rx="8"/>
+  <text x="60" y="155" style="font: bold 20px sans-serif; fill: #1f2937;">Active Migration: aws-production → minio-backup</text>
+  <text x="60" y="180" style="font: 14px sans-serif; fill: #6b7280;">Started: 2 hours 15 minutes ago • Migration ID: mg_1234567890</text>
+  
+  <!-- Status Badge -->
+  <rect x="900" y="140" width="80" height="25" fill="#3b82f6" rx="12"/>
+  <text x="920" y="157" style="font: 12px sans-serif; fill: white;">Running</text>
+  
+  <!-- Cancel Button -->
+  <rect x="1000" y="140" width="60" height="25" fill="#ef4444" rx="12"/>
+  <text x="1020" y="157" style="font: 12px sans-serif; fill: white;">Cancel</text>
+  
+  <!-- Overall Progress Bar -->
+  <text x="60" y="220" style="font: bold 16px sans-serif; fill: #1f2937;">Overall Progress: 67%</text>
+  <rect x="60" y="230" width="800" height="20" fill="#e5e7eb" rx="10"/>
+  <rect x="60" y="230" width="536" height="20" fill="#3b82f6" rx="10"/>
+  <text x="870" y="244" style="font: 14px sans-serif; fill: #1f2937;">1,247 / 1,860 objects</text>
+  
+  <!-- Speed and ETA -->
+  <text x="60" y="280" style="font: 14px sans-serif; fill: #6b7280;">Transfer Speed: 245 MB/s • ETA: 1h 23m</text>
+  <text x="60" y="300" style="font: 14px sans-serif; fill: #6b7280;">Data Transferred: 1.6 TB / 2.4 TB</text>
+  
+  <!-- Statistics Grid -->
+  <rect x="40" y="350" width="360" height="180" class="card" rx="8"/>
+  <text x="60" y="385" style="font: bold 18px sans-serif; fill: #1f2937;">Transfer Statistics</text>
+  
+  <!-- Stats Items -->
+  <text x="60" y="415" style="font: 14px sans-serif; fill: #6b7280;">Files Processed:</text>
+  <text x="280" y="415" style="font: bold 14px sans-serif; fill: #1f2937;">1,247</text>
+  
+  <text x="60" y="440" style="font: 14px sans-serif; fill: #6b7280;">Files Remaining:</text>
+  <text x="280" y="440" style="font: bold 14px sans-serif; fill: #1f2937;">613</text>
+  
+  <text x="60" y="465" style="font: 14px sans-serif; fill: #6b7280;">Errors:</text>
+  <text x="280" y="465" style="font: bold 14px sans-serif; fill: #ef4444;">3</text>
+  
+  <text x="60" y="490" style="font: 14px sans-serif; fill: #6b7280;">Average Speed:</text>
+  <text x="280" y="490" style="font: bold 14px sans-serif; fill: #1f2937;">198 MB/s</text>
+  
+  <text x="60" y="515" style="font: 14px sans-serif; fill: #6b7280;">Elapsed Time:</text>
+  <text x="280" y="515" style="font: bold 14px sans-serif; fill: #1f2937;">2h 15m</text>
+  
+  <!-- Speed Chart -->
+  <rect x="440" y="350" width="360" height="180" class="card" rx="8"/>
+  <text x="460" y="385" style="font: bold 18px sans-serif; fill: #1f2937;">Transfer Speed (MB/s)</text>
+  
+  <!-- Simple speed chart -->
+  <polyline points="460,450 500,430 540,440 580,420 620,410 660,425 700,435 740,430 780,440" 
+            fill="none" stroke="#3b82f6" stroke-width="2"/>
+  <circle cx="780" cy="440" r="3" fill="#3b82f6"/>
+  
+  <!-- Axes labels -->
+  <text x="460" y="520" style="font: 12px sans-serif; fill: #9ca3af;">2h ago</text>
+  <text x="750" y="520" style="font: 12px sans-serif; fill: #9ca3af;">now</text>
+  <text x="420" y="460" style="font: 12px sans-serif; fill: #9ca3af;">0</text>
+  <text x="420" y="400" style="font: 12px sans-serif; fill: #9ca3af;">300</text>
+  
+  <!-- Network Info -->
+  <rect x="840" y="350" width="320" height="180" class="card" rx="8"/>
+  <text x="860" y="385" style="font: bold 18px sans-serif; fill: #1f2937;">Network & Resources</text>
+  
+  <text x="860" y="415" style="font: 14px sans-serif; fill: #6b7280;">Bandwidth Usage:</text>
+  <rect x="860" y="425" width="200" height="8" fill="#e5e7eb" rx="4"/>
+  <rect x="860" y="425" width="140" height="8" fill="#3b82f6" rx="4"/>
+  <text x="1070" y="433" style="font: 12px sans-serif; fill: #1f2937;">70%</text>
+  
+  <text x="860" y="455" style="font: 14px sans-serif; fill: #6b7280;">CPU Usage:</text>
+  <rect x="860" y="465" width="200" height="8" fill="#e5e7eb" rx="4"/>
+  <rect x="860" y="465" width="60" height="8" fill="#10b981" rx="4"/>
+  <text x="1070" y="473" style="font: 12px sans-serif; fill: #1f2937;">30%</text>
+  
+  <text x="860" y="495" style="font: 14px sans-serif; fill: #6b7280;">Memory Usage:</text>
+  <rect x="860" y="505" width="200" height="8" fill="#e5e7eb" rx="4"/>
+  <rect x="860" y="505" width="80" height="8" fill="#10b981" rx="4"/>
+  <text x="1070" y="513" style="font: 12px sans-serif; fill: #1f2937;">40%</text>
+  
+  <!-- Recent Activity Log -->
+  <rect x="40" y="560" width="1120" height="160" class="card" rx="8"/>
+  <text x="60" y="595" style="font: bold 18px sans-serif; fill: #1f2937;">Recent Activity</text>
+  
+  <!-- Log entries -->
+  <circle cx="80" cy="620" r="4" fill="#10b981"/>
+  <text x="100" y="625" style="font: 12px sans-serif; fill: #6b7280;">14:23:45</text>
+  <text x="180" y="625" style="font: 14px sans-serif; fill: #1f2937;">Completed transfer: images/photo_001.jpg (2.1 MB)</text>
+  
+  <circle cx="80" cy="645" r="4" fill="#10b981"/>
+  <text x="100" y="650" style="font: 12px sans-serif; fill: #6b7280;">14:23:44</text>
+  <text x="180" y="650" style="font: 14px sans-serif; fill: #1f2937;">Completed transfer: documents/report.pdf (5.8 MB)</text>
+  
+  <circle cx="80" cy="670" r="4" fill="#f59e0b"/>
+  <text x="100" y="675" style="font: 12px sans-serif; fill: #6b7280;">14:23:42</text>
+  <text x="180" y="675" style="font: 14px sans-serif; fill: #92400e;">Warning: Retrying large_file.zip (timeout)</text>
+  
+  <circle cx="80" cy="695" r="4" fill="#10b981"/>
+  <text x="100" y="700" style="font: 12px sans-serif; fill: #6b7280;">14:23:40</text>
+  <text x="180" y="700" style="font: 14px sans-serif; fill: #1f2937;">Completed transfer: videos/demo.mp4 (156.2 MB)</text>
+  
+  <!-- Auto-refresh indicator -->
+  <text x="950" y="595" style="font: 12px sans-serif; fill: #6b7280;">Auto-refreshing every 2s</text>
+  <circle cx="1100" cy="590" r="3" fill="#10b981">
+    <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- Watermark -->
+  <text x="1000" y="790" style="font: 12px sans-serif; fill: #d1d5db;">🖼️ Progress Monitoring Placeholder</text>
+</svg>

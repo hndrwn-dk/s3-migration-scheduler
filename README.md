@@ -34,31 +34,31 @@ A comprehensive fullstack application for managing S3 bucket migrations using Mi
 ### Migration Configuration
 *Easy setup for S3 endpoints and connections*
 
-![Configuration](docs/images/configuration.png)
+![Configuration](docs/images/configuration.svg)
 > ⚙️ **Configuration Tab** - Simple interface to add and manage S3 endpoints with connection testing capabilities.
 
 ### Migration Wizard
 *Step-by-step migration setup with bucket analysis*
 
-![Migration Wizard](docs/images/migration-wizard.png)
+![Migration Wizard](docs/images/migration-wizard.svg)
 > 🚀 **Migration Tab** - Guided migration setup with bucket analysis, size estimates, and advanced options.
 
 ### Real-time Progress
 *Live migration monitoring with detailed progress*
 
-![Progress Monitoring](docs/images/progress-monitoring.png)
+![Progress Monitoring](docs/images/progress-monitoring.svg)
 > 📈 **Progress Tracking** - Real-time migration progress with transfer statistics and WebSocket updates.
 
 ### Migration History
 *Complete history with detailed views and filtering*
 
-![Migration History](docs/images/migration-history.png)
+![Migration History](docs/images/migration-history.svg)
 > 📋 **History Tab** - Comprehensive migration history with filtering, sorting, and detailed modal views.
 
 ### Live Log Viewer
 *Real-time log streaming with filtering and export*
 
-![Log Viewer](docs/images/log-viewer.png)
+![Log Viewer](docs/images/log-viewer.svg)
 > 📝 **Logs Tab** - Live log streaming with filtering, highlighting, and export capabilities.
 
 > **📷 Note**: The screenshots above are placeholders. To add actual UI screenshots, run the application and use:
