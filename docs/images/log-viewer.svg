@@ -1,0 +1,131 @@
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font: bold 24px sans-serif; fill: #1f2937; }
+      .subtitle { font: 16px sans-serif; fill: #6b7280; }
+      .label { font: 14px sans-serif; fill: #374151; }
+      .card { fill: #f9fafb; stroke: #e5e7eb; stroke-width: 1; }
+      .log-bg { fill: #1f2937; }
+      .log-text { font: 12px monospace; }
+      .log-info { fill: #10b981; }
+      .log-warning { fill: #f59e0b; }
+      .log-error { fill: #ef4444; }
+      .log-normal { fill: #e5e7eb; }
+    </style>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="100%" height="80" fill="#1f2937"/>
+  <text x="40" y="35" class="title" fill="white">S3 Migration Dashboard - Logs</text>
+  <text x="40" y="55" class="subtitle" fill="#9ca3af">Real-time log monitoring with filtering and export</text>
+  
+  <!-- Auto-refresh indicator -->
+  <circle cx="1050" cy="40" r="6" fill="#10b981">
+    <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <text x="1070" y="45" style="font: 12px sans-serif; fill: white;">Auto-refresh</text>
+  
+  <!-- Controls -->
+  <rect x="40" y="120" width="1120" height="60" class="card" rx="8"/>
+  <text x="60" y="145" style="font: bold 16px sans-serif; fill: #1f2937;">Log Controls</text>
+  
+  <!-- Migration Selection -->
+  <text x="60" y="170" style="font: 12px sans-serif; fill: #6b7280;">Migration:</text>
+  <rect x="120" y="160" width="200" height="20" fill="#ffffff" stroke="#d1d5db" stroke-width="1" rx="4"/>
+  <text x="130" y="173" style="font: 11px sans-serif; fill: #1f2937;">aws-prod → minio-backup</text>
+  <polygon points="310,165 315,170 310,175" fill="#6b7280"/>
+  
+  <!-- Log Level Filter -->
+  <text x="340" y="170" style="font: 12px sans-serif; fill: #6b7280;">Level:</text>
+  <rect x="380" y="160" width="80" height="20" fill="#ffffff" stroke="#d1d5db" stroke-width="1" rx="4"/>
+  <text x="390" y="173" style="font: 11px sans-serif; fill: #1f2937;">All Levels</text>
+  <polygon points="450,165 455,170 450,175" fill="#6b7280"/>
+  
+  <!-- Search -->
+  <text x="480" y="170" style="font: 12px sans-serif; fill: #6b7280;">Search:</text>
+  <rect x="520" y="160" width="150" height="20" fill="#ffffff" stroke="#d1d5db" stroke-width="1" rx="4"/>
+  <text x="530" y="173" style="font: 11px sans-serif; fill: #9ca3af;">Filter logs...</text>
+  
+  <!-- Controls -->
+  <rect x="690" y="160" width="60" height="20" fill="#3b82f6" rx="4"/>
+  <text x="705" y="173" style="font: 11px sans-serif; fill: white;">Pause</text>
+  
+  <rect x="760" y="160" width="60" height="20" fill="#10b981" rx="4"/>
+  <text x="775" y="173" style="font: 11px sans-serif; fill: white;">Download</text>
+  
+  <rect x="830" y="160" width="60" height="20" fill="#6b7280" rx="4"/>
+  <text x="850" y="173" style="font: 11px sans-serif; fill: white;">Clear</text>
+  
+  <rect x="900" y="160" width="60" height="20" fill="#f59e0b" rx="4"/>
+  <text x="920" y="173" style="font: 11px sans-serif; fill: white;">Copy</text>
+  
+  <!-- Log Viewer -->
+  <rect x="40" y="200" width="1120" height="500" class="log-bg" rx="8"/>
+  
+  <!-- Log Header -->
+  <rect x="40" y="200" width="1120" height="30" fill="#374151" rx="8"/>
+  <text x="60" y="220" style="font: bold 12px sans-serif; fill: #e5e7eb;">Migration Log: aws-production → minio-backup (Live)</text>
+  <text x="1000" y="220" style="font: 10px sans-serif; fill: #9ca3af;">1,247 lines</text>
+  
+  <!-- Log Content -->
+  <text x="60" y="250" class="log-text log-normal">[2024-01-15 14:23:45] INFO  Starting migration validation...</text>
+  <text x="60" y="270" class="log-text log-info">[2024-01-15 14:23:46] INFO  ✓ Source bucket accessible: aws-production/bucket-1</text>
+  <text x="60" y="290" class="log-text log-info">[2024-01-15 14:23:47] INFO  ✓ Destination bucket accessible: minio/backup-1</text>
+  <text x="60" y="310" class="log-text log-normal">[2024-01-15 14:23:48] INFO  Source analysis: 1,860 objects, 2.4 TB</text>
+  <text x="60" y="330" class="log-text log-normal">[2024-01-15 14:23:49] INFO  Starting mc mirror command...</text>
+  <text x="60" y="350" class="log-text log-normal">[2024-01-15 14:23:50] INFO  Transfer started: images/photo_001.jpg</text>
+  <text x="60" y="370" class="log-text log-info">[2024-01-15 14:23:52] INFO  ✓ Transferred: images/photo_001.jpg (2.1 MB)</text>
+  <text x="60" y="390" class="log-text log-normal">[2024-01-15 14:23:53] INFO  Transfer started: documents/report.pdf</text>
+  <text x="60" y="410" class="log-text log-info">[2024-01-15 14:23:55] INFO  ✓ Transferred: documents/report.pdf (5.8 MB)</text>
+  <text x="60" y="430" class="log-text log-normal">[2024-01-15 14:23:56] INFO  Transfer started: videos/large_file.mp4</text>
+  <text x="60" y="450" class="log-text log-warning">[2024-01-15 14:24:12] WARN  Retrying transfer: videos/large_file.mp4 (timeout)</text>
+  <text x="60" y="470" class="log-text log-info">[2024-01-15 14:24:45] INFO  ✓ Transferred: videos/large_file.mp4 (156.2 MB)</text>
+  <text x="60" y="490" class="log-text log-normal">[2024-01-15 14:24:46] INFO  Progress: 1,247/1,860 objects (67%)</text>
+  <text x="60" y="510" class="log-text log-normal">[2024-01-15 14:24:47] INFO  Transfer speed: 245 MB/s, ETA: 1h 23m</text>
+  <text x="60" y="530" class="log-text log-error">[2024-01-15 14:24:48] ERROR Failed to transfer: temp/corrupted.dat (checksum mismatch)</text>
+  <text x="60" y="550" class="log-text log-warning">[2024-01-15 14:24:49] WARN  Skipping corrupted file, continuing migration...</text>
+  <text x="60" y="570" class="log-text log-normal">[2024-01-15 14:24:50] INFO  Transfer started: archive/backup_2024.zip</text>
+  <text x="60" y="590" class="log-text log-info">[2024-01-15 14:25:15] INFO  ✓ Transferred: archive/backup_2024.zip (234.5 MB)</text>
+  <text x="60" y="610" class="log-text log-normal">[2024-01-15 14:25:16] INFO  Current status: 1,248/1,860 objects transferred</text>
+  <text x="60" y="630" class="log-text log-normal">[2024-01-15 14:25:17] INFO  Data transferred: 1.6 TB / 2.4 TB (67%)</text>
+  <text x="60" y="650" class="log-text log-normal">[2024-01-15 14:25:18] INFO  Transfer started: database/prod_backup.sql</text>
+  <text x="60" y="670" class="log-text log-info">[2024-01-15 14:25:45] INFO  ✓ Transferred: database/prod_backup.sql (89.3 MB)</text>
+  
+  <!-- Scrollbar indicator -->
+  <rect x="1130" y="230" width="4" height="440" fill="#4b5563" rx="2"/>
+  <rect x="1130" y="400" width="4" height="60" fill="#9ca3af" rx="2"/>
+  
+  <!-- Log Stats at bottom -->
+  <rect x="40" y="720" width="1120" height="60" class="card" rx="8"/>
+  <text x="60" y="745" style="font: bold 14px sans-serif; fill: #1f2937;">Log Statistics</text>
+  
+  <!-- Stats Grid -->
+  <text x="60" y="765" style="font: 12px sans-serif; fill: #6b7280;">Total Lines: 1,247</text>
+  <text x="200" y="765" style="font: 12px sans-serif; fill: #6b7280;">Errors: 3</text>
+  <text x="300" y="765" style="font: 12px sans-serif; fill: #6b7280;">Warnings: 8</text>
+  <text x="420" y="765" style="font: 12px sans-serif; fill: #6b7280;">Info: 1,236</text>
+  <text x="550" y="765" style="font: 12px sans-serif; fill: #6b7280;">Last Updated: 14:25:45</text>
+  <text x="750" y="765" style="font: 12px sans-serif; fill: #6b7280;">File Size: 156.2 KB</text>
+  
+  <!-- Export Options -->
+  <text x="900" y="745" style="font: 12px sans-serif; fill: #6b7280;">Export:</text>
+  <rect x="950" y="735" width="40" height="16" fill="#3b82f6" rx="8"/>
+  <text x="965" y="745" style="font: 10px sans-serif; fill: white;">TXT</text>
+  
+  <rect x="1000" y="735" width="40" height="16" fill="#10b981" rx="8"/>
+  <text x="1015" y="745" style="font: 10px sans-serif; fill: white;">JSON</text>
+  
+  <rect x="1050" y="735" width="40" height="16" fill="#f59e0b" rx="8"/>
+  <text x="1065" y="745" style="font: 10px sans-serif; fill: white;">CSV</text>
+  
+  <!-- Live indicator bottom -->
+  <circle cx="1120" cy="765" r="4" fill="#10b981">
+    <animate attributeName="opacity" values="1;0.3;1" dur="1s" repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- Watermark -->
+  <text x="1050" y="790" style="font: 12px sans-serif; fill: #d1d5db;">🖼️ Log Viewer Placeholder</text>
+</svg>
