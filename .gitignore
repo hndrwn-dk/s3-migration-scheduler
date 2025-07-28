@@ -97,7 +97,7 @@ Thumbs.db
 *.dmg
 
 # Windows
-*.exe
+*.exe  # Includes mc.exe for portable deployment
 *.msi
 
 # Core dumps and large files
