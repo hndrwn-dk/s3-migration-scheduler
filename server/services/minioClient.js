@@ -6,12 +6,40 @@ const { broadcast } = require('./websocket');
 
 class MinioClientService {
   constructor() {
-    this.mcPath = process.env.MC_PATH || 'mc';
+    // Detect MinIO client path
+    this.mcPath = this.detectMcPath();
     this.activeMigrations = new Map();
     this.logDir = path.join(__dirname, '../logs');
     this.migrationsFile = path.join(this.logDir, 'migrations.json');
     this.ensureLogDirectory();
     this.loadMigrations();
+  }
+
+  detectMcPath() {
+    if (process.env.MC_PATH) {
+      return process.env.MC_PATH;
+    }
+    
+    // Try common Windows paths
+    if (process.platform === 'win32') {
+      const commonPaths = [
+        'C:\\Program Files\\Minio\\mc.exe',
+        'C:\\Program Files\\MinIO\\mc.exe', 
+        'C:\\Program Files (x86)\\Minio\\mc.exe',
+        'C:\\Program Files (x86)\\MinIO\\mc.exe',
+        'mc.exe',
+        'mc'
+      ];
+      
+      for (const testPath of commonPaths) {
+        if (fs.existsSync(testPath)) {
+          console.log(`Found MinIO client at: ${testPath}`);
+          return testPath;
+        }
+      }
+    }
+    
+    return 'mc'; // Fallback to PATH
   }
 
   async ensureLogDirectory() {
@@ -276,7 +304,9 @@ class MinioClientService {
     const childProcess = spawn(this.mcPath, args, {
       stdio: ['ignore', 'pipe', 'pipe'],
       env: process.env,
-      shell: process.platform === 'win32' // Use shell on Windows
+      shell: process.platform === 'win32', // Use shell on Windows
+      windowsHide: false, // Don't hide window on Windows for debugging
+      timeout: 300000 // 5 minutes timeout
     });
 
     migration.process = childProcess;
