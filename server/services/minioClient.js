@@ -313,6 +313,9 @@ class MinioClientService {
     // Build mc mirror command
     let command = `${this.quoteMcPath()} mirror`;
     
+    // Add JSON output and summary for better parsing and reconciliation
+    command += ' --json --summary';
+    
     // Basic options
     if (options.overwrite) command += ' --overwrite';
     if (options.remove) command += ' --remove';

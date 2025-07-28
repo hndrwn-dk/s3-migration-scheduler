@@ -21,9 +21,7 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
   const [aliases, setAliases] = useState<S3Alias[]>([]);
   const [sourceBuckets, setSourceBuckets] = useState<S3Bucket[]>([]);
   const [destinationBuckets, setDestinationBuckets] = useState<S3Bucket[]>([]);
-  const [bucketAnalysis, setBucketAnalysis] = useState<BucketInfo | null>(null);
   const [loading, setLoading] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false);
   const [validating, setValidating] = useState(false);
   
   const [formData, setFormData] = useState<MigrationFormData>({
@@ -67,13 +65,7 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
     }
   }, [formData.destinationAlias]);
 
-  useEffect(() => {
-    if (formData.sourceAlias && formData.sourceBucket) {
-      analyzeBucket();
-    } else {
-      setBucketAnalysis(null);
-    }
-  }, [formData.sourceAlias, formData.sourceBucket]);
+
 
   const loadAliases = () => {
     try {
@@ -107,18 +99,7 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
     }
   };
 
-  const analyzeBucket = async () => {
-    setAnalyzing(true);
-    try {
-      const analysis = await bucketService.analyzeBucket(formData.sourceAlias, formData.sourceBucket);
-      setBucketAnalysis(analysis);
-    } catch (error) {
-      console.error('Failed to analyze bucket:', error);
-      setBucketAnalysis(null);
-    } finally {
-      setAnalyzing(false);
-    }
-  };
+
 
   const validateMigration = async () => {
     setValidating(true);
@@ -346,53 +327,7 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
           </div>
         </div>
 
-        {/* Bucket Analysis */}
-        {(analyzing || bucketAnalysis) && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Bucket Analysis</h3>
-              <button
-                onClick={analyzeBucket}
-                disabled={analyzing}
-                className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {analyzing ? 'Refreshing...' : 'Refresh Analysis'}
-              </button>
-            </div>
-            
-            {analyzing ? (
-              <LoadingSpinner text="Analyzing source bucket..." />
-            ) : bucketAnalysis && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-sm font-medium text-blue-600">Total Size</p>
-                    <p className="text-2xl font-bold text-blue-900">{bucketAnalysis.formattedSize}</p>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <p className="text-sm font-medium text-green-600">Total Objects</p>
-                    <p className="text-2xl font-bold text-green-900">{bucketAnalysis.totalObjects.toLocaleString()}</p>
-                  </div>
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <p className="text-sm font-medium text-purple-600">Estimated Time</p>
-                    <p className="text-2xl font-bold text-purple-900">{bucketAnalysis.estimatedMigrationTime}</p>
-                  </div>
-                </div>
 
-                {bucketAnalysis.recommendations && bucketAnalysis.recommendations.length > 0 && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <h4 className="font-medium text-yellow-800 mb-2">Recommendations:</h4>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-yellow-700">
-                      {bucketAnalysis.recommendations.map((rec, index) => (
-                        <li key={index}>{rec}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Advanced Options */}
         <div className="bg-white rounded-lg shadow p-6">
