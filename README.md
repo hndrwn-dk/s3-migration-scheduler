@@ -28,37 +28,37 @@ A comprehensive fullstack application for managing S3 bucket migrations using Mi
 ### Dashboard Overview
 *Real-time migration statistics and progress monitoring*
 
-![Dashboard Overview](https://raw.githubusercontent.com/hndrwn-dk/s3-management-ui/main/docs/images/dashboard-overview.svg)
+![Dashboard Overview](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/dashboard-overview.svg?raw=true)
 > 📊 **Main Dashboard** - Shows migration statistics, recent activity, and visual charts for tracking migration trends and status distribution.
 
 ### Migration Configuration
 *Easy setup for S3 endpoints and connections*
 
-![Configuration](https://raw.githubusercontent.com/hndrwn-dk/s3-management-ui/main/docs/images/configuration.svg)
+![Configuration](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/configuration.svg?raw=true)
 > ⚙️ **Configuration Tab** - Simple interface to add and manage S3 endpoints with connection testing capabilities.
 
 ### Migration Wizard
 *Step-by-step migration setup with bucket analysis*
 
-![Migration Wizard](https://raw.githubusercontent.com/hndrwn-dk/s3-management-ui/main/docs/images/migration-wizard.svg)
+![Migration Wizard](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/migration-wizard.svg?raw=true)
 > 🚀 **Migration Tab** - Guided migration setup with bucket analysis, size estimates, and advanced options.
 
 ### Real-time Progress
 *Live migration monitoring with detailed progress*
 
-![Progress Monitoring](https://raw.githubusercontent.com/hndrwn-dk/s3-management-ui/main/docs/images/progress-monitoring.svg)
+![Progress Monitoring](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/progress-monitoring.svg?raw=true)
 > 📈 **Progress Tracking** - Real-time migration progress with transfer statistics and WebSocket updates.
 
 ### Migration History
 *Complete history with detailed views and filtering*
 
-![Migration History](https://raw.githubusercontent.com/hndrwn-dk/s3-management-ui/main/docs/images/migration-history.svg)
+![Migration History](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/migration-history.svg?raw=true)
 > 📋 **History Tab** - Comprehensive migration history with filtering, sorting, and detailed modal views.
 
 ### Live Log Viewer
 *Real-time log streaming with filtering and export*
 
-![Log Viewer](https://raw.githubusercontent.com/hndrwn-dk/s3-management-ui/main/docs/images/log-viewer.svg)
+![Log Viewer](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/log-viewer.svg?raw=true)
 > 📝 **Logs Tab** - Live log streaming with filtering, highlighting, and export capabilities.
 
 > **📷 Note**: The screenshots above are placeholders. To add actual UI screenshots, run the application and use:
@@ -72,23 +72,37 @@ A comprehensive fullstack application for managing S3 bucket migrations using Mi
 
 ## 🚀 Quick Start
 
+### Linux/macOS
 ```bash
 # 1. Clone the repository
 git clone https://github.com/hndrwn-dk/s3-management-ui.git
 cd s3-management-ui
 
 # 2. Run automated setup
-chmod +x setup.sh
-./setup.sh
+chmod +x scripts/setup-linux.sh
+./scripts/setup-linux.sh
 
 # 3. Start the application
-npm run dev
+./start.sh
+```
+
+### Windows
+```batch
+# 1. Clone the repository
+git clone https://github.com/hndrwn-dk/s3-management-ui.git
+cd s3-management-ui
+
+# 2. Run automated setup
+scripts\setup-windows.bat
+
+# 3. Start the application
+start.bat
 ```
 
 **Dashboard available at:** http://localhost:3000  
 **API server available at:** http://localhost:5000
 
-> 💡 **Note**: Make sure MinIO client (`mc`) is installed for migrations to work.
+> 💡 **Note**: The setup scripts will check for MinIO client (`mc`) and provide installation instructions if needed.
 
 ---
 
@@ -146,12 +160,37 @@ Invoke-WebRequest -Uri "https://dl.min.io/client/mc/release/windows-amd64/mc.exe
 
 ## 🛠️ Installation
 
-### Quick Start
+### Platform-Specific Setup
+
+Choose the setup script for your operating system:
+
+#### Linux/macOS
+```bash
+# Make script executable and run
+chmod +x scripts/setup-linux.sh
+./scripts/setup-linux.sh
+
+# For production build
+./scripts/setup-linux.sh --production
+```
+
+#### Windows
+```batch
+# Run the Windows setup script
+scripts\setup-windows.bat
+
+# For production build
+scripts\setup-windows.bat --production
+```
+
+### Manual Installation
+
+If you prefer to set up manually:
 
 1. **Clone the repository**
 ```bash
-git clone <repository-url>
-cd s3-migration-dashboard
+git clone https://github.com/hndrwn-dk/s3-management-ui.git
+cd s3-management-ui
 ```
 
 2. **Install dependencies**
