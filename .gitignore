@@ -99,3 +99,8 @@ Thumbs.db
 # Windows
 *.exe
 *.msi
+
+# Core dumps and large files
+core
+core.*
+*.dump
