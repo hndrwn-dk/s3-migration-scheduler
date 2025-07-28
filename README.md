@@ -271,28 +271,30 @@ Choose the setup script for your operating system:
 
 #### Linux/macOS
 ```bash
-# Make script executable and run (creates start.sh in root)
-chmod +x scripts/setup-linux.sh
-./scripts/setup-linux.sh
-
-# For production build
-./scripts/setup-linux.sh --production
+# Make script executable and run
+chmod +x scripts/00-setup-linux.sh
+./scripts/00-setup-linux.sh
 
 # Start the application
-./start.sh
+./scripts/02-start.sh
 ```
 
 #### Windows
 ```batch
-# Run the Windows setup script (creates start.bat in root)
-scripts\setup-windows.bat
-
-# For production build
-scripts\setup-windows.bat --production
+# Run the Windows setup script
+scripts\00-setup-windows.bat
 
 # Start the application
-start.bat
+scripts\02-start.bat
 ```
+
+#### 📋 Script Overview
+All scripts are numbered for easy execution order:
+- `00-setup-*`: Initial environment setup (run once)
+- `01-fix-*`: Dependency troubleshooting (if needed)  
+- `02-start.*`: Application startup (daily use)
+
+For detailed script information, see [`scripts/README.md`](scripts/README.md).
 
 ### Manual Installation
 
@@ -345,11 +347,11 @@ If you see this error when running `start.bat` or `npm run dev`:
 ```bash
 # Run the dependency fix script
 # For Windows:
-fix-dependencies.bat
+scripts\01-fix-dependencies.bat
 
 # For Linux/macOS:
-chmod +x fix-dependencies.sh
-./fix-dependencies.sh
+chmod +x scripts/01-fix-dependencies.sh
+./scripts/01-fix-dependencies.sh
 ```
 
 Or manually install dependencies:
@@ -381,9 +383,55 @@ node --version  # Should show v18.x or higher
 
 If you have an older version, update Node.js from https://nodejs.org/
 
+### 📦 Project Structure & Dependencies
+
+This project uses a **monorepo structure** with multiple `package.json` files:
+
+```
+s3-migration-dashboard/
+├── package.json           # Root package (monorepo management)
+├── package-lock.json      # Root lockfile
+├── server/
+│   ├── package.json      # Backend dependencies (Express, WebSocket, etc.)
+│   ├── package-lock.json # Server lockfile
+│   └── ...
+├── client/
+│   ├── package.json      # Frontend dependencies (React, TypeScript, etc.)
+│   ├── package-lock.json # Client lockfile
+│   └── ...
+└── scripts/              # Numbered automation scripts
+    ├── 00-setup-*
+    ├── 01-fix-*
+    └── 02-start.*
+```
+
+#### Why Multiple package.json Files?
+
+1. **Root `package.json`**: 
+   - Manages workspace-level scripts (`dev`, `build`, `start`)
+   - Contains `concurrently` for running server + client together
+   - Handles monorepo dependencies and configuration
+
+2. **Server `package.json`**:
+   - Backend-specific dependencies (Express, cors, ws, etc.)
+   - Server-only scripts and build configuration
+   - Production deployment settings
+
+3. **Client `package.json`**:
+   - Frontend-specific dependencies (React, TypeScript, Tailwind, etc.)
+   - Client build tools and development server
+   - Browser-specific configurations
+
+This structure provides:
+- ✅ **Independent dependency management** for frontend/backend
+- ✅ **Separate build processes** for optimal deployment
+- ✅ **Clear separation of concerns** 
+- ✅ **Development convenience** (single command starts both)
+- ✅ **Easy scalability** for microservices architecture
+
 5. **Access the dashboard**
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:5000
+     - Frontend: http://localhost:3000
+     - Backend API: http://localhost:5000
 
 ### Production Deployment
 

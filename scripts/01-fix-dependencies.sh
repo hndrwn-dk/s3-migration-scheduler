@@ -4,6 +4,9 @@ echo "Fixing S3 Migration Dashboard Dependencies..."
 echo "==============================================="
 echo ""
 
+# Navigate to project root
+cd "$(dirname "$0")/.."
+
 # Install root dependencies
 echo "Installing root dependencies (including concurrently)..."
 if npm install; then
@@ -38,5 +41,5 @@ cd ..
 
 echo ""
 echo "[SUCCESS] All dependencies installed successfully!"
-echo "You can now run: ./start.sh"
+echo "You can now run: ./scripts/02-start.sh"
 echo ""

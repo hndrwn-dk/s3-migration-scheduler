@@ -159,24 +159,27 @@ fi
 
 # Step 8: Create start script
 print_step "Creating start script..."
-cat > start.sh << 'EOF'
+cat > scripts/02-start.sh << 'EOF'
 #!/bin/bash
 
 # S3 Migration Dashboard Startup Script
 
-echo "🚀 Starting S3 Migration Dashboard..."
+echo "Starting S3 Migration Dashboard..."
+
+# Navigate to project root
+cd "$(dirname "$0")/.."
 
 # Check if MinIO client is available
 if ! command -v mc >/dev/null 2>&1; then
-    echo "⚠️  Warning: MinIO client (mc) not found in PATH"
-    echo "   Migrations will not work without MinIO client installed"
-    echo "   Visit: https://docs.min.io/docs/minio-client-quickstart-guide.html"
+    echo "Warning: MinIO client (mc) not found in PATH"
+    echo "Migrations will not work without MinIO client installed"
+    echo "Visit: https://docs.min.io/docs/minio-client-quickstart-guide.html"
     echo ""
 fi
 
 # Start the application
-echo "📊 Dashboard will be available at: http://localhost:3000"
-echo "🔌 API server will be available at: http://localhost:5000"
+echo "Dashboard will be available at: http://localhost:3000"
+echo "API server will be available at: http://localhost:5000"
 echo ""
 echo "Press Ctrl+C to stop the application"
 echo ""
@@ -184,8 +187,8 @@ echo ""
 npm run dev
 EOF
 
-chmod +x start.sh
-print_status "Created executable start.sh script"
+chmod +x scripts/02-start.sh
+print_status "Created executable scripts/02-start.sh script"
 
 # Step 9: Completion message
 echo ""
@@ -193,7 +196,7 @@ echo "Setup completed successfully!"
 echo ""
 echo "Next steps:"
 echo "   1. Configure your S3 endpoints in the dashboard"
-echo "   2. Start the application: ./start.sh"
+echo "   2. Start the application: ./scripts/02-start.sh"
 echo "   3. Open browser: http://localhost:3000"
 echo ""
 

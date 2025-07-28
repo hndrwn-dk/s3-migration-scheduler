@@ -165,28 +165,31 @@ echo =^> Creating start script...
     echo.
     echo REM S3 Migration Dashboard Startup Script
     echo.
-    echo echo 🚀 Starting S3 Migration Dashboard...
+    echo echo Starting S3 Migration Dashboard...
+    echo.
+    echo REM Navigate to project root
+    echo cd /d "%%~dp0\.."
     echo.
     echo REM Check if MinIO client is available
     echo mc --version ^>nul 2^>^&1
     echo if %%ERRORLEVEL%% neq 0 ^(
-    echo     echo ⚠️  Warning: MinIO client ^(mc^) not found in PATH
-    echo     echo    Migrations will not work without MinIO client installed
-    echo     echo    Visit: https://docs.min.io/docs/minio-client-quickstart-guide.html
+    echo     echo Warning: MinIO client ^(mc^) not found in PATH
+    echo     echo Migrations will not work without MinIO client installed
+    echo     echo Visit: https://docs.min.io/docs/minio-client-quickstart-guide.html
     echo     echo.
     echo ^)
     echo.
     echo REM Start the application
-    echo echo 📊 Dashboard will be available at: http://localhost:3000
-    echo echo 🔌 API server will be available at: http://localhost:5000
+    echo echo Dashboard will be available at: http://localhost:3000
+    echo echo API server will be available at: http://localhost:5000
     echo echo.
     echo echo Press Ctrl+C to stop the application
     echo echo.
     echo.
     echo call npm run dev
     echo pause
-) > start.bat
-echo [INFO] Created start.bat script
+) > scripts\02-start.bat
+echo [INFO] Created scripts\02-start.bat script
 
 REM Step 9: Completion message
 echo.
@@ -194,7 +197,7 @@ echo Setup completed successfully!
 echo.
 echo Next steps:
 echo    1. Configure your S3 endpoints in the dashboard
-echo    2. Start the application: start.bat
+echo    2. Start the application: scripts\02-start.bat
 echo    3. Open browser: http://localhost:3000
 echo.
 
