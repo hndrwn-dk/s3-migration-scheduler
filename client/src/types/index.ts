@@ -29,6 +29,11 @@ export interface MigrationConfig {
     overwrite: boolean;
     remove: boolean;
     exclude: string[];
+    // Advanced MinIO mirror options
+    checksum?: 'CRC64NVME' | 'CRC32' | 'CRC32C' | 'SHA1' | 'SHA256';
+    preserve: boolean;
+    retry: boolean;
+    dryRun: boolean;
   };
 }
 
@@ -110,6 +115,11 @@ export interface MigrationFormData {
   overwrite: boolean;
   remove: boolean;
   exclude: string[];
+  // Advanced MinIO mirror options
+  checksum?: 'CRC64NVME' | 'CRC32' | 'CRC32C' | 'SHA1' | 'SHA256';
+  preserve: boolean;
+  retry: boolean;
+  dryRun: boolean;
 }
 
 export type TabType = 'dashboard' | 'configure' | 'migrate' | 'history' | 'logs';

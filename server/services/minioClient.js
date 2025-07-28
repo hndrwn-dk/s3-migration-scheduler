@@ -172,6 +172,7 @@ class MinioClientService {
     // Build mc mirror command
     let command = `${this.mcPath} mirror`;
     
+    // Basic options
     if (options.overwrite) command += ' --overwrite';
     if (options.remove) command += ' --remove';
     if (options.exclude && options.exclude.length > 0) {
@@ -179,6 +180,12 @@ class MinioClientService {
         command += ` --exclude "${pattern}"`;
       });
     }
+    
+    // Advanced MinIO options
+    if (options.checksum) command += ` --checksum ${options.checksum}`;
+    if (options.preserve) command += ' --preserve';
+    if (options.retry) command += ' --retry';
+    if (options.dryRun) command += ' --dry-run';
     
     command += ` ${source} ${destination}`;
     
