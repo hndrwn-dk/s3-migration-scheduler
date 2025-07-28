@@ -77,6 +77,21 @@ const ConfigureTab: React.FC = () => {
         throw new Error('All fields are required');
       }
 
+      // Validate alias name format
+      if (!/^[a-zA-Z0-9_-]+$/.test(formData.name)) {
+        throw new Error('Alias name can only contain letters, numbers, hyphens, and underscores');
+      }
+
+      // Validate alias name length
+      if (formData.name.length < 1 || formData.name.length > 63) {
+        throw new Error('Alias name must be between 1 and 63 characters');
+      }
+
+      // Validate endpoint format
+      if (!formData.endpoint.startsWith('http://') && !formData.endpoint.startsWith('https://')) {
+        throw new Error('Endpoint must start with http:// or https://');
+      }
+
       // Check if alias name already exists
       if (aliases.some(alias => alias.name === formData.name)) {
         throw new Error('Alias name already exists');
@@ -174,10 +189,12 @@ const ConfigureTab: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   placeholder="e.g., source-s3, dest-minio"
+                  pattern="[a-zA-Z0-9_-]+"
+                  maxLength={63}
                   required
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  A unique name to identify this S3 endpoint
+                  Letters, numbers, hyphens, and underscores only (1-63 characters)
                 </p>
               </div>
 
@@ -191,8 +208,12 @@ const ConfigureTab: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, endpoint: e.target.value })}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   placeholder="https://s3.amazonaws.com or https://minio.example.com"
+                  pattern="https?://.*"
                   required
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  Must start with http:// or https://
+                </p>
               </div>
 
               <div>
@@ -341,6 +362,18 @@ const ConfigureTab: React.FC = () => {
             </p>
           </div>
         )}
+      </div>
+
+      {/* Troubleshooting Section */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-yellow-900 mb-3">🔧 Troubleshooting 400 Errors</h3>
+        <div className="space-y-2 text-sm text-yellow-800">
+          <p>• <strong>Invalid alias name:</strong> Use only letters, numbers, hyphens, and underscores (1-63 chars)</p>
+          <p>• <strong>Invalid endpoint:</strong> Must start with http:// or https://</p>
+          <p>• <strong>Missing fields:</strong> All fields (name, endpoint, access key, secret key) are required</p>
+          <p>• <strong>Duplicate name:</strong> Alias name must be unique</p>
+          <p>• <strong>Special characters:</strong> Avoid spaces and special characters in alias names</p>
+        </div>
       </div>
 
       {/* Help Section */}

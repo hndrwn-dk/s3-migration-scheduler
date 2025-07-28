@@ -15,25 +15,51 @@ router.get('/health', async (req, res) => {
 // Configure S3 alias
 router.post('/alias', async (req, res) => {
   try {
-    const { aliasName, endpoint, accessKey, secretKey } = req.body;
+    console.log('Alias configuration request body:', req.body);
+    const { name, endpoint, accessKey, secretKey } = req.body;
 
     // Validate required fields
-    if (!aliasName || !endpoint || !accessKey || !secretKey) {
+    if (!name || !endpoint || !accessKey || !secretKey) {
+      console.log('Missing required fields:', { 
+        name: !!name, 
+        endpoint: !!endpoint, 
+        accessKey: !!accessKey, 
+        secretKey: !!secretKey 
+      });
       return res.status(400).json({
         success: false,
-        error: 'All fields are required: aliasName, endpoint, accessKey, secretKey'
+        error: 'All fields are required: name, endpoint, accessKey, secretKey',
+        received: { name: !!name, endpoint: !!endpoint, accessKey: !!accessKey, secretKey: !!secretKey }
+      });
+    }
+
+    // Validate endpoint format
+    if (!endpoint.startsWith('http://') && !endpoint.startsWith('https://')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Endpoint must start with http:// or https://'
       });
     }
 
     // Validate alias name format
-    if (!/^[a-zA-Z0-9_-]+$/.test(aliasName)) {
+    if (!/^[a-zA-Z0-9_-]+$/.test(name)) {
       return res.status(400).json({
         success: false,
         error: 'Alias name can only contain letters, numbers, hyphens, and underscores'
       });
     }
 
-    const result = await minioClient.configureAlias(aliasName, endpoint, accessKey, secretKey);
+    // Validate alias name length
+    if (name.length < 1 || name.length > 63) {
+      return res.status(400).json({
+        success: false,
+        error: 'Alias name must be between 1 and 63 characters'
+      });
+    }
+
+    console.log(`Attempting to configure alias: ${name} -> ${endpoint}`);
+    const result = await minioClient.configureAlias(name, endpoint, accessKey, secretKey);
+    console.log('Alias configuration successful:', result);
     res.json({ success: true, data: result });
   } catch (error) {
     console.error('Alias configuration error:', error);
