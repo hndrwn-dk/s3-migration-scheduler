@@ -17,6 +17,7 @@ echo "Dashboard will be available at: http://localhost:3000"
 echo "API server will be available at: http://localhost:5000"
 echo ""
 echo "Press Ctrl+C to stop the application"
+echo "Using stable mode (no auto-restart during migrations)"
 echo ""
 
-npm run dev
+npm run dev:stable
