@@ -236,7 +236,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations }) => {
                   <tr key={migration.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {migration.config.source} → {migration.config.destination}
+                        {migration.config?.source || 'Unknown'} → {migration.config?.destination || 'Unknown'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
