@@ -89,10 +89,29 @@ class MinioClientService {
             .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
             .slice(0, 100);
           
+          // Clean up stale running migrations (older than 10 minutes)
+          const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+          let cleanedCount = 0;
+          
           recentMigrations.forEach(migration => {
+            // Mark old running migrations as failed if they're stuck
+            if ((migration.status === 'running' || migration.status === 'starting' || migration.status === 'reconciling') &&
+                new Date(migration.startTime) < tenMinutesAgo) {
+              migration.status = 'failed';
+              migration.progress = 0;
+              migration.endTime = migration.endTime || new Date().toISOString();
+              migration.errors = migration.errors || [];
+              migration.errors.push('Migration was terminated due to server restart or timeout');
+              cleanedCount++;
+            }
             this.activeMigrations.set(migration.id, migration);
           });
+          
           console.log(`Loaded ${recentMigrations.length} recent migrations from disk`);
+          if (cleanedCount > 0) {
+            console.log(`Cleaned up ${cleanedCount} stale running migrations`);
+            this.saveMigrations(); // Save the cleaned up data
+          }
           
           // If we filtered out old migrations, save the cleaned up list
           if (recentMigrations.length < data.length) {
@@ -501,13 +520,71 @@ class MinioClientService {
   }
 
   async performReconciliation(source, destination) {
-    // Compare source and destination using mc diff
+    try {
+      // Get bucket statistics for both source and destination
+      const [sourceStats, destStats, differences] = await Promise.all([
+        this.getBucketStats(source),
+        this.getBucketStats(destination),
+        this.compareDirectories(source, destination)
+      ]);
+
+      return {
+        differences,
+        sourceStats,
+        destStats,
+        summary: {
+          objectCountMatch: sourceStats.objectCount === destStats.objectCount,
+          totalSizeMatch: sourceStats.totalSize === destStats.totalSize,
+          differencesFound: differences.length > 0
+        }
+      };
+    } catch (error) {
+      throw new Error(`Reconciliation failed: ${error.message}`);
+    }
+  }
+
+  async getBucketStats(bucketPath) {
+    return new Promise((resolve, reject) => {
+      const command = `${this.quoteMcPath()} du ${bucketPath} --json`;
+      
+      exec(command, (error, stdout, stderr) => {
+        if (error) {
+          resolve({ objectCount: 0, totalSize: 0 }); // Default if bucket is empty or inaccessible
+          return;
+        }
+
+        try {
+          const lines = stdout.trim().split('\n').filter(line => line);
+          let totalSize = 0;
+          let objectCount = 0;
+
+          lines.forEach(line => {
+            try {
+              const data = JSON.parse(line);
+              if (data.size !== undefined) {
+                totalSize += data.size || 0;
+                objectCount++;
+              }
+            } catch (e) {
+              // Skip invalid JSON lines
+            }
+          });
+
+          resolve({ objectCount, totalSize });
+        } catch (error) {
+          resolve({ objectCount: 0, totalSize: 0 });
+        }
+      });
+    });
+  }
+
+  async compareDirectories(source, destination) {
     return new Promise((resolve, reject) => {
       const command = `${this.quoteMcPath()} diff ${source} ${destination} --json`;
       
       exec(command, (error, stdout, stderr) => {
         if (error && !stdout) {
-          reject(new Error(`Reconciliation failed: ${stderr || error.message}`));
+          reject(new Error(`Directory comparison failed: ${stderr || error.message}`));
           return;
         }
 
