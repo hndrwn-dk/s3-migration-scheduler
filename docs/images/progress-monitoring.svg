@@ -83,7 +83,7 @@
   
   <!-- Network Info -->
   <rect x="840" y="350" width="320" height="180" class="card" rx="8"/>
-  <text x="860" y="385" style="font: bold 18px sans-serif; fill: #1f2937;">Network & Resources</text>
+  <text x="860" y="385" style="font: bold 18px sans-serif; fill: #1f2937;">Network &amp; Resources</text>
   
   <text x="860" y="415" style="font: 14px sans-serif; fill: #6b7280;">Bandwidth Usage:</text>
   <rect x="860" y="425" width="200" height="8" fill="#e5e7eb" rx="4"/>
