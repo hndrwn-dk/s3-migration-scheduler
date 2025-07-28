@@ -121,7 +121,12 @@ start.bat
 ### Migration Management
 - **Easy Configuration** - Simple setup for S3 endpoints (AWS S3, MinIO, etc.)
 - **Bucket Analysis** - Pre-migration analysis with size estimates and recommendations
-- **Advanced Options** - Support for overwrite, remove, and exclude patterns
+- **Advanced MinIO Options** - Enterprise-grade migration features:
+  - **Checksum Verification** - CRC64NVME, CRC32, CRC32C, SHA1, SHA256 algorithms for data integrity
+  - **Preserve Attributes** - Maintain file/object attributes and bucket policies/locking configurations
+  - **Retry Mechanism** - Automatic retry on per-object basis for error handling
+  - **Dry Run Mode** - Test migrations without actual file transfer
+- **Migration Options** - Support for overwrite, remove, and exclude patterns
 - **Data Reconciliation** - Automatic verification after migration completion
 - **Progress Tracking** - Real-time progress bars and transfer statistics
 
@@ -744,7 +749,15 @@ When reporting bugs, please include:
 
 - **v1.0.0**: Initial release with core migration features
 - **v1.1.0**: Added data reconciliation and improved UI
-- **v1.2.0**: WebSocket real-time updates and enhanced logging
+- **v1.2.0**: Advanced enterprise features and production improvements
+  - ✅ Advanced MinIO mirror options (checksum, preserve, retry, dry-run)
+  - ✅ Comprehensive system requirements for Linux/Windows/macOS
+  - ✅ Numbered script organization (00-setup, 01-fix, 02-start)
+  - ✅ Enhanced TypeScript error handling and type safety
+  - ✅ Production-ready scripts without Unicode dependencies
+  - ✅ Improved UI/UX with advanced options section
+  - ✅ Fixed footer overlap issues for better mobile experience
+  - ✅ WebSocket real-time updates and enhanced logging
 
 ---
 
