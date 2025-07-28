@@ -38,7 +38,8 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
     checksum: undefined,
     preserve: true,
     retry: true,
-    dryRun: false
+    dryRun: false,
+    watch: false
   });
 
   const [excludePattern, setExcludePattern] = useState('');
@@ -167,7 +168,8 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
           checksum: formData.checksum,
           preserve: formData.preserve,
           retry: formData.retry,
-          dryRun: formData.dryRun
+          dryRun: formData.dryRun,
+          watch: formData.watch
         }
       };
 
@@ -192,7 +194,8 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
         checksum: undefined,
         preserve: true,
         retry: true,
-        dryRun: false
+        dryRun: false,
+        watch: false
       });
       setBucketAnalysis(null);
       
@@ -503,7 +506,7 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
                   </div>
 
                   {/* Advanced Options Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <label className="flex items-center">
                       <input
                         type="checkbox"
@@ -539,6 +542,18 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
                         Dry run (test mode)
                       </span>
                     </label>
+
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.watch}
+                        onChange={(e) => setFormData(prev => ({ ...prev, watch: e.target.checked }))}
+                        className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">
+                        Watch for changes
+                      </span>
+                    </label>
                   </div>
 
                   {/* Option Descriptions */}
@@ -546,6 +561,7 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
                     <p><strong>Preserve attributes:</strong> Maintains file/object attributes and bucket policies/locking configurations</p>
                     <p><strong>Enable retry:</strong> Automatically retries failed objects during migration</p>
                     <p><strong>Dry run:</strong> Simulates the migration without actually transferring files</p>
+                    <p><strong>Watch for changes:</strong> Continuously monitors source and syncs new/changed files</p>
                   </div>
 
                   {/* Dry Run Warning */}
@@ -559,6 +575,23 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
                           </h3>
                           <div className="mt-1 text-sm text-yellow-700">
                             <p>This migration will simulate the process without actually transferring any files. Perfect for testing and validation.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Watch Mode Warning */}
+                  {formData.watch && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                      <div className="flex">
+                        <InformationCircleIcon className="h-5 w-5 text-blue-400" />
+                        <div className="ml-3">
+                          <h3 className="text-sm font-medium text-blue-800">
+                            Watch Mode Enabled
+                          </h3>
+                          <div className="mt-1 text-sm text-blue-700">
+                            <p>Migration will run continuously, monitoring source for new/changed files. Perfect for ongoing synchronization.</p>
                           </div>
                         </div>
                       </div>
@@ -581,10 +614,11 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
                 {formData.overwrite ? ' --overwrite' : ''}
                 {formData.remove ? ' --remove' : ''}
                 {formData.exclude.length > 0 ? formData.exclude.map(pattern => ` --exclude "${pattern}"`).join('') : ''}
-                {formData.checksum ? ` --checksum ${formData.checksum}` : ''}
-                {formData.preserve ? ' --preserve' : ''}
-                {formData.retry ? ' --retry' : ''}
-                {formData.dryRun ? ' --dry-run' : ''}
+                                 {formData.checksum ? ` --checksum ${formData.checksum}` : ''}
+                 {formData.preserve ? ' --preserve' : ''}
+                 {formData.retry ? ' --retry' : ''}
+                 {formData.dryRun ? ' --dry-run' : ''}
+                 {formData.watch ? ' --watch' : ''}
                 {' '}
                 <span className="text-yellow-400">{formData.sourceAlias}/{formData.sourceBucket}</span>
                 {' '}

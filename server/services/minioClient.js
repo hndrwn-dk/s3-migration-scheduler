@@ -181,7 +181,7 @@ class MinioClientService {
       config: migrationConfig,
       status: 'starting',
       progress: 0,
-      startTime: new Date(),
+      startTime: new Date().toISOString(),
       logFile,
       errors: [],
       stats: {
@@ -228,6 +228,7 @@ class MinioClientService {
     if (options.preserve) command += ' --preserve';
     if (options.retry) command += ' --retry';
     if (options.dryRun) command += ' --dry-run';
+    if (options.watch) command += ' --watch';
     
     command += ` ${source} ${destination}`;
     
@@ -266,8 +267,9 @@ class MinioClientService {
       logStream.end();
 
       migration.status = code === 0 ? 'completed' : 'failed';
-      migration.endTime = new Date();
+      migration.endTime = new Date().toISOString();
       migration.progress = code === 0 ? 100 : migration.progress;
+      migration.duration = (new Date().getTime() - new Date(migration.startTime).getTime()) / 1000;
       
       this.broadcastMigrationUpdate(migration);
       
@@ -318,7 +320,7 @@ class MinioClientService {
     migration.status = 'reconciling';
     migration.reconciliation = {
       status: 'running',
-      startTime: new Date(),
+      startTime: new Date().toISOString(),
       differences: []
     };
 
@@ -328,7 +330,7 @@ class MinioClientService {
       const differences = await this.performReconciliation(migration.config.source, migration.config.destination);
       
       migration.reconciliation.status = 'completed';
-      migration.reconciliation.endTime = new Date();
+      migration.reconciliation.endTime = new Date().toISOString();
       migration.reconciliation.differences = differences;
       migration.status = differences.length === 0 ? 'verified' : 'completed_with_differences';
       

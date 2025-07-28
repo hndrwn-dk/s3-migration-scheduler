@@ -34,6 +34,7 @@ export interface MigrationConfig {
     preserve: boolean;
     retry: boolean;
     dryRun: boolean;
+    watch: boolean;
   };
 }
 
@@ -120,6 +121,7 @@ export interface MigrationFormData {
   preserve: boolean;
   retry: boolean;
   dryRun: boolean;
+  watch: boolean;
 }
 
 export type TabType = 'dashboard' | 'configure' | 'migrate' | 'history' | 'logs';
