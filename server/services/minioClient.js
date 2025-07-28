@@ -9,7 +9,9 @@ class MinioClientService {
     this.mcPath = process.env.MC_PATH || 'mc';
     this.activeMigrations = new Map();
     this.logDir = path.join(__dirname, '../logs');
+    this.migrationsFile = path.join(this.logDir, 'migrations.json');
     this.ensureLogDirectory();
+    this.loadMigrations();
   }
 
   async ensureLogDirectory() {
@@ -17,6 +19,43 @@ class MinioClientService {
       await fs.ensureDir(this.logDir);
     } catch (error) {
       console.error('Failed to create log directory:', error);
+    }
+  }
+
+  async loadMigrations() {
+    try {
+      if (await fs.pathExists(this.migrationsFile)) {
+        const data = await fs.readJson(this.migrationsFile);
+        if (Array.isArray(data)) {
+          // Keep only migrations from the last 7 days and limit to 100 most recent
+          const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+          const recentMigrations = data
+            .filter(migration => new Date(migration.startTime) > oneWeekAgo)
+            .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
+            .slice(0, 100);
+          
+          recentMigrations.forEach(migration => {
+            this.activeMigrations.set(migration.id, migration);
+          });
+          console.log(`Loaded ${recentMigrations.length} recent migrations from disk`);
+          
+          // If we filtered out old migrations, save the cleaned up list
+          if (recentMigrations.length < data.length) {
+            this.saveMigrations();
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load migrations:', error);
+    }
+  }
+
+  async saveMigrations() {
+    try {
+      const migrations = Array.from(this.activeMigrations.values());
+      await fs.writeJson(this.migrationsFile, migrations, { spaces: 2 });
+    } catch (error) {
+      console.error('Failed to save migrations:', error);
     }
   }
 
@@ -155,6 +194,9 @@ class MinioClientService {
     };
 
     this.activeMigrations.set(migrationId, migration);
+    
+    // Save migrations to disk for persistence
+    this.saveMigrations();
 
     try {
       await this.executeMigration(migration);
@@ -339,6 +381,9 @@ class MinioClientService {
   }
 
   broadcastMigrationUpdate(migration) {
+    // Save migrations to disk for persistence
+    this.saveMigrations();
+    
     broadcast({
       type: 'migration_update',
       data: {

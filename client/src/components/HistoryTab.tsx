@@ -22,6 +22,12 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
   const [selectedMigration, setSelectedMigration] = useState<Migration | null>(null);
 
   const filteredMigrations = migrations.filter(migration => {
+    // Filter out migrations with incomplete data
+    if (!migration.config || !migration.id) {
+      console.warn('Skipping migration with incomplete data:', migration);
+      return false;
+    }
+    
     if (filter === 'all') return true;
     return migration.status === filter;
   });
@@ -197,7 +203,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {migration.config.source} → {migration.config.destination}
+                          {migration.config?.source || 'Unknown'} → {migration.config?.destination || 'Unknown'}
                         </div>
                         <div className="text-xs text-gray-500">
                           ID: {migration.id.slice(0, 8)}...
@@ -306,11 +312,11 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Source</h4>
-                  <p className="mt-1 text-sm text-gray-900">{selectedMigration.config.source}</p>
+                  <p className="mt-1 text-sm text-gray-900">{selectedMigration.config?.source || 'Unknown'}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Destination</h4>
-                  <p className="mt-1 text-sm text-gray-900">{selectedMigration.config.destination}</p>
+                                      <p className="mt-1 text-sm text-gray-900">{selectedMigration.config?.destination || 'Unknown'}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Started</h4>
