@@ -45,6 +45,14 @@ class MinioClientService {
     return 'mc'; // Fallback to PATH
   }
 
+  // Helper method to quote paths with spaces for command execution
+  quoteMcPath() {
+    if (this.mcPath.includes(' ') && !this.mcPath.startsWith('"')) {
+      return `"${this.mcPath}"`;
+    }
+    return this.mcPath;
+  }
+
   async ensureLogDirectory() {
     try {
       await fs.ensureDir(this.logDir);
@@ -92,7 +100,7 @@ class MinioClientService {
 
   async checkMcInstallation() {
     return new Promise((resolve) => {
-      exec(`${this.mcPath} --version`, (error, stdout, stderr) => {
+      exec(`${this.quoteMcPath()} --version`, (error, stdout, stderr) => {
         if (error) {
           resolve({ installed: false, error: error.message });
         } else {
@@ -129,7 +137,7 @@ class MinioClientService {
 
   async configureAlias(aliasName, endpoint, accessKey, secretKey) {
     return new Promise((resolve, reject) => {
-      const command = `${this.mcPath} alias set ${aliasName} ${endpoint} ${accessKey} ${secretKey}`;
+      const command = `${this.quoteMcPath()} alias set ${aliasName} ${endpoint} ${accessKey} ${secretKey}`;
       
       exec(command, (error, stdout, stderr) => {
         if (error) {
@@ -143,7 +151,7 @@ class MinioClientService {
 
   async listBuckets(aliasName) {
     return new Promise((resolve, reject) => {
-      const command = `${this.mcPath} ls ${aliasName} --json`;
+      const command = `${this.quoteMcPath()} ls ${aliasName} --json`;
       
       exec(command, (error, stdout, stderr) => {
         if (error) {
@@ -186,7 +194,7 @@ class MinioClientService {
 
   async getBucketInfo(aliasName, bucketName) {
     return new Promise((resolve, reject) => {
-      const command = `${this.mcPath} du ${aliasName}/${bucketName} --json`;
+      const command = `${this.quoteMcPath()} du ${aliasName}/${bucketName} --json`;
       
       exec(command, (error, stdout, stderr) => {
         if (error) {
@@ -268,7 +276,7 @@ class MinioClientService {
     const { source, destination, options = {} } = migration.config;
     
     // Build mc mirror command
-    let command = `${this.mcPath} mirror`;
+    let command = `${this.quoteMcPath()} mirror`;
     
     // Basic options
     if (options.overwrite) command += ' --overwrite';
@@ -482,7 +490,7 @@ class MinioClientService {
   async performReconciliation(source, destination) {
     // Compare source and destination using mc diff
     return new Promise((resolve, reject) => {
-      const command = `${this.mcPath} diff ${source} ${destination} --json`;
+      const command = `${this.quoteMcPath()} diff ${source} ${destination} --json`;
       
       exec(command, (error, stdout, stderr) => {
         if (error && !stdout) {
