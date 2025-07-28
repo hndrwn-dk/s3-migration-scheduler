@@ -162,7 +162,7 @@ const ConfigureTab: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Configure S3 Connections</h2>
-          <p className="text-gray-600 mt-2">Set up your source and destination S3 endpoints</p>
+          <p className="text-gray-600 mt-2">Set up S3 endpoint aliases (connections only - buckets selected during migration)</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
@@ -378,12 +378,26 @@ const ConfigureTab: React.FC = () => {
 
       {/* Help Section */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-blue-900 mb-3">💡 Setup Tips</h3>
-        <div className="space-y-2 text-sm text-blue-800">
-          <p>• <strong>For AWS S3:</strong> Use https://s3.amazonaws.com as endpoint</p>
-          <p>• <strong>For MinIO:</strong> Use your MinIO server URL (e.g., https://minio.example.com)</p>
-          <p>• <strong>Access Keys:</strong> Ensure your keys have proper permissions for bucket operations</p>
-          <p>• <strong>Testing:</strong> Always test connections before starting migrations</p>
+        <h3 className="text-lg font-semibold text-blue-900 mb-3">💡 MinIO Command Workflow</h3>
+        <div className="space-y-3 text-sm text-blue-800">
+          <div>
+            <p><strong>Step 1 - Configure Aliases (This Page):</strong></p>
+            <div className="bg-blue-100 p-2 rounded mt-1 font-mono text-xs">
+              mc alias set source https://s3.ap-southeast-2.amazonaws.com ACCESS_KEY SECRET_KEY<br/>
+              mc alias set target https://s3.ap-southeast-2.amazonaws.com ACCESS_KEY SECRET_KEY
+            </div>
+          </div>
+          <div>
+            <p><strong>Step 2 - Select Buckets (Migration Page):</strong></p>
+            <div className="bg-blue-100 p-2 rounded mt-1 font-mono text-xs">
+              mc mirror source/bucketkicep1 target/bucketkicep2
+            </div>
+          </div>
+          <div className="space-y-1">
+            <p>• <strong>For AWS S3:</strong> Use https://s3.amazonaws.com or regional endpoints</p>
+            <p>• <strong>For MinIO:</strong> Use your MinIO server URL (e.g., https://minio.example.com)</p>
+            <p>• <strong>Access Keys:</strong> Ensure your keys have proper permissions for bucket operations</p>
+          </div>
         </div>
       </div>
     </div>
