@@ -4,6 +4,9 @@ echo Fixing S3 Migration Dashboard Dependencies...
 echo ===============================================
 echo.
 
+REM Navigate to project root
+cd /d "%~dp0\.."
+
 echo Installing root dependencies (including concurrently)...
 call npm install
 if %ERRORLEVEL% neq 0 (
@@ -42,6 +45,6 @@ cd ..
 
 echo.
 echo [SUCCESS] All dependencies installed successfully!
-echo You can now run: start.bat
+echo You can now run: scripts\02-start.bat
 echo.
 pause
