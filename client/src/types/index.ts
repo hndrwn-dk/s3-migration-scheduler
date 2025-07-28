@@ -53,12 +53,26 @@ export interface ReconciliationDifference {
   targetSize: number;
 }
 
+export interface BucketStats {
+  objectCount: number;
+  totalSize: number;
+}
+
+export interface ReconciliationSummary {
+  objectCountMatch: boolean;
+  totalSizeMatch: boolean;
+  differencesFound: boolean;
+}
+
 export interface Reconciliation {
   status: 'running' | 'completed' | 'failed';
   startTime: string;
   endTime?: string;
   differences: ReconciliationDifference[];
   error?: string;
+  sourceStats?: BucketStats;
+  destStats?: BucketStats;
+  summary?: ReconciliationSummary;
 }
 
 export interface Migration {

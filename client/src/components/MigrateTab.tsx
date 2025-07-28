@@ -178,7 +178,7 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
         dryRun: false,
         watch: false
       });
-      setBucketAnalysis(null);
+
       
     } catch (error) {
       toast.error(`Failed to start migration: ${error instanceof Error ? error.message : 'Unknown error'}`);
