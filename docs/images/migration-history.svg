@@ -23,7 +23,7 @@
   
   <!-- Filters and Controls -->
   <rect x="40" y="120" width="1120" height="60" class="card" rx="8"/>
-  <text x="60" y="145" style="font: bold 16px sans-serif; fill: #1f2937;">Filters & Search</text>
+  <text x="60" y="145" style="font: bold 16px sans-serif; fill: #1f2937;">Filters &amp; Search</text>
   
   <!-- Filter controls -->
   <text x="60" y="170" style="font: 12px sans-serif; fill: #6b7280;">Status:</text>
