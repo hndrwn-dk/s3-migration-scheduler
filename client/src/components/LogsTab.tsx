@@ -132,10 +132,10 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
   };
 
   const activeMigrations = migrations.filter(m => 
-    m.status === 'running' || m.status === 'reconciling' || m.status === 'starting'
+    m.config && m.id && (m.status === 'running' || m.status === 'reconciling' || m.status === 'starting')
   );
   const completedMigrations = migrations.filter(m => 
-    m.status === 'completed' || m.status === 'failed' || m.status === 'cancelled' || m.status === 'verified'
+    m.config && m.id && (m.status === 'completed' || m.status === 'failed' || m.status === 'cancelled' || m.status === 'verified')
   );
 
   return (
@@ -162,7 +162,7 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
                 <optgroup label="Active Migrations">
                   {activeMigrations.map(migration => (
                     <option key={migration.id} value={migration.id}>
-                      {migration.config.source} → {migration.config.destination} ({migration.status})
+                      {migration.config?.source || 'Unknown'} → {migration.config?.destination || 'Unknown'} ({migration.status})
                     </option>
                   ))}
                 </optgroup>
@@ -172,7 +172,7 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
                 <optgroup label="Completed Migrations">
                   {completedMigrations.map(migration => (
                     <option key={migration.id} value={migration.id}>
-                      {migration.config.source} → {migration.config.destination} ({migration.status})
+                      {migration.config?.source || 'Unknown'} → {migration.config?.destination || 'Unknown'} ({migration.status})
                     </option>
                   ))}
                 </optgroup>
