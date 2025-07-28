@@ -388,36 +388,22 @@ class MinioClientService {
   parseCommand(command) {
     // Convert command string to array for spawn, handling quoted arguments
     const args = [];
-    const parts = command.split(' ').slice(1); // Remove 'mc' from the beginning
     
-    let currentArg = '';
-    let inQuotes = false;
+    // Split by spaces but preserve quoted sections
+    const regex = /[^\s"]+|"([^"]*)"/gi;
+    const matches = [];
+    let match;
     
-    for (let part of parts) {
-      if (part.startsWith('"') && part.endsWith('"')) {
-        // Complete quoted argument
-        args.push(part.slice(1, -1));
-      } else if (part.startsWith('"')) {
-        // Start of quoted argument
-        currentArg = part.slice(1);
-        inQuotes = true;
-      } else if (part.endsWith('"') && inQuotes) {
-        // End of quoted argument
-        currentArg += ' ' + part.slice(0, -1);
-        args.push(currentArg);
-        currentArg = '';
-        inQuotes = false;
-      } else if (inQuotes) {
-        // Middle of quoted argument
-        currentArg += ' ' + part;
-      } else {
-        // Regular argument
-        args.push(part);
-      }
+    while ((match = regex.exec(command)) !== null) {
+      matches.push(match[1] ? match[1] : match[0]);
     }
     
-    console.log('Parsed command args:', args);
-    return args;
+    // Skip the first element (which is the mc path) and return the rest as args
+    const commandArgs = matches.slice(1);
+    
+    console.log('Full command parsed:', matches);
+    console.log('Command args (excluding mc path):', commandArgs);
+    return commandArgs;
   }
 
   parseProgress(migration, output) {
