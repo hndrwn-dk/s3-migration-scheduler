@@ -21,13 +21,17 @@ class MinioClientService {
     }
     
     // Portable deployment - check project directory first
+    // Server runs from /server directory, so go up one level to project root
+    const projectRoot = path.join(process.cwd(), '..');
     const projectPaths = [
-      path.join(process.cwd(), process.platform === 'win32' ? 'mc.exe' : 'mc'), // Project root
-      path.join(process.cwd(), 'server', process.platform === 'win32' ? 'mc.exe' : 'mc'), // Server folder
-      path.join(process.cwd(), 'bin', process.platform === 'win32' ? 'mc.exe' : 'mc') // Bin folder
+      path.join(projectRoot, process.platform === 'win32' ? 'mc.exe' : 'mc'), // Project root
+      path.join(process.cwd(), process.platform === 'win32' ? 'mc.exe' : 'mc'), // Server folder  
+      path.join(projectRoot, 'bin', process.platform === 'win32' ? 'mc.exe' : 'mc') // Bin folder
     ];
     
+    console.log('Checking project paths for MinIO client:', projectPaths);
     for (const testPath of projectPaths) {
+      console.log(`Checking: ${testPath} - exists: ${fs.existsSync(testPath)}`);
       if (fs.existsSync(testPath)) {
         console.log(`Found MinIO client at: ${testPath}`);
         return testPath;
