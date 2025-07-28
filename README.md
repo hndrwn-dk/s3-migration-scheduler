@@ -78,7 +78,7 @@ A comprehensive fullstack application for managing S3 bucket migrations using Mi
 git clone https://github.com/hndrwn-dk/s3-management-ui.git
 cd s3-management-ui
 
-# 2. Run automated setup
+# 2. Run automated setup (creates start.sh)
 chmod +x scripts/setup-linux.sh
 ./scripts/setup-linux.sh
 
@@ -92,7 +92,7 @@ chmod +x scripts/setup-linux.sh
 git clone https://github.com/hndrwn-dk/s3-management-ui.git
 cd s3-management-ui
 
-# 2. Run automated setup
+# 2. Run automated setup (creates start.bat)
 scripts\setup-windows.bat
 
 # 3. Start the application
@@ -102,7 +102,11 @@ start.bat
 **Dashboard available at:** http://localhost:3000  
 **API server available at:** http://localhost:5000
 
-> 💡 **Note**: The setup scripts will check for MinIO client (`mc`) and provide installation instructions if needed.
+> 💡 **Note**: The setup scripts will:
+> - Check for all prerequisites (Node.js, npm, MinIO client)
+> - Install all dependencies automatically
+> - Create platform-specific start scripts (`start.sh` or `start.bat`)
+> - Set up environment configuration
 
 ---
 
@@ -166,21 +170,27 @@ Choose the setup script for your operating system:
 
 #### Linux/macOS
 ```bash
-# Make script executable and run
+# Make script executable and run (creates start.sh in root)
 chmod +x scripts/setup-linux.sh
 ./scripts/setup-linux.sh
 
 # For production build
 ./scripts/setup-linux.sh --production
+
+# Start the application
+./start.sh
 ```
 
 #### Windows
 ```batch
-# Run the Windows setup script
+# Run the Windows setup script (creates start.bat in root)
 scripts\setup-windows.bat
 
 # For production build
 scripts\setup-windows.bat --production
+
+# Start the application
+start.bat
 ```
 
 ### Manual Installation
