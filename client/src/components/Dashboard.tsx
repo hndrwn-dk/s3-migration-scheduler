@@ -49,9 +49,17 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations }) => {
       date.setDate(date.getDate() - (6 - i));
       const dateStr = format(date, 'yyyy-MM-dd');
       
-      const dayMigrations = migrations.filter(m => 
-        format(new Date(m.startTime), 'yyyy-MM-dd') === dateStr
-      );
+      const dayMigrations = migrations.filter(m => {
+        if (!m.startTime) return false;
+        try {
+          const migrationDate = new Date(m.startTime);
+          if (isNaN(migrationDate.getTime())) return false;
+          return format(migrationDate, 'yyyy-MM-dd') === dateStr;
+        } catch (error) {
+          console.warn('Invalid startTime for migration:', m.id, m.startTime);
+          return false;
+        }
+      });
 
       return {
         date: format(date, 'MMM dd'),
