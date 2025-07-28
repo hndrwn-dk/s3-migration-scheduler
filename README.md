@@ -131,36 +131,137 @@ start.bat
 - **Mobile Responsive** - Works seamlessly on desktop and mobile devices
 - **Accessibility** - WCAG compliant with keyboard navigation support
 
-## 📋 Prerequisites
+## 📋 System Requirements & Prerequisites
 
-Before running this application, ensure you have:
+### Linux Requirements
+**Required Software:**
+- **Operating System**: Ubuntu 18.04+, CentOS 7+, Debian 9+, RHEL 7+, or similar
+- **Node.js**: Version 18.x or higher (LTS recommended)
+- **npm**: Version 8.x or higher (included with Node.js)
+- **Git**: For repository cloning
+- **curl/wget**: For downloading packages and MinIO client
 
-- **Node.js** (version 18.x or higher)
-- **npm** (version 8.x or higher)
-- **MinIO Client (mc)** installed and accessible in PATH
-- **S3 Compatible Storage** (AWS S3, MinIO, etc.)
-
-### Installing MinIO Client
-
-#### Linux/macOS
+**System Dependencies:**
 ```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install nodejs npm git curl build-essential
+
+# CentOS/RHEL/Rocky/AlmaLinux
+sudo yum install nodejs npm git curl gcc-c++ make
+# Or for newer versions: sudo dnf install nodejs npm git curl gcc-c++ make
+
+# Arch Linux
+sudo pacman -S nodejs npm git curl base-devel
+
+# Verify installation
+node --version    # Should show 18.x or higher
+npm --version     # Should show 8.x or higher
+git --version
+```
+
+**MinIO Client Installation (Linux):**
+```bash
+# Method 1: Direct download (recommended)
+sudo curl https://dl.min.io/client/mc/release/linux-amd64/mc \
+  -o /usr/local/bin/mc
+sudo chmod +x /usr/local/bin/mc
+
+# Method 2: User directory
 curl https://dl.min.io/client/mc/release/linux-amd64/mc \
-  --create-dirs \
-  -o $HOME/minio-binaries/mc
+  --create-dirs -o $HOME/.local/bin/mc
+chmod +x $HOME/.local/bin/mc
+echo 'export PATH=$PATH:$HOME/.local/bin' >> ~/.bashrc
+source ~/.bashrc
 
-chmod +x $HOME/minio-binaries/mc
-export PATH=$PATH:$HOME/minio-binaries/
-
-# Or using package managers
-# Ubuntu/Debian: sudo apt install minio-client
-# macOS: brew install minio/stable/mc
+# Verify installation
+mc --version
 ```
 
-#### Windows
-```powershell
-# Download and add to PATH
-Invoke-WebRequest -Uri "https://dl.min.io/client/mc/release/windows-amd64/mc.exe" -OutFile "C:\mc.exe"
+### Windows Requirements
+**Required Software:**
+- **Operating System**: Windows 10 (version 1903+) or Windows 11
+- **Node.js**: Version 18.x or higher (LTS from nodejs.org)
+- **npm**: Version 8.x or higher (included with Node.js)
+- **Git for Windows**: Latest version from git-scm.com
+- **PowerShell**: 5.1+ (built-in) or PowerShell 7+ (recommended)
+
+**Installation Steps:**
+1. **Install Node.js:**
+   - Download from: https://nodejs.org/en/download/
+   - Choose "Windows Installer" (.msi) for your architecture
+   - During installation: Check "Add to PATH" and "Install additional tools"
+   - Restart terminal after installation
+
+2. **Install Git for Windows:**
+   - Download from: https://git-scm.com/download/win
+   - Use default settings during installation
+   - Choose "Git from the command line and also from 3rd-party software"
+
+3. **Verify Installation:**
+   ```batch
+   node --version
+   npm --version
+   git --version
+   ```
+
+**MinIO Client Installation (Windows):**
+```batch
+# Method 1: Using winget (Windows 10 1809+/Windows 11)
+winget install MinIO.MinIOClient
+
+# Method 2: Direct download
+curl -L https://dl.min.io/client/mc/release/windows-amd64/mc.exe -o mc.exe
+# Move mc.exe to a directory in your PATH (e.g., C:\Windows\System32)
+
+# Method 3: PowerShell download
+powershell -Command "Invoke-WebRequest -Uri 'https://dl.min.io/client/mc/release/windows-amd64/mc.exe' -OutFile 'mc.exe'"
+
+# Verify installation
+mc --version
 ```
+
+### macOS Requirements
+**Required Software:**
+- **Operating System**: macOS 10.15 (Catalina) or higher
+- **Node.js**: Version 18.x or higher
+- **npm**: Version 8.x or higher
+- **Git**: Pre-installed or via Xcode Command Line Tools
+- **Homebrew**: Package manager (recommended)
+
+**Installation:**
+```bash
+# Install Homebrew (if not already installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install Node.js and Git
+brew install node git
+
+# Or install Node.js directly from nodejs.org
+# Verify installation
+node --version
+npm --version
+git --version
+```
+
+**MinIO Client Installation (macOS):**
+```bash
+# Method 1: Using Homebrew (recommended)
+brew install minio/stable/mc
+
+# Method 2: Direct download
+curl https://dl.min.io/client/mc/release/darwin-amd64/mc \
+  -o /usr/local/bin/mc
+chmod +x /usr/local/bin/mc
+
+# Verify installation
+mc --version
+```
+
+### Storage Requirements
+- **S3 Compatible Storage**: AWS S3, MinIO, DigitalOcean Spaces, or similar
+- **Network Access**: Internet connection for S3 operations
+- **Disk Space**: At least 1GB free space for dependencies and logs
 
 ## 🛠️ Installation
 
@@ -229,6 +330,56 @@ npm run dev
 npm run server:dev  # Backend only
 npm run client:dev  # Frontend only
 ```
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+#### "concurrently is not recognized" Error
+If you see this error when running `start.bat` or `npm run dev`:
+```
+'concurrently' is not recognized as an internal or external command
+```
+
+**Solution:**
+```bash
+# Run the dependency fix script
+# For Windows:
+fix-dependencies.bat
+
+# For Linux/macOS:
+chmod +x fix-dependencies.sh
+./fix-dependencies.sh
+```
+
+Or manually install dependencies:
+```bash
+npm install                    # Install root dependencies
+cd server && npm install      # Install server dependencies  
+cd ../client && npm install   # Install client dependencies
+```
+
+#### Port Already in Use
+If ports 3000 or 5000 are already in use:
+- **Option 1**: Stop the conflicting service
+- **Option 2**: Change ports in `server/.env`:
+  ```
+  PORT=5001  # Change server port
+  ```
+  And update `FRONTEND_URL` accordingly.
+
+#### MinIO Client Issues
+- **Linux/macOS**: Ensure `mc` is in your PATH
+- **Windows**: Try running `mc --version` to verify installation
+- **Alternative**: The dashboard will work without `mc`, but migrations won't function
+
+#### Node.js Version Issues
+Ensure you're using Node.js 18.x or higher:
+```bash
+node --version  # Should show v18.x or higher
+```
+
+If you have an older version, update Node.js from https://nodejs.org/
 
 5. **Access the dashboard**
    - Frontend: http://localhost:3000

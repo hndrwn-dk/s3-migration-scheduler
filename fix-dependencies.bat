@@ -1,6 +1,6 @@
 @echo off
 
-echo 🔧 Fixing S3 Migration Dashboard Dependencies...
+echo Fixing S3 Migration Dashboard Dependencies...
 echo ===============================================
 echo.
 
@@ -12,7 +12,7 @@ if %ERRORLEVEL% neq 0 (
     pause
     exit /b 1
 )
-echo [INFO] Root dependencies installed successfully
+echo [SUCCESS] Root dependencies installed successfully
 
 echo.
 echo Installing server dependencies...
@@ -24,7 +24,7 @@ if %ERRORLEVEL% neq 0 (
     pause
     exit /b 1
 )
-echo [INFO] Server dependencies installed successfully
+echo [SUCCESS] Server dependencies installed successfully
 cd ..
 
 echo.
@@ -37,11 +37,11 @@ if %ERRORLEVEL% neq 0 (
     pause
     exit /b 1
 )
-echo [INFO] Client dependencies installed successfully
+echo [SUCCESS] Client dependencies installed successfully
 cd ..
 
 echo.
-echo ✅ All dependencies installed successfully!
+echo [SUCCESS] All dependencies installed successfully!
 echo You can now run: start.bat
 echo.
 pause
