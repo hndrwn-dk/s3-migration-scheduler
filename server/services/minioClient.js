@@ -328,28 +328,36 @@ class MinioClientService {
     console.log(`Executing: ${this.mcPath} with args:`, args);
     logStream.write(`Executing: ${this.mcPath} ${args.join(' ')}\n\n`);
 
+    // Set working directory to project root (where mc.exe is located)
+    const projectRoot = path.join(process.cwd(), '..');
+    
     const childProcess = spawn(this.mcPath, args, {
       stdio: ['ignore', 'pipe', 'pipe'],
       env: process.env,
+      cwd: projectRoot, // Run from project root, not server directory
       shell: process.platform === 'win32', // Use shell on Windows
       windowsHide: false, // Don't hide window on Windows for debugging
       timeout: 300000 // 5 minutes timeout
     });
+    
+    console.log(`Working directory set to: ${projectRoot}`);
 
     migration.process = childProcess;
 
     childProcess.stdout.on('data', (data) => {
       const output = data.toString();
-      console.log('MC STDOUT:', output);
+      console.log('MC STDOUT:', JSON.stringify(output)); // Use JSON.stringify to see exact chars
       logStream.write(`STDOUT: ${output}`);
       this.parseProgress(migration, output);
     });
 
     childProcess.stderr.on('data', (data) => {
       const error = data.toString();
-      console.log('MC STDERR:', error);
+      console.log('MC STDERR:', JSON.stringify(error)); // Use JSON.stringify to see exact chars
       logStream.write(`STDERR: ${error}`);
       migration.errors.push(error);
+      // Some MinIO progress might come through stderr, try parsing it too
+      this.parseProgress(migration, error);
       this.broadcastMigrationUpdate(migration);
     });
 
@@ -439,11 +447,14 @@ class MinioClientService {
         }
       }
       
-      // Count transferred objects (various patterns)
+      // Count transferred objects (various patterns including new MinIO format)
       if (trimmedLine.includes('->') || 
           trimmedLine.includes('copied') || 
           trimmedLine.includes('COPY') ||
-          trimmedLine.includes('PUT')) {
+          trimmedLine.includes('PUT') ||
+          trimmedLine.match(/\.txt:|\.jpg:|\.png:|\.pdf:|\.zip:/) || // File transfer lines
+          trimmedLine.includes('[=') || // Progress bar
+          trimmedLine.includes('KiB /') || trimmedLine.includes('MiB /') || trimmedLine.includes('GiB /')) {
         migration.stats.transferredObjects++;
         migration.progress = Math.min(95, (migration.stats.transferredObjects / Math.max(1, migration.stats.totalObjects || 1)) * 100);
         hasUpdate = true;
