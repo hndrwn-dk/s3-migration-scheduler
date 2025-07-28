@@ -417,8 +417,8 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
               {selectedMigration.reconciliation && (
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Data Reconciliation</h4>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
+                  <div className="bg-gray-50 p-3 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         selectedMigration.reconciliation.status === 'completed' 
                           ? 'bg-green-100 text-green-800'
@@ -428,14 +428,80 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
                       }`}>
                         {selectedMigration.reconciliation.status}
                       </span>
-                      {selectedMigration.reconciliation.differences.length === 0 ? (
+                      {selectedMigration.reconciliation.differences && selectedMigration.reconciliation.differences.length === 0 ? (
                         <span className="text-sm text-green-600">✓ No differences found</span>
-                      ) : (
+                      ) : selectedMigration.reconciliation.differences ? (
                         <span className="text-sm text-yellow-600">
                           ⚠ {selectedMigration.reconciliation.differences.length} differences found
                         </span>
-                      )}
+                      ) : null}
                     </div>
+
+                    {/* Bucket Statistics Comparison */}
+                    {selectedMigration.reconciliation.sourceStats && selectedMigration.reconciliation.destStats && (
+                      <div className="grid grid-cols-2 gap-4 text-xs">
+                        <div className="space-y-2">
+                          <div className="font-medium text-gray-700">Source Bucket</div>
+                          <div className="space-y-1">
+                            <div className="flex justify-between">
+                              <span>Objects:</span>
+                              <span className="font-mono">{selectedMigration.reconciliation.sourceStats.objectCount.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Size:</span>
+                              <span className="font-mono">{(selectedMigration.reconciliation.sourceStats.totalSize / 1024).toFixed(1)} KB</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="font-medium text-gray-700">Destination Bucket</div>
+                          <div className="space-y-1">
+                            <div className="flex justify-between">
+                              <span>Objects:</span>
+                              <span className="font-mono">{selectedMigration.reconciliation.destStats.objectCount.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Size:</span>
+                              <span className="font-mono">{(selectedMigration.reconciliation.destStats.totalSize / 1024).toFixed(1)} KB</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Verification Results */}
+                    {selectedMigration.reconciliation.summary && (
+                      <div className="border-t pt-2 space-y-1 text-xs">
+                        <div className="flex justify-between items-center">
+                          <span>Object Count Match:</span>
+                          <span className={selectedMigration.reconciliation.summary.objectCountMatch ? 'text-green-600' : 'text-red-600'}>
+                            {selectedMigration.reconciliation.summary.objectCountMatch ? '✓ Yes' : '✗ No'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span>Total Size Match:</span>
+                          <span className={selectedMigration.reconciliation.summary.totalSizeMatch ? 'text-green-600' : 'text-red-600'}>
+                            {selectedMigration.reconciliation.summary.totalSizeMatch ? '✓ Yes' : '✗ No'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span>Overall Status:</span>
+                          <span className={
+                            selectedMigration.reconciliation.summary.objectCountMatch && 
+                            selectedMigration.reconciliation.summary.totalSizeMatch && 
+                            !selectedMigration.reconciliation.summary.differencesFound 
+                              ? 'text-green-600 font-medium' 
+                              : 'text-yellow-600 font-medium'
+                          }>
+                            {selectedMigration.reconciliation.summary.objectCountMatch && 
+                             selectedMigration.reconciliation.summary.totalSizeMatch && 
+                             !selectedMigration.reconciliation.summary.differencesFound 
+                               ? '✅ Migration Verified' 
+                               : '⚠ Needs Review'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
