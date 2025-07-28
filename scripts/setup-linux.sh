@@ -5,8 +5,8 @@
 
 set -e
 
-echo "🐧 S3 Migration Dashboard - Linux Setup"
-echo "======================================"
+echo "S3 Migration Dashboard - Linux Setup"
+echo "====================================="
 echo ""
 
 # Colors for output
@@ -189,20 +189,20 @@ print_status "Created executable start.sh script"
 
 # Step 9: Completion message
 echo ""
-echo "🎉 Setup completed successfully!"
+echo "Setup completed successfully!"
 echo ""
-echo "📋 Next steps:"
+echo "Next steps:"
 echo "   1. Configure your S3 endpoints in the dashboard"
 echo "   2. Start the application: ./start.sh"
 echo "   3. Open browser: http://localhost:3000"
 echo ""
 
 if ! command -v mc >/dev/null 2>&1; then
-    echo "⚠️  Don't forget to install MinIO client for migrations to work:"
+    echo "Don't forget to install MinIO client for migrations to work:"
     echo "   wget https://dl.min.io/client/mc/release/linux-amd64/mc"
     echo "   chmod +x mc && sudo mv mc /usr/local/bin/"
     echo ""
 fi
 
-echo "📚 For more information, see README.md"
+echo "For more information, see README.md"
 echo ""

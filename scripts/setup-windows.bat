@@ -4,8 +4,8 @@ setlocal enabledelayedexpansion
 REM S3 Migration Dashboard - Windows Setup Script
 REM This script sets up the development environment on Windows
 
-echo 🪟 S3 Migration Dashboard - Windows Setup
-echo =========================================
+echo S3 Migration Dashboard - Windows Setup
+echo ========================================
 echo.
 
 REM Check if running on Windows
@@ -190,9 +190,9 @@ echo [INFO] Created start.bat script
 
 REM Step 9: Completion message
 echo.
-echo 🎉 Setup completed successfully!
+echo Setup completed successfully!
 echo.
-echo 📋 Next steps:
+echo Next steps:
 echo    1. Configure your S3 endpoints in the dashboard
 echo    2. Start the application: start.bat
 echo    3. Open browser: http://localhost:3000
@@ -200,13 +200,13 @@ echo.
 
 mc --version >nul 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo ⚠️  Don't forget to install MinIO client for migrations to work:
+    echo Don't forget to install MinIO client for migrations to work:
     echo    Download: https://dl.min.io/client/mc/release/windows-amd64/mc.exe
     echo    Or use: winget install MinIO.MinIOClient
     echo.
 )
 
-echo 📚 For more information, see README.md
+echo For more information, see README.md
 echo.
 echo Press any key to exit...
 pause >nul
