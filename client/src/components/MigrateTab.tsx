@@ -33,7 +33,12 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
     destinationBucket: '',
     overwrite: false,
     remove: false,
-    exclude: []
+    exclude: [],
+    // Advanced MinIO mirror options
+    checksum: undefined,
+    preserve: true,
+    retry: true,
+    dryRun: false
   });
 
   const [excludePattern, setExcludePattern] = useState('');
@@ -157,7 +162,12 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
         options: {
           overwrite: formData.overwrite,
           remove: formData.remove,
-          exclude: formData.exclude
+          exclude: formData.exclude,
+          // Advanced MinIO options
+          checksum: formData.checksum,
+          preserve: formData.preserve,
+          retry: formData.retry,
+          dryRun: formData.dryRun
         }
       };
 
@@ -177,7 +187,12 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
         destinationBucket: '',
         overwrite: false,
         remove: false,
-        exclude: []
+        exclude: [],
+        // Advanced MinIO options
+        checksum: undefined,
+        preserve: true,
+        retry: true,
+        dryRun: false
       });
       setBucketAnalysis(null);
       
@@ -456,6 +471,97 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
                     </div>
                   )}
                 </div>
+
+                {/* Advanced MinIO Options */}
+                <div className="space-y-4 pt-4 border-t border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-900">Advanced MinIO Mirror Options</h4>
+                  
+                  {/* Checksum Algorithm */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Checksum Algorithm</label>
+                    <select
+                      value={formData.checksum || ''}
+                      onChange={(e) => setFormData(prev => ({ 
+                        ...prev, 
+                        checksum: e.target.value as 'CRC64NVME' | 'CRC32' | 'CRC32C' | 'SHA1' | 'SHA256' | undefined 
+                      }))}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="">Default (no checksum verification)</option>
+                      <option value="CRC64NVME">CRC64NVME</option>
+                      <option value="CRC32">CRC32</option>
+                      <option value="CRC32C">CRC32C</option>
+                      <option value="SHA1">SHA1</option>
+                      <option value="SHA256">SHA256</option>
+                    </select>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Enable checksum verification for data integrity during transfer
+                    </p>
+                  </div>
+
+                  {/* Advanced Options Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.preserve}
+                        onChange={(e) => setFormData(prev => ({ ...prev, preserve: e.target.checked }))}
+                        className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">
+                        Preserve attributes
+                      </span>
+                    </label>
+
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.retry}
+                        onChange={(e) => setFormData(prev => ({ ...prev, retry: e.target.checked }))}
+                        className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">
+                        Enable retry on errors
+                      </span>
+                    </label>
+
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.dryRun}
+                        onChange={(e) => setFormData(prev => ({ ...prev, dryRun: e.target.checked }))}
+                        className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">
+                        Dry run (test mode)
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* Option Descriptions */}
+                  <div className="text-xs text-gray-500 space-y-1">
+                    <p><strong>Preserve attributes:</strong> Maintains file/object attributes and bucket policies/locking configurations</p>
+                    <p><strong>Enable retry:</strong> Automatically retries failed objects during migration</p>
+                    <p><strong>Dry run:</strong> Simulates the migration without actually transferring files</p>
+                  </div>
+
+                  {/* Dry Run Warning */}
+                  {formData.dryRun && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                      <div className="flex">
+                        <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" />
+                        <div className="ml-3">
+                          <h3 className="text-sm font-medium text-yellow-800">
+                            Dry Run Mode Enabled
+                          </h3>
+                          <div className="mt-1 text-sm text-yellow-700">
+                            <p>This migration will simulate the process without actually transferring any files. Perfect for testing and validation.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -465,7 +571,10 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center text-sm text-gray-500">
             <InformationCircleIcon className="w-4 h-4 mr-1" />
-            Migration will start immediately after clicking "Start Migration"
+            {formData.dryRun 
+              ? 'Dry run will simulate the migration without transferring files'
+              : 'Migration will start immediately after clicking "Start Migration"'
+            }
           </div>
           
           <div className="flex space-x-3">
@@ -501,7 +610,7 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
               ) : (
                 <>
                   <ArrowRightIcon className="w-4 h-4 mr-2" />
-                  Start Migration
+                  {formData.dryRun ? 'Run Dry Migration Test' : 'Start Migration'}
                 </>
               )}
             </button>
