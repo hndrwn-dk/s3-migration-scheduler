@@ -23,10 +23,13 @@ class MinioClientService {
     // Try common Windows paths
     if (process.platform === 'win32') {
       const commonPaths = [
-        'C:\\Program Files\\Minio\\mc.exe',
+        'C:\\Program Files\\Minio\\mc.exe',  // Your current location
         'C:\\Program Files\\MinIO\\mc.exe', 
         'C:\\Program Files (x86)\\Minio\\mc.exe',
         'C:\\Program Files (x86)\\MinIO\\mc.exe',
+        'C:\\Windows\\System32\\mc.exe',
+        path.join(process.cwd(), 'mc.exe'), // Project root
+        path.join(process.cwd(), 'server', 'mc.exe'), // Server folder
         'mc.exe',
         'mc'
       ];

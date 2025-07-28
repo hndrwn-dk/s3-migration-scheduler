@@ -349,7 +349,16 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
         {/* Bucket Analysis */}
         {(analyzing || bucketAnalysis) && (
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Bucket Analysis</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Bucket Analysis</h3>
+              <button
+                onClick={analyzeBucket}
+                disabled={analyzing}
+                className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              >
+                {analyzing ? 'Refreshing...' : 'Refresh Analysis'}
+              </button>
+            </div>
             
             {analyzing ? (
               <LoadingSpinner text="Analyzing source bucket..." />
