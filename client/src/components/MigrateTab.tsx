@@ -233,7 +233,10 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
       {/* Header */}
       <div>
         <h2 className="text-3xl font-bold text-gray-900">Start Migration</h2>
-        <p className="text-gray-600 mt-2">Configure and start a new S3 bucket migration</p>
+        <p className="text-gray-600 mt-2">Select specific buckets from your configured aliases and start migration</p>
+        <p className="text-sm text-gray-500 mt-1">
+          💡 Aliases are configured on the <strong>Configure</strong> tab. Here you select specific buckets: <code>alias/bucket-name</code>
+        </p>
       </div>
 
       {aliases.length === 0 && (
@@ -566,6 +569,34 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
             )}
           </div>
         </div>
+
+        {/* Command Preview */}
+        {formData.sourceAlias && formData.sourceBucket && formData.destinationAlias && formData.destinationBucket && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-gray-900 mb-2">📋 MinIO Command Preview</h3>
+            <div className="bg-gray-900 text-green-400 p-3 rounded font-mono text-sm overflow-x-auto">
+              <div className="mb-2 text-gray-400"># This command will be executed:</div>
+              <div>
+                mc mirror
+                {formData.overwrite ? ' --overwrite' : ''}
+                {formData.remove ? ' --remove' : ''}
+                {formData.exclude.length > 0 ? formData.exclude.map(pattern => ` --exclude "${pattern}"`).join('') : ''}
+                {formData.checksum ? ` --checksum ${formData.checksum}` : ''}
+                {formData.preserve ? ' --preserve' : ''}
+                {formData.retry ? ' --retry' : ''}
+                {formData.dryRun ? ' --dry-run' : ''}
+                {' '}
+                <span className="text-yellow-400">{formData.sourceAlias}/{formData.sourceBucket}</span>
+                {' '}
+                <span className="text-blue-400">{formData.destinationAlias}/{formData.destinationBucket}</span>
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-gray-600">
+              <strong>Source:</strong> {formData.sourceAlias}/{formData.sourceBucket} • 
+              <strong>Destination:</strong> {formData.destinationAlias}/{formData.destinationBucket}
+            </p>
+          </div>
+        )}
 
         {/* Submit */}
         <div className="flex items-center justify-between">
