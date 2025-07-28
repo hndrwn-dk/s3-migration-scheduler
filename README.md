@@ -268,19 +268,29 @@ mc --version
 - **Network Access**: Internet connection for S3 operations
 - **Disk Space**: At least 1GB free space for dependencies and logs
 
-### 📦 Portable Deployment Setup
+### 📦 Portable Deployment Setup (Recommended)
 
-For **portable deployment** (recommended for easy distribution):
+For **portable, self-contained deployment**:
 
 1. **Download MinIO Client (`mc`)** from: https://min.io/download#/linux or https://min.io/download#/windows
-2. **Copy `mc` or `mc.exe` to your project root**: `s3-management-ui/mc.exe` (Windows) or `s3-management-ui/mc` (Linux/macOS)
-3. **The application will automatically detect and use the local MinIO client**
+2. **Copy to your project root**: 
+   - **Windows**: `s3-management-ui/mc.exe`
+   - **Linux/macOS**: `s3-management-ui/mc`
+3. **The application automatically detects and uses the local MinIO client**
+
+> 🎯 **Detection Priority (Portable-First):**
+> 1. ✅ **Project root**: `./mc.exe` or `./mc` (YOUR SETUP)
+> 2. ✅ **Server folder**: `./server/mc.exe` or `./server/mc`  
+> 3. ✅ **Bin folder**: `./bin/mc.exe` or `./bin/mc`
+> 4. 🔄 System locations (fallback only)
+> 5. 🔄 PATH (final fallback)
 
 > 💡 **Benefits of Portable Setup:**
-> - ✅ Self-contained deployment (no system-wide mc installation needed)
-> - ✅ Consistent mc version across deployments
-> - ✅ Easier distribution and setup
-> - ✅ No PATH configuration required
+> - ✅ **Self-contained**: No system-wide installation needed
+> - ✅ **Consistent**: Same mc version across all deployments
+> - ✅ **Portable**: Copy entire folder to any machine
+> - ✅ **No Admin Rights**: No system modifications required
+> - ✅ **Easy Distribution**: Zip and deploy anywhere
 
 ## 🛠️ Installation
 

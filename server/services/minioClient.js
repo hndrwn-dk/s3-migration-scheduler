@@ -20,29 +20,41 @@ class MinioClientService {
       return process.env.MC_PATH;
     }
     
-    // Try common Windows paths
+    // Portable deployment - check project directory first
+    const projectPaths = [
+      path.join(process.cwd(), process.platform === 'win32' ? 'mc.exe' : 'mc'), // Project root
+      path.join(process.cwd(), 'server', process.platform === 'win32' ? 'mc.exe' : 'mc'), // Server folder
+      path.join(process.cwd(), 'bin', process.platform === 'win32' ? 'mc.exe' : 'mc') // Bin folder
+    ];
+    
+    for (const testPath of projectPaths) {
+      if (fs.existsSync(testPath)) {
+        console.log(`Found MinIO client at: ${testPath}`);
+        return testPath;
+      }
+    }
+    
+    // If not found in project, check system locations as fallback
     if (process.platform === 'win32') {
-      const commonPaths = [
-        path.join(process.cwd(), 'mc.exe'), // Project root - YOUR LOCATION
-        path.join(process.cwd(), 'server', 'mc.exe'), // Server folder
+      const systemPaths = [
         'C:\\Program Files\\Minio\\mc.exe',
         'C:\\Program Files\\MinIO\\mc.exe', 
         'C:\\Program Files (x86)\\Minio\\mc.exe',
         'C:\\Program Files (x86)\\MinIO\\mc.exe',
-        'C:\\Windows\\System32\\mc.exe',
-        'mc.exe',
-        'mc'
+        'C:\\Windows\\System32\\mc.exe'
       ];
       
-      for (const testPath of commonPaths) {
+      for (const testPath of systemPaths) {
         if (fs.existsSync(testPath)) {
-          console.log(`Found MinIO client at: ${testPath}`);
+          console.log(`Found MinIO client at: ${testPath} (system fallback)`);
           return testPath;
         }
       }
     }
     
-    return 'mc'; // Fallback to PATH
+    // Final fallback to PATH
+    console.log('MinIO client not found in project directory, falling back to PATH');
+    return process.platform === 'win32' ? 'mc.exe' : 'mc';
   }
 
   // Helper method to quote paths with spaces for command execution
