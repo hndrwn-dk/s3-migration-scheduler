@@ -12,6 +12,21 @@ router.get('/health', async (req, res) => {
   }
 });
 
+// Test MinIO command execution
+router.post('/test-command', async (req, res) => {
+  try {
+    const { command } = req.body;
+    if (!command) {
+      return res.status(400).json({ success: false, error: 'Command is required' });
+    }
+    
+    const result = await minioClient.testCommand(command);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Configure S3 alias
 router.post('/alias', async (req, res) => {
   try {

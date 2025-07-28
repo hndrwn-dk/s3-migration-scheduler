@@ -91,7 +91,9 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations }) => {
     return formatBytes(bytesPerSecond) + '/s';
   };
 
-  const recentMigrations = migrations.slice(0, 5);
+  const recentMigrations = migrations
+    .filter(migration => migration.config && migration.id) // Filter out incomplete migrations
+    .slice(0, 5);
 
   return (
     <div className="space-y-6">

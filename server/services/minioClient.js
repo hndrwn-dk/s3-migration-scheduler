@@ -71,6 +71,31 @@ class MinioClientService {
     });
   }
 
+  async testCommand(command) {
+    return new Promise((resolve, reject) => {
+      console.log(`Testing command: ${command}`);
+      exec(command, { 
+        timeout: 30000,
+        env: process.env
+      }, (error, stdout, stderr) => {
+        if (error) {
+          reject(new Error(`Command failed: ${error.message}\nSTDOUT: ${stdout}\nSTDERR: ${stderr}`));
+        } else {
+          resolve({ 
+            stdout: stdout.trim(), 
+            stderr: stderr.trim(),
+            command,
+            workingDir: process.cwd(),
+            env: {
+              PATH: process.env.PATH,
+              MC_CONFIG_DIR: process.env.MC_CONFIG_DIR
+            }
+          });
+        }
+      });
+    });
+  }
+
   async configureAlias(aliasName, endpoint, accessKey, secretKey) {
     return new Promise((resolve, reject) => {
       const command = `${this.mcPath} alias set ${aliasName} ${endpoint} ${accessKey} ${secretKey}`;
@@ -237,28 +262,43 @@ class MinioClientService {
     // Create log file
     const logStream = fs.createWriteStream(migration.logFile, { flags: 'a' });
     logStream.write(`Migration started at ${new Date().toISOString()}\n`);
-    logStream.write(`Command: ${command}\n\n`);
+    logStream.write(`Command: ${command}\n`);
+    logStream.write(`Working directory: ${process.cwd()}\n`);
+    logStream.write(`PATH: ${process.env.PATH}\n\n`);
 
     migration.status = 'running';
     this.broadcastMigrationUpdate(migration);
 
-    const childProcess = spawn(this.mcPath, this.parseCommand(command), {
-      stdio: ['ignore', 'pipe', 'pipe']
+    const args = this.parseCommand(command);
+    console.log(`Executing: ${this.mcPath} with args:`, args);
+    logStream.write(`Executing: ${this.mcPath} ${args.join(' ')}\n\n`);
+
+    const childProcess = spawn(this.mcPath, args, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: process.env,
+      shell: process.platform === 'win32' // Use shell on Windows
     });
 
     migration.process = childProcess;
 
     childProcess.stdout.on('data', (data) => {
       const output = data.toString();
-      logStream.write(output);
+      console.log('MC STDOUT:', output);
+      logStream.write(`STDOUT: ${output}`);
       this.parseProgress(migration, output);
     });
 
     childProcess.stderr.on('data', (data) => {
       const error = data.toString();
-      logStream.write(`ERROR: ${error}`);
+      console.log('MC STDERR:', error);
+      logStream.write(`STDERR: ${error}`);
       migration.errors.push(error);
       this.broadcastMigrationUpdate(migration);
+    });
+
+    childProcess.on('spawn', () => {
+      console.log('MinIO process spawned successfully');
+      logStream.write('Process spawned successfully\n');
     });
 
     childProcess.on('close', (code) => {
@@ -280,9 +320,13 @@ class MinioClientService {
     });
 
     childProcess.on('error', (error) => {
+      console.error('MinIO process spawn error:', error);
       migration.status = 'failed';
-      migration.errors.push(error.message);
+      migration.errors.push(`Process spawn error: ${error.message} (${error.code || 'UNKNOWN'})`);
+      migration.endTime = new Date().toISOString();
       logStream.write(`PROCESS ERROR: ${error.message}\n`);
+      logStream.write(`Error code: ${error.code || 'UNKNOWN'}\n`);
+      logStream.write(`Error path: ${error.path || 'UNKNOWN'}\n`);
       logStream.end();
       this.broadcastMigrationUpdate(migration);
     });
@@ -326,24 +370,53 @@ class MinioClientService {
   parseProgress(migration, output) {
     // Parse mc mirror output for progress information
     const lines = output.split('\n');
+    let hasUpdate = false;
     
     lines.forEach(line => {
-      // Look for transfer progress patterns
-      if (line.includes('...')) {
-        const match = line.match(/(\d+(?:\.\d+)?)\s*([KMGT]?B)\/s/);
-        if (match) {
-          migration.stats.speed = this.parseSize(match[1] + match[2]);
+      const trimmedLine = line.trim();
+      if (!trimmedLine) return;
+      
+      console.log('Parsing line:', trimmedLine);
+      
+      // Look for various MinIO output patterns
+      if (trimmedLine.includes('Total:') || trimmedLine.includes('total objects')) {
+        const totalMatch = trimmedLine.match(/(\d+)/);
+        if (totalMatch) {
+          migration.stats.totalObjects = parseInt(totalMatch[1]);
+          hasUpdate = true;
         }
       }
       
-      // Count transferred objects (simple heuristic)
-      if (line.includes('->') || line.includes('copied')) {
+      // Look for transfer speed patterns
+      if (trimmedLine.includes('B/s') || trimmedLine.includes('KB/s') || trimmedLine.includes('MB/s')) {
+        const match = trimmedLine.match(/(\d+(?:\.\d+)?)\s*([KMGT]?B)\/s/);
+        if (match) {
+          migration.stats.speed = this.parseSize(match[1] + match[2]);
+          hasUpdate = true;
+        }
+      }
+      
+      // Count transferred objects (various patterns)
+      if (trimmedLine.includes('->') || 
+          trimmedLine.includes('copied') || 
+          trimmedLine.includes('COPY') ||
+          trimmedLine.includes('PUT')) {
         migration.stats.transferredObjects++;
-        migration.progress = Math.min(95, (migration.stats.transferredObjects / Math.max(1, migration.stats.totalObjects)) * 100);
+        migration.progress = Math.min(95, (migration.stats.transferredObjects / Math.max(1, migration.stats.totalObjects || 1)) * 100);
+        hasUpdate = true;
+        console.log(`Progress update: ${migration.stats.transferredObjects}/${migration.stats.totalObjects || 'unknown'} (${migration.progress.toFixed(1)}%)`);
+      }
+      
+      // Any activity means we're making progress
+      if (trimmedLine.length > 0) {
+        migration.progress = Math.max(migration.progress, 5); // At least 5% if we have output
+        hasUpdate = true;
       }
     });
 
-    this.broadcastMigrationUpdate(migration);
+    if (hasUpdate) {
+      this.broadcastMigrationUpdate(migration);
+    }
   }
 
   async startReconciliation(migration) {
