@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import {
   ClockIcon,
@@ -8,7 +8,9 @@ import {
   EyeIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
+import { toast } from 'react-toastify';
 import { Migration } from '../types';
+import { migrationService } from '../services/api';
 
 interface HistoryTabProps {
   migrations: Migration[];
@@ -20,12 +22,45 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
   const [sortBy, setSortBy] = useState<'startTime' | 'status' | 'progress'>('startTime');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedMigration, setSelectedMigration] = useState<Migration | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      // Force refresh from storage first, then get updated data
+      const refreshResult = await migrationService.refreshMigrations();
+      console.log('Refresh result:', refreshResult);
+      toast.success(refreshResult.message);
+    } catch (error) {
+      toast.error(`Failed to refresh migrations: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const filteredMigrations = migrations.filter(migration => {
     // Filter out migrations with incomplete data
-    if (!migration.config || !migration.id) {
-      console.warn('Skipping migration with incomplete data:', migration);
+    if (!migration.id) {
+      console.warn('Skipping migration with missing ID:', migration);
       return false;
+    }
+    
+    // Ensure config exists or create a minimal one for display
+    if (!migration.config) {
+      console.warn('Migration missing config, creating minimal config:', migration.id);
+      migration.config = {
+        source: 'Unknown',
+        destination: 'Unknown',
+        options: {
+          overwrite: false,
+          remove: false,
+          exclude: [],
+          preserve: false,
+          retry: false,
+          dryRun: false,
+          watch: false
+        }
+      };
     }
     
     if (filter === 'all') return true;
@@ -161,8 +196,18 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
             </div>
           </div>
 
-          <div className="text-sm text-gray-600">
-            Showing {sortedMigrations.length} of {migrations.length} migrations
+          <div className="flex items-center space-x-4">
+            <div className="text-sm text-gray-600">
+              Showing {sortedMigrations.length} of {migrations.length} migrations
+            </div>
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              <ArrowPathIcon className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
           </div>
         </div>
       </div>

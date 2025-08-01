@@ -623,20 +623,44 @@ class MinioClientService {
     // Save migrations to disk for persistence
     this.saveMigrations();
     
+    const updateData = {
+      id: migration.id,
+      status: migration.status,
+      progress: migration.progress,
+      stats: migration.stats,
+      errors: migration.errors,
+      reconciliation: migration.reconciliation,
+      startTime: migration.startTime,
+      endTime: migration.endTime,
+      config: migration.config,
+      duration: migration.endTime ? 
+        (new Date(migration.endTime).getTime() - new Date(migration.startTime).getTime()) / 1000 : 
+        (new Date().getTime() - new Date(migration.startTime).getTime()) / 1000
+    };
+    
+    // Broadcast via WebSocket
     broadcast({
       type: 'migration_update',
-      data: {
-        id: migration.id,
-        status: migration.status,
-        progress: migration.progress,
-        stats: migration.stats,
-        errors: migration.errors,
-        reconciliation: migration.reconciliation,
-        duration: migration.endTime ? 
-          (migration.endTime - migration.startTime) / 1000 : 
-          (new Date() - migration.startTime) / 1000
-      }
+      data: updateData
     }, 'migrations');
+    
+    // Also broadcast to SSE clients
+    this.broadcastToSSE(updateData);
+  }
+
+  broadcastToSSE(migration) {
+    if (global.sseClients) {
+      global.sseClients.forEach((client, clientId) => {
+        try {
+          if (client.onMigrationUpdate) {
+            client.onMigrationUpdate(migration);
+          }
+        } catch (error) {
+          console.error(`Error sending SSE update to ${clientId}:`, error);
+          global.sseClients.delete(clientId);
+        }
+      });
+    }
   }
 
   async getMigrationLogs(migrationId) {

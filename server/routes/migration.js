@@ -2,12 +2,116 @@ const express = require('express');
 const router = express.Router();
 const minioClient = require('../services/minioClient');
 
+// SSE endpoint for streaming migration updates
+router.get('/stream', async (req, res) => {
+  // Set headers for SSE
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Cache-Control'
+  });
+
+  const clientId = `sse_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  console.log(`SSE client connected: ${clientId}`);
+
+  // Send initial connection message
+  res.write(`data: ${JSON.stringify({
+    type: 'connection',
+    clientId,
+    message: 'Connected to S3 Migration Stream',
+    timestamp: new Date().toISOString()
+  })}\n\n`);
+
+  // Send initial migration data
+  try {
+    const migrations = minioClient.getAllMigrations();
+    res.write(`data: ${JSON.stringify({
+      type: 'initial_data',
+      data: migrations,
+      timestamp: new Date().toISOString()
+    })}\n\n`);
+  } catch (error) {
+    res.write(`data: ${JSON.stringify({
+      type: 'error',
+      message: 'Failed to load initial migration data',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    })}\n\n`);
+  }
+
+  // Keep connection alive with heartbeat
+  const heartbeat = setInterval(() => {
+    res.write(`data: ${JSON.stringify({
+      type: 'heartbeat',
+      timestamp: new Date().toISOString()
+    })}\n\n`);
+  }, 30000); // Every 30 seconds
+
+  // Register SSE client for migration updates
+  const migrationUpdateHandler = (migration) => {
+    try {
+      res.write(`data: ${JSON.stringify({
+        type: 'migration_update',
+        data: migration,
+        timestamp: new Date().toISOString()
+      })}\n\n`);
+    } catch (error) {
+      console.error(`Error sending SSE update to ${clientId}:`, error);
+    }
+  };
+
+  // Add this client to SSE clients tracking
+  if (!global.sseClients) {
+    global.sseClients = new Map();
+  }
+  global.sseClients.set(clientId, {
+    res,
+    onMigrationUpdate: migrationUpdateHandler
+  });
+
+  // Handle client disconnect
+  req.on('close', () => {
+    console.log(`SSE client disconnected: ${clientId}`);
+    clearInterval(heartbeat);
+    if (global.sseClients) {
+      global.sseClients.delete(clientId);
+    }
+  });
+
+  req.on('error', (err) => {
+    console.error(`SSE client error for ${clientId}:`, err);
+    clearInterval(heartbeat);
+    if (global.sseClients) {
+      global.sseClients.delete(clientId);
+    }
+  });
+});
+
 // Get all migrations
 router.get('/', async (req, res) => {
   try {
     const migrations = minioClient.getAllMigrations();
-    res.json({ success: true, data: migrations });
+    // Ensure all migrations have required fields
+    const sanitizedMigrations = migrations.map(migration => ({
+      id: migration.id || 'unknown',
+      config: migration.config || { source: 'Unknown', destination: 'Unknown', options: {} },
+      status: migration.status || 'unknown',
+      progress: migration.progress || 0,
+      startTime: migration.startTime || new Date().toISOString(),
+      endTime: migration.endTime || null,
+      stats: migration.stats || { totalObjects: 0, transferredObjects: 0, totalSize: 0, transferredSize: 0, speed: 0 },
+      errors: migration.errors || [],
+      reconciliation: migration.reconciliation || null,
+      duration: migration.endTime ? 
+        (new Date(migration.endTime).getTime() - new Date(migration.startTime).getTime()) / 1000 : 
+        migration.startTime ? (new Date().getTime() - new Date(migration.startTime).getTime()) / 1000 : 0
+    }));
+    
+    res.json({ success: true, data: sanitizedMigrations });
   } catch (error) {
+    console.error('Error getting migrations:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -126,6 +230,47 @@ router.post('/validate', async (req, res) => {
 
     res.json({ success: true, data: validationResults });
   } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Force refresh migrations from disk
+router.post('/refresh', async (req, res) => {
+  try {
+    await minioClient.loadMigrations();
+    const migrations = minioClient.getAllMigrations();
+    res.json({ 
+      success: true, 
+      data: { 
+        count: migrations.length,
+        message: `Refreshed ${migrations.length} migrations from storage` 
+      } 
+    });
+  } catch (error) {
+    console.error('Error refreshing migrations:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get system status and migration statistics
+router.get('/status', async (req, res) => {
+  try {
+    const migrations = minioClient.getAllMigrations();
+    const stats = {
+      total: migrations.length,
+      running: migrations.filter(m => m.status === 'running' || m.status === 'reconciling').length,
+      completed: migrations.filter(m => m.status === 'completed' || m.status === 'verified').length,
+      failed: migrations.filter(m => m.status === 'failed').length,
+      cancelled: migrations.filter(m => m.status === 'cancelled').length,
+      recent: migrations.filter(m => {
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        return new Date(m.startTime) > oneDayAgo;
+      }).length
+    };
+
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    console.error('Error getting migration status:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

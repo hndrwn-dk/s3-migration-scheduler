@@ -4,9 +4,10 @@ import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
 
 interface HeaderProps {
   connected: boolean;
+  connectionType?: 'websocket' | 'sse' | 'none';
 }
 
-const Header: React.FC<HeaderProps> = ({ connected }) => {
+const Header: React.FC<HeaderProps> = ({ connected, connectionType = 'none' }) => {
   return (
     <header className="bg-white shadow-lg border-b border-gray-200">
       <div className="px-6 py-4">
@@ -33,7 +34,9 @@ const Header: React.FC<HeaderProps> = ({ connected }) => {
               {connected ? (
                 <div className="flex items-center space-x-1">
                   <CheckCircleIcon className="w-5 h-5 text-green-500" />
-                  <span className="text-sm font-medium text-green-600">Connected</span>
+                  <span className="text-sm font-medium text-green-600">
+                    Connected {connectionType === 'websocket' ? '(WebSocket)' : connectionType === 'sse' ? '(SSE)' : ''}
+                  </span>
                 </div>
               ) : (
                 <div className="flex items-center space-x-1">
