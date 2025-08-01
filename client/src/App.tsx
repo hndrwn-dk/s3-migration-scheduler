@@ -151,7 +151,7 @@ function App() {
   const renderActiveTab = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard migrations={migrations} />;
+        return <Dashboard migrations={migrations} onTabChange={setActiveTab} />;
       case 'configure':
         return <ConfigureTab />;
       case 'migrate':

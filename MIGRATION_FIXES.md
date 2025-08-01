@@ -32,6 +32,15 @@ This document outlines the comprehensive fixes and improvements made to the S3 M
 - Created a dual-connection system that automatically switches between WebSocket and SSE
 - Added connection status indicators showing the active connection type
 
+### 4. Dashboard Recent Migrations Enhancement
+**Problem**: Users needed quick access to recent migration activity without navigating to separate tabs.
+
+**Solution**:
+- Added comprehensive "Recent Migrations" section to the Dashboard
+- Implemented real-time activity highlighting for new migrations
+- Added quick action buttons for immediate log access
+- Created seamless navigation between Dashboard, History, and Logs tabs
+
 ## Implementation Details
 
 ### Backend Improvements
@@ -116,18 +125,27 @@ const connectionCheck = setInterval(() => {
 - Connection type indicators in the UI
 - Graceful error handling for both connection types
 
-#### 3. Enhanced History Tab
+#### 3. Enhanced Dashboard with Recent Migrations
+- Added comprehensive "Recent Migrations" section
+- Real-time activity highlighting for migrations started within 10 minutes
+- Quick access buttons to view logs for any migration
+- Recent activity statistics (last 24 hours)
+- Direct navigation to History tab for full migration list
+- Enhanced empty state with helpful action prompts
+
+#### 4. Enhanced History Tab
 - Added manual refresh button with storage reload
 - Improved error handling for incomplete migration data
 - Better data filtering and sorting
 - Robust display of migration information
 
-#### 4. Enhanced Logs Tab
+#### 5. Enhanced Logs Tab
 - Real-time log streaming for active migrations
 - Manual refresh functionality with toast notifications
 - Last refresh timestamp display
 - Better error messages and fallback content
 - Auto-scroll and filtering capabilities
+- Auto-selection of migrations when navigating from Dashboard
 
 ## Architecture
 
@@ -191,9 +209,14 @@ Automatic Recovery on Restart
 
 ### Monitoring Migrations
 
-1. **History Tab**: View all past and current migrations with status, progress, and metadata
-2. **Logs Tab**: Monitor real-time logs for any migration with auto-refresh
-3. **Dashboard**: Overview of migration statistics and trends
+1. **Dashboard**: 
+   - Overview of migration statistics and trends
+   - Recent Migrations section showing the 8 most recent migrations
+   - Quick access to logs via action buttons
+   - Real-time highlighting of new activity (migrations started within 10 minutes)
+   - Recent activity counter for last 24 hours
+2. **History Tab**: View all past and current migrations with status, progress, and metadata
+3. **Logs Tab**: Monitor real-time logs for any migration with auto-refresh
 
 ### Connection Status
 
