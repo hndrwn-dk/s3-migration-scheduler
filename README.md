@@ -1,17 +1,38 @@
 # S3 Migration Dashboard
 
-A comprehensive fullstack application for managing S3 bucket migrations using MinIO client with a modern React dashboard interface.
+A comprehensive, enterprise-grade fullstack application for managing S3 bucket migrations with persistent SQLite database, real-time monitoring, and detailed reconciliation tracking. Features a modern React dashboard with TypeScript, dual real-time connections (WebSocket + SSE), and comprehensive migration difference analysis.
 
 ![S3 Migration Dashboard](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![Database](https://img.shields.io/badge/Database-SQLite-blue)
 ![Node.js](https://img.shields.io/badge/Node.js-18.x-green)
 ![React](https://img.shields.io/badge/React-18.x-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)
+![Real-time](https://img.shields.io/badge/Real--time-WebSocket%2BSSE-orange)
+
+## 🎯 **Current Status & Recent Improvements**
+
+### ✅ **Latest Features (v2.0.0)**
+- **🗄️ SQLite Database**: Persistent migration storage with ACID transactions
+- **📊 Accurate Statistics**: Real-time dashboard with database-driven metrics
+- **🔍 Reconciliation Tracking**: Detailed analysis of migration differences
+- **🔄 Dual Connectivity**: WebSocket + SSE fallback for reliable real-time updates
+- **📈 Enhanced Monitoring**: Comprehensive migration lifecycle tracking
+- **🎨 Improved UX**: Modern interface with detailed status indicators
+
+### 🔧 **Issues Recently Resolved**
+- ✅ Dashboard statistics now show accurate completion rates (no more 0% success)
+- ✅ Migration history persists across server restarts and page refreshes
+- ✅ "completed_with_differences" status includes detailed reconciliation reports
+- ✅ Consistent migration counts across all components
+- ✅ Real-time updates with automatic fallback mechanisms
 
 ## 📑 Table of Contents
 
+- [🎯 Current Status & Recent Improvements](#-current-status--recent-improvements)
 - [📸 Screenshots](#-screenshots)
 - [🚀 Quick Start](#-quick-start)
 - [🚀 Features](#-features)
+- [🔧 Recent Major Improvements](#-recent-major-improvements)
 - [📋 Prerequisites](#-prerequisites)
 - [🛠️ Installation](#️-installation)
 - [⚙️ Configuration](#️-configuration)
@@ -135,6 +156,124 @@ start.bat
 - **Error Handling** - Comprehensive error logging and user feedback
 - **Mobile Responsive** - Works seamlessly on desktop and mobile devices
 - **Accessibility** - WCAG compliant with keyboard navigation support
+
+## 🔧 Recent Major Improvements
+
+### 🗄️ **SQLite Database Implementation**
+
+**Replaced JSON file storage with robust SQLite database for enterprise-grade data persistence:**
+
+```
+Previous Architecture    =>    New Architecture
+┌─────────────────────┐       ┌──────────────────────┐
+│ JSON File Storage   │       │ SQLite Database      │
+│ - In-memory Map     │       │ - Persistent tables  │
+│ - Manual file writes│       │ - Auto transactions  │
+│ - Data loss restart │       │ - ACID compliance    │
+│ - No relationships  │       │ - Indexed queries    │
+└─────────────────────┘       └──────────────────────┘
+```
+
+**Benefits:**
+- ✅ **Data Persistence**: Survives server restarts and crashes
+- ✅ **ACID Transactions**: Guaranteed data integrity
+- ✅ **Performance**: Indexed queries for fast data retrieval
+- ✅ **Scalability**: Handles thousands of migrations efficiently
+
+### 📊 **Enhanced Dashboard Statistics**
+
+**Fixed critical dashboard issues and added real-time database-driven statistics:**
+
+- ✅ **Accurate Completion Rates**: No more "0 Completed, 0.0% success rate" despite active migrations
+- ✅ **Real-time Updates**: Auto-refresh every 30 seconds with live data
+- ✅ **Persistent Statistics**: Data remains consistent across page refreshes
+- ✅ **Enhanced Metrics**: Recent activity tracking, data transfer volumes, average speeds
+
+### 🔍 **Migration Reconciliation & Difference Tracking**
+
+**New comprehensive reconciliation system for "completed_with_differences" migrations:**
+
+**ReconciliationModal Features:**
+- 🔴 **Missing Files**: Files in source but not in destination
+- 🔵 **Extra Files**: Files in destination but not in source  
+- 🟠 **Size Differences**: Files with different sizes between source/destination
+- 🟡 **General Differences**: Other reconciliation issues and conflicts
+
+**Visual Indicators:**
+- Orange warning badges for migrations with differences
+- Detailed modal dialogs with categorized file listings
+- File count summaries and size difference analysis
+- Export capabilities for reconciliation reports
+
+### 🔄 **Dual Real-time Connectivity**
+
+**Enhanced real-time updates with automatic fallback mechanisms:**
+
+**Implementation:**
+```
+WebSocket (Primary) + Server-Sent Events (Fallback)
+     ↓                           ↓
+Real-time Dashboard ←→ Auto-switching Connection
+```
+
+**Features:**
+- ✅ **Primary WebSocket**: Low-latency bidirectional communication
+- ✅ **SSE Fallback**: Automatic fallback when WebSocket fails
+- ✅ **Connection Status**: Visual indicators showing active connection type
+- ✅ **Automatic Recovery**: Seamless reconnection with exponential backoff
+
+### 📈 **Improved Migration Lifecycle Management**
+
+**Enhanced tracking and monitoring throughout the complete migration process:**
+
+- ✅ **Persistent Status Tracking**: Migration states survive server restarts
+- ✅ **Comprehensive Logging**: Database-backed logs with file fallback
+- ✅ **Auto-cleanup**: Automatic detection and cleanup of stale migrations
+- ✅ **Consistent UI**: Synchronized data across Dashboard, History, and Logs
+
+### 🎨 **User Experience Enhancements**
+
+**Modern interface improvements with better information display:**
+
+- ✅ **Recent Migrations Section**: Quick access to recent activity on Dashboard
+- ✅ **Enhanced History Tab**: Proper filtering and reconciliation integration
+- ✅ **Improved Logs Tab**: Better error handling and auto-refresh for active migrations
+- ✅ **Color-coded Status**: Intuitive visual indicators for all migration states
+- ✅ **Action Buttons**: Quick access to logs and reconciliation details
+
+### 🔧 **Technical Improvements**
+
+**Backend architecture enhancements for reliability and performance:**
+
+**Database Schema:**
+```sql
+-- Comprehensive migration tracking
+CREATE TABLE migrations (
+  id TEXT PRIMARY KEY,
+  config_source TEXT NOT NULL,
+  config_destination TEXT NOT NULL,
+  status TEXT NOT NULL,
+  progress INTEGER DEFAULT 0,
+  start_time TEXT NOT NULL,
+  reconciliation_differences TEXT DEFAULT '[]',
+  -- ... additional fields for complete tracking
+);
+
+-- Structured logging
+CREATE TABLE migration_logs (
+  migration_id TEXT NOT NULL,
+  timestamp TEXT NOT NULL,
+  level TEXT NOT NULL,
+  message TEXT NOT NULL,
+  FOREIGN KEY (migration_id) REFERENCES migrations (id)
+);
+```
+
+**API Enhancements:**
+- ✅ **New Endpoints**: `/api/migration/status` for system statistics
+- ✅ **SSE Streaming**: `/api/migration/stream` for real-time updates
+- ✅ **Enhanced Responses**: Comprehensive data sanitization and validation
+- ✅ **Backward Compatibility**: Automatic import of existing JSON data
 
 ## 📋 System Requirements & Prerequisites
 
@@ -442,7 +581,8 @@ s3-migration-dashboard/
    - Handles monorepo dependencies and configuration
 
 2. **Server `package.json`**:
-   - Backend-specific dependencies (Express, cors, ws, etc.)
+   - Backend-specific dependencies (Express, cors, ws, SQLite, etc.)
+   - Database management (better-sqlite3, migration tools)
    - Server-only scripts and build configuration
    - Production deployment settings
 
@@ -560,30 +700,47 @@ After migration completion, the system automatically:
 server/
 ├── index.js              # Main server file
 ├── routes/
-│   ├── migration.js      # Migration API endpoints
+│   ├── migration.js      # Migration API endpoints + SSE streaming
 │   └── buckets.js        # S3 bucket management
 ├── services/
-│   ├── minioClient.js    # MinIO client wrapper
-│   └── websocket.js      # Real-time communication
+│   ├── database.js       # SQLite database service (NEW)
+│   ├── minioClient.js    # MinIO client wrapper + DB integration
+│   └── websocket.js      # Real-time communication (WebSocket + SSE)
+├── data/
+│   └── migrations.db     # SQLite database (auto-created)
 └── logs/                 # Migration log files
 ```
+
+**Key Components:**
+- 🗄️ **SQLite Database**: Persistent storage for migrations and logs
+- 🔄 **Dual Real-time**: WebSocket + Server-Sent Events fallback
+- 📊 **Enhanced APIs**: Database-driven statistics and streaming
+- 🔍 **Reconciliation**: Detailed difference tracking and analysis
 
 ### Frontend (React/TypeScript)
 ```
 client/src/
 ├── components/           # React components
-│   ├── Dashboard.tsx     # Main dashboard
+│   ├── Dashboard.tsx     # Main dashboard with real-time stats
 │   ├── ConfigureTab.tsx  # S3 configuration
 │   ├── MigrateTab.tsx    # Migration interface
-│   ├── HistoryTab.tsx    # Migration history
-│   └── LogsTab.tsx       # Log viewer
+│   ├── HistoryTab.tsx    # Migration history + reconciliation
+│   ├── LogsTab.tsx       # Log viewer with auto-refresh
+│   └── ReconciliationModal.tsx  # Difference analysis (NEW)
 ├── services/
-│   ├── api.ts           # API client
-│   └── websocket.ts     # WebSocket client
+│   ├── api.ts           # API client with enhanced endpoints
+│   ├── websocket.ts     # WebSocket client
+│   └── sse.ts           # Server-Sent Events client (NEW)
 ├── types/
-│   └── index.ts         # TypeScript definitions
-└── App.tsx              # Main application
+│   └── index.ts         # TypeScript definitions + reconciliation types
+└── App.tsx              # Main application with dual connectivity
 ```
+
+**Enhanced Features:**
+- 🎨 **Modern UI**: Responsive design with real-time updates
+- 🔄 **Dual Connectivity**: Automatic WebSocket/SSE fallback
+- 📊 **Live Statistics**: Database-driven dashboard metrics
+- 🔍 **Difference Analysis**: Detailed reconciliation modal
 
 ## 🔧 API Reference
 
