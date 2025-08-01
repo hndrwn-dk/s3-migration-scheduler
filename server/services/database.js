@@ -188,7 +188,10 @@ class DatabaseService {
     `);
     
     const rows = stmt.all(limit);
-    return rows.map(row => this.formatMigrationRow(row));
+    console.log(`🗄️  Database getAllMigrations: found ${rows.length} rows`);
+    const formatted = rows.map(row => this.formatMigrationRow(row));
+    console.log(`🗄️  Database getAllMigrations: returning ${formatted.length} formatted migrations`);
+    return formatted;
   }
 
   getMigrationsByStatus(status) {
