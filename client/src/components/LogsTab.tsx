@@ -26,6 +26,15 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
   const logsEndRef = useRef<HTMLDivElement>(null);
   const logsContainerRef = useRef<HTMLDivElement>(null);
 
+  // Check for pre-selected migration from Dashboard
+  useEffect(() => {
+    const preSelectedMigration = localStorage.getItem('selectedMigrationForLogs');
+    if (preSelectedMigration && migrations.some(m => m.id === preSelectedMigration)) {
+      setSelectedMigration(preSelectedMigration);
+      localStorage.removeItem('selectedMigrationForLogs'); // Clean up after use
+    }
+  }, [migrations]);
+
   useEffect(() => {
     if (autoScroll && logsEndRef.current) {
       logsEndRef.current.scrollIntoView({ behavior: 'smooth' });

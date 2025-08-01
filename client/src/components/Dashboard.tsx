@@ -4,17 +4,20 @@ import {
   ClockIcon,
   ArrowPathIcon,
   ChartBarIcon,
-  DocumentDuplicateIcon
+  DocumentDuplicateIcon,
+  EyeIcon,
+  ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { format } from 'date-fns';
-import { Migration } from '../types';
+import { Migration, TabType } from '../types';
 
 interface DashboardProps {
   migrations: Migration[];
+  onTabChange?: (tab: TabType) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ migrations }) => {
+const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
   const stats = useMemo(() => {
     const total = migrations.length;
     const completed = migrations.filter(m => m.status === 'completed' || m.status === 'verified').length;
@@ -22,12 +25,16 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations }) => {
     const failed = migrations.filter(m => m.status === 'failed').length;
     const pending = migrations.filter(m => m.status === 'starting').length;
 
+    // Recent activity (last 24 hours)
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentActivity = migrations.filter(m => new Date(m.startTime) > oneDayAgo).length;
+
     const totalDataTransferred = migrations
-      .filter(m => m.stats.transferredSize)
+      .filter(m => m.stats?.transferredSize)
       .reduce((sum, m) => sum + m.stats.transferredSize, 0);
 
     const averageSpeed = migrations
-      .filter(m => m.stats.speed > 0)
+      .filter(m => m.stats?.speed > 0)
       .reduce((sum, m, _, arr) => sum + m.stats.speed / arr.length, 0);
 
     return {
@@ -36,6 +43,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations }) => {
       running,
       failed,
       pending,
+      recentActivity,
       totalDataTransferred,
       averageSpeed,
       successRate: total > 0 ? ((completed / total) * 100) : 0
@@ -90,9 +98,32 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations }) => {
     return formatBytes(bytesPerSecond) + '/s';
   };
 
-  const recentMigrations = migrations
-    .filter(migration => migration.config && migration.id) // Filter out incomplete migrations
-    .slice(0, 5);
+  const recentMigrations = useMemo(() => {
+    return migrations
+      .filter(migration => migration.config && migration.id) // Filter out incomplete migrations
+      .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()) // Most recent first
+      .slice(0, 8); // Show up to 8 recent migrations
+  }, [migrations]);
+
+  const handleViewLogs = (migrationId: string) => {
+    if (onTabChange) {
+      // Store selected migration in localStorage so LogsTab can pick it up
+      localStorage.setItem('selectedMigrationForLogs', migrationId);
+      onTabChange('logs');
+    }
+  };
+
+  const handleViewHistory = () => {
+    if (onTabChange) {
+      onTabChange('history');
+    }
+  };
+
+  const isRecentActivity = (startTime: string) => {
+    const migrationTime = new Date(startTime);
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    return migrationTime > tenMinutesAgo;
+  };
 
   return (
     <div className="space-y-6">
@@ -145,12 +176,12 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations }) => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <ChartBarIcon className="h-8 w-8 text-purple-600" />
+              <ClockIcon className="h-8 w-8 text-orange-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Data Transferred</p>
-              <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalDataTransferred)}</p>
-              <p className="text-sm text-purple-600">Avg: {formatSpeed(stats.averageSpeed)}</p>
+              <p className="text-sm font-medium text-gray-600">Recent Activity</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.recentActivity}</p>
+              <p className="text-sm text-orange-600">Last 24 hours</p>
             </div>
           </div>
         </div>
@@ -208,7 +239,16 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations }) => {
       {/* Recent Migrations */}
       <div className="bg-white rounded-lg shadow">
         <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Recent Migrations</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Migrations</h3>
+            <button
+              onClick={handleViewHistory}
+              className="inline-flex items-center text-sm text-blue-600 hover:text-blue-500"
+            >
+              View all
+              <ArrowTopRightOnSquareIcon className="ml-1 w-4 h-4" />
+            </button>
+          </div>
         </div>
         <div className="overflow-x-auto">
           {recentMigrations.length > 0 ? (
@@ -230,14 +270,27 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations }) => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Duration
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {recentMigrations.map((migration) => (
-                  <tr key={migration.id} className="hover:bg-gray-50">
+                  <tr key={migration.id} className={`hover:bg-gray-50 ${isRecentActivity(migration.startTime) ? 'bg-blue-50' : ''}`}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {migration.config?.source || 'Unknown'} → {migration.config?.destination || 'Unknown'}
+                      <div className="flex items-center">
+                        <div className="text-sm font-medium text-gray-900">
+                          {migration.config?.source || 'Unknown'} → {migration.config?.destination || 'Unknown'}
+                        </div>
+                        {isRecentActivity(migration.startTime) && (
+                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                            New
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        ID: {migration.id.slice(0, 8)}...
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -270,6 +323,17 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations }) => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {migration.duration ? `${Math.round(migration.duration)}s` : '-'}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleViewLogs(migration.id)}
+                          className="text-blue-600 hover:text-blue-500"
+                          title="View logs"
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -277,8 +341,17 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations }) => {
           ) : (
             <div className="p-6 text-center text-gray-500">
               <ClockIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No migrations</h3>
-              <p className="mt-1 text-sm text-gray-500">Get started by configuring your S3 connections.</p>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No recent migrations</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Start a migration to see it here, or{' '}
+                <button
+                  onClick={handleViewHistory}
+                  className="text-blue-600 hover:text-blue-500"
+                >
+                  view all migrations
+                </button>
+                .
+              </p>
             </div>
           )}
         </div>
