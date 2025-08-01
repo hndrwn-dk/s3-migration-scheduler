@@ -17,6 +17,9 @@ class MinioClientService {
     
     // Import existing JSON migrations to database on first run
     this.importJSONMigrations();
+    
+    // Clean up any invalid migrations in the database
+    database.cleanupInvalidMigrations();
   }
 
   detectMcPath() {
@@ -281,6 +284,11 @@ class MinioClientService {
   }
 
   async startMigration(migrationConfig) {
+    // Validate migration config
+    if (!migrationConfig || !migrationConfig.source || !migrationConfig.destination) {
+      throw new Error('Invalid migration config: source and destination are required');
+    }
+
     const migrationId = uuidv4();
     const logFile = path.join(this.logDir, `migration-${migrationId}.log`);
     
@@ -301,13 +309,35 @@ class MinioClientService {
       }
     };
 
+    // Check if migration already exists (prevent duplicates)
+    if (this.activeMigrations.has(migrationId)) {
+      throw new Error(`Migration ${migrationId} already exists`);
+    }
+
+    // Check for similar migration already running (same source/destination)
+    const existingSimilar = Array.from(this.activeMigrations.values()).find(m => 
+      m.config.source === migrationConfig.source && 
+      m.config.destination === migrationConfig.destination && 
+      ['starting', 'running'].includes(m.status)
+    );
+    
+    if (existingSimilar) {
+      throw new Error(`Similar migration already running: ${existingSimilar.id} (${migrationConfig.source} → ${migrationConfig.destination})`);
+    }
+
     this.activeMigrations.set(migrationId, migration);
     
-    // Save migration to database
+    // Save migration to database first, then broadcast
     try {
       database.insertMigration(migration);
+      console.log(`🚀 Starting migration: ${migrationConfig.source} → ${migrationConfig.destination}`);
+      
+      // Immediately broadcast the new migration to clients
+      this.broadcastMigrationUpdate(migration);
     } catch (error) {
       console.error('Failed to save migration to database:', error);
+      this.activeMigrations.delete(migrationId); // Clean up on failure
+      throw error;
     }
 
     try {
@@ -316,6 +346,7 @@ class MinioClientService {
     } catch (error) {
       migration.status = 'failed';
       migration.errors.push(error.message);
+      this.broadcastMigrationUpdate(migration); // Broadcast the failed status
       throw error;
     }
   }
