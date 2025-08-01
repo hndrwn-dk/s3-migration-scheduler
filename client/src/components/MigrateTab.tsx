@@ -154,9 +154,8 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
 
       const result = await migrationService.startMigration(migrationConfig);
       
-      // Get the migration details
-      const migration = await migrationService.getMigrationStatus(result.migrationId);
-      onMigrationStart(migration);
+      // Real-time updates will handle adding the migration to the state
+      // No need to manually call onMigrationStart as WebSocket/SSE will notify
       
       toast.success(`Migration started successfully! ID: ${result.migrationId.slice(0, 8)}`);
       
