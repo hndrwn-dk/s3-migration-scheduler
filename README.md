@@ -739,50 +739,6 @@ npm run format
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🤝 Support
-
-### Getting Help
-
-1. **Documentation**: Check this README and inline code comments
-2. **Issues**: Create an issue on GitHub with detailed information
-3. **Discussions**: Use GitHub Discussions for questions and ideas
-
-### Bug Reports
-
-When reporting bugs, please include:
-- Operating system and version
-- Node.js version
-- MinIO client version
-- Complete error messages
-- Steps to reproduce
-
-## 🗺️ Roadmap
-
-### Planned Features
-
-- [ ] **Multi-region Support**: Cross-region migration optimization
-- [ ] **Scheduling**: Cron-based migration scheduling
-- [ ] **Notifications**: Email/Slack notifications for completion
-- [ ] **Bandwidth Limiting**: Rate limiting for network usage
-- [ ] **Encryption**: End-to-end encryption support
-- [ ] **Audit Trail**: Comprehensive audit logging
-- [ ] **REST API**: Complete REST API for integrations
-- [ ] **Docker Support**: Docker containerization
-
-### Version History
-
-- **v1.0.0**: Initial release with core migration features
-- **v1.1.0**: Added data reconciliation and improved UI
-- **v1.2.0**: Advanced enterprise features and production improvements
-  - ✅ Advanced MinIO mirror options (checksum, preserve, retry, dry-run)
-  - ✅ Comprehensive system requirements for Linux/Windows/macOS
-  - ✅ Numbered script organization (00-setup, 01-fix, 02-start)
-  - ✅ Enhanced TypeScript error handling and type safety
-  - ✅ Production-ready scripts without Unicode dependencies
-  - ✅ Improved UI/UX with advanced options section
-  - ✅ Fixed footer overlap issues for better mobile experience
-  - ✅ WebSocket real-time updates and enhanced logging
-
 ---
 
 Built with ❤️ using React, Node.js, and MinIO
