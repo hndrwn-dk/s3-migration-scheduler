@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import {
   PlusIcon,
@@ -26,13 +26,7 @@ const ConfigureTab: React.FC = () => {
     secretKey: ''
   });
 
-  useEffect(() => {
-    // Load saved aliases from localStorage
-    loadSavedAliases();
-    checkMinIOHealth();
-  }, []);
-
-  const loadSavedAliases = () => {
+  const loadSavedAliases = useCallback(() => {
     try {
       const saved = localStorage.getItem('s3-aliases');
       if (saved) {
@@ -44,7 +38,13 @@ const ConfigureTab: React.FC = () => {
     } catch (error) {
       console.error('Failed to load aliases:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // Load saved aliases from localStorage
+    loadSavedAliases();
+    checkMinIOHealth();
+  }, [loadSavedAliases]);
 
   const saveAliases = (newAliases: S3Alias[]) => {
     try {

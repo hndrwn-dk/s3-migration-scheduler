@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import {
   ArrowRightIcon,
@@ -10,7 +10,7 @@ import {
   TrashIcon
 } from '@heroicons/react/24/outline';
 import LoadingSpinner from './LoadingSpinner';
-import { Migration, S3Alias, S3Bucket, BucketInfo, MigrationFormData } from '../types';
+import { Migration, S3Alias, S3Bucket, MigrationFormData } from '../types';
 import { bucketService, migrationService } from '../services/api';
 
 interface MigrateTabProps {
@@ -47,26 +47,6 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
     loadAliases();
   }, []);
 
-  useEffect(() => {
-    if (formData.sourceAlias) {
-      loadSourceBuckets();
-    } else {
-      setSourceBuckets([]);
-      setFormData(prev => ({ ...prev, sourceBucket: '' }));
-    }
-  }, [formData.sourceAlias]);
-
-  useEffect(() => {
-    if (formData.destinationAlias) {
-      loadDestinationBuckets();
-    } else {
-      setDestinationBuckets([]);
-      setFormData(prev => ({ ...prev, destinationBucket: '' }));
-    }
-  }, [formData.destinationAlias]);
-
-
-
   const loadAliases = () => {
     try {
       const saved = localStorage.getItem('s3-aliases');
@@ -79,7 +59,7 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
     }
   };
 
-  const loadSourceBuckets = async () => {
+  const loadSourceBuckets = useCallback(async () => {
     try {
       const buckets = await bucketService.listBuckets(formData.sourceAlias);
       setSourceBuckets(buckets);
@@ -87,9 +67,9 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
       toast.error(`Failed to load source buckets: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setSourceBuckets([]);
     }
-  };
+  }, [formData.sourceAlias]);
 
-  const loadDestinationBuckets = async () => {
+  const loadDestinationBuckets = useCallback(async () => {
     try {
       const buckets = await bucketService.listBuckets(formData.destinationAlias);
       setDestinationBuckets(buckets);
@@ -97,7 +77,25 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
       toast.error(`Failed to load destination buckets: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setDestinationBuckets([]);
     }
-  };
+  }, [formData.destinationAlias]);
+
+  useEffect(() => {
+    if (formData.sourceAlias) {
+      loadSourceBuckets();
+    } else {
+      setSourceBuckets([]);
+      setFormData(prev => ({ ...prev, sourceBucket: '' }));
+    }
+  }, [formData.sourceAlias, loadSourceBuckets]);
+
+  useEffect(() => {
+    if (formData.destinationAlias) {
+      loadDestinationBuckets();
+    } else {
+      setDestinationBuckets([]);
+      setFormData(prev => ({ ...prev, destinationBucket: '' }));
+    }
+  }, [formData.destinationAlias, loadDestinationBuckets]);
 
 
 
@@ -202,14 +200,6 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
       ...prev,
       exclude: prev.exclude.filter(p => p !== pattern)
     }));
-  };
-
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
