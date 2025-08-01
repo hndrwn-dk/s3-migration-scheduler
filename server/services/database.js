@@ -72,6 +72,12 @@ class DatabaseService {
 
   // Migration CRUD operations
   insertMigration(migration) {
+    // Validate migration config before insertion
+    if (!migration.config || !migration.config.source || !migration.config.destination) {
+      console.error('❌ Invalid migration config:', migration);
+      throw new Error('Migration config must have source and destination');
+    }
+
     const stmt = this.db.prepare(`
       INSERT INTO migrations (
         id, config_source, config_destination, config_options,
@@ -85,7 +91,7 @@ class DatabaseService {
       migration.id,
       migration.config.source,
       migration.config.destination,
-      JSON.stringify(migration.config.options),
+      JSON.stringify(migration.config.options || {}),
       migration.status,
       migration.progress,
       migration.startTime,
@@ -98,7 +104,7 @@ class DatabaseService {
       migration.stats?.speed || 0
     );
 
-    console.log(`✅ Migration inserted: ${migration.id}`);
+    console.log(`✅ Migration inserted: ${migration.id}, source: ${migration.config.source}, dest: ${migration.config.destination}`);
     return result;
   }
 
@@ -290,11 +296,16 @@ class DatabaseService {
 
   // Helper method to format database row to migration object
   formatMigrationRow(row) {
+    // Debug logging for null values
+    if (!row.config_source || !row.config_destination) {
+      console.warn(`⚠️  Migration ${row.id} has null config: source=${row.config_source}, dest=${row.config_destination}`);
+    }
+
     return {
       id: row.id,
       config: {
-        source: row.config_source,
-        destination: row.config_destination,
+        source: row.config_source || 'Unknown',
+        destination: row.config_destination || 'Unknown',
         options: JSON.parse(row.config_options || '{}')
       },
       status: row.status,
