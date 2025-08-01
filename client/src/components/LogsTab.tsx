@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
 import {
   DocumentTextIcon,
@@ -30,6 +30,21 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
     }
   }, [logs, autoScroll]);
 
+  const loadLogs = useCallback(async () => {
+    if (!selectedMigration) return;
+    
+    setLoading(true);
+    try {
+      const logsData = await migrationService.getMigrationLogs(selectedMigration);
+      setLogs(logsData);
+    } catch (error) {
+      toast.error(`Failed to load logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setLogs(`Error loading logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedMigration]);
+
   useEffect(() => {
     if (selectedMigration) {
       loadLogs();
@@ -44,22 +59,7 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
         return () => clearInterval(interval);
       }
     }
-  }, [selectedMigration, migrations]);
-
-  const loadLogs = async () => {
-    if (!selectedMigration) return;
-    
-    setLoading(true);
-    try {
-      const logsData = await migrationService.getMigrationLogs(selectedMigration);
-      setLogs(logsData);
-    } catch (error) {
-      toast.error(`Failed to load logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      setLogs(`Error loading logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [selectedMigration, migrations, loadLogs]);
 
   const copyLogsToClipboard = async () => {
     try {
@@ -71,7 +71,6 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
   };
 
   const downloadLogs = () => {
-    const migration = migrations.find(m => m.id === selectedMigration);
     const filename = `migration-${selectedMigration.slice(0, 8)}-${format(new Date(), 'yyyy-MM-dd-HHmm')}.log`;
     
     const blob = new Blob([logs], { type: 'text/plain' });
