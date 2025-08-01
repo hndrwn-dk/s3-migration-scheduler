@@ -160,6 +160,38 @@ export const migrationService = {
     }
     return response.data.data!;
   },
+
+  // Refresh migrations from storage
+  refreshMigrations: async (): Promise<{ count: number; message: string }> => {
+    const response = await api.post<ApiResponse<{ count: number; message: string }>>('/migration/refresh');
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to refresh migrations');
+    }
+    return response.data.data!;
+  },
+
+  // Get migration system status
+  getSystemStatus: async (): Promise<{
+    total: number;
+    running: number;
+    completed: number;
+    failed: number;
+    cancelled: number;
+    recent: number;
+  }> => {
+    const response = await api.get<ApiResponse<{
+      total: number;
+      running: number;
+      completed: number;
+      failed: number;
+      cancelled: number;
+      recent: number;
+    }>>('/migration/status');
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to get system status');
+    }
+    return response.data.data!;
+  },
 };
 
 export const healthService = {

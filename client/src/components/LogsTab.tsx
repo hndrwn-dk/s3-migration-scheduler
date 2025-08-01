@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import {
   DocumentTextIcon,
   ArrowDownIcon,
+  ArrowPathIcon,
   ClipboardDocumentIcon,
   FunnelIcon
 } from '@heroicons/react/24/outline';
@@ -21,6 +22,7 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
   const [loading, setLoading] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
   const [filterLevel, setFilterLevel] = useState<'all' | 'error' | 'warning' | 'info'>('all');
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
   const logsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -30,16 +32,27 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
     }
   }, [logs, autoScroll]);
 
-  const loadLogs = useCallback(async () => {
+  const loadLogs = useCallback(async (showToast = false) => {
     if (!selectedMigration) return;
     
     setLoading(true);
     try {
       const logsData = await migrationService.getMigrationLogs(selectedMigration);
-      setLogs(logsData);
+      setLogs(logsData || 'No logs available yet...');
+      setLastRefresh(new Date());
+      if (showToast) {
+        toast.success('Logs refreshed');
+      }
     } catch (error) {
-      toast.error(`Failed to load logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      setLogs(`Error loading logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      if (errorMessage.includes('not found')) {
+        setLogs('Migration not found or logs not yet available.');
+      } else {
+        setLogs(`Error loading logs: ${errorMessage}\n\nThis might be because:\n- The migration is still starting\n- The migration logs haven't been generated yet\n- There was a connection issue\n\nTry refreshing in a few moments.`);
+      }
+      if (showToast) {
+        toast.error(`Failed to load logs: ${errorMessage}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -51,15 +64,23 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
       
       // Auto-refresh logs for active migrations
       const migration = migrations.find(m => m.id === selectedMigration);
-      if (migration && (migration.status === 'running' || migration.status === 'reconciling')) {
+      if (migration && (migration.status === 'running' || migration.status === 'reconciling' || migration.status === 'starting')) {
         const interval = setInterval(() => {
           loadLogs();
-        }, 2000);
+        }, 3000); // Increased to 3 seconds to reduce server load
         
         return () => clearInterval(interval);
       }
     }
   }, [selectedMigration, migrations, loadLogs]);
+
+  // Reset logs when migration selection changes
+  useEffect(() => {
+    if (selectedMigration) {
+      setLogs('');
+      setLastRefresh(null);
+    }
+  }, [selectedMigration]);
 
   const copyLogsToClipboard = async () => {
     try {
@@ -193,14 +214,14 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
               </div>
               
               <button
-                onClick={loadLogs}
+                onClick={() => loadLogs(true)}
                 disabled={loading}
                 className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
               >
                 {loading ? (
                   <LoadingSpinner size="small" className="mr-2" />
                 ) : (
-                  <ArrowDownIcon className="w-4 h-4 mr-2" />
+                  <ArrowPathIcon className="w-4 h-4 mr-2" />
                 )}
                 Refresh
               </button>
@@ -216,10 +237,17 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
               <div className="flex items-center space-x-4">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                  <DocumentTextIcon className="w-5 h-5 mr-2" />
-                  Migration Logs
-                </h3>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <DocumentTextIcon className="w-5 h-5 mr-2" />
+                    Migration Logs
+                  </h3>
+                  {lastRefresh && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Last updated: {format(lastRefresh, 'HH:mm:ss')}
+                    </p>
+                  )}
+                </div>
                 
                 <div className="flex items-center space-x-2">
                   <FunnelIcon className="w-4 h-4 text-gray-500" />

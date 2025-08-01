@@ -14,6 +14,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import { TabType, Migration } from './types';
 import { healthService, migrationService } from './services/api';
 import websocketService from './services/websocket';
+import sseService from './services/sse';
 
 import './App.css';
 
@@ -22,24 +23,45 @@ function App() {
   const [migrations, setMigrations] = useState<Migration[]>([]);
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
+  const [connectionType, setConnectionType] = useState<'websocket' | 'sse' | 'none'>('none');
 
   useEffect(() => {
     // Initialize the application
     initializeApp();
 
-    // Set up WebSocket handlers
+    // Set up WebSocket handlers first
     websocketService.onMigrationUpdate(handleMigrationUpdate);
     websocketService.onError(handleWebSocketError);
 
-    // Check connection status periodically
+    // Set up SSE handlers as fallback
+    sseService.onInitialData(handleInitialData);
+    sseService.onMigrationUpdate(handleMigrationUpdate);
+    sseService.onError(handleSSEError);
+
+    // Check connection status periodically and manage fallback
     const connectionCheck = setInterval(() => {
-      setConnected(websocketService.isConnected());
-    }, 5000);
+      const wsConnected = websocketService.isConnected();
+      const sseConnected = sseService.isConnected();
+      
+      if (wsConnected) {
+        setConnected(true);
+        setConnectionType('websocket');
+      } else if (sseConnected) {
+        setConnected(true);
+        setConnectionType('sse');
+      } else {
+        setConnected(false);
+        setConnectionType('none');
+      }
+    }, 2000);
 
     return () => {
       clearInterval(connectionCheck);
       websocketService.removeHandler('migration_update');
       websocketService.removeHandler('error');
+      sseService.removeHandler('initial_data');
+      sseService.removeHandler('migration_update');
+      sseService.removeHandler('error');
     };
   }, []);
 
@@ -50,11 +72,13 @@ function App() {
       // Check server health
       await healthService.checkHealth();
       
-      // Load existing migrations
-      const existingMigrations = await migrationService.getAllMigrations();
-      setMigrations(existingMigrations);
-      
-      setConnected(websocketService.isConnected());
+      // Load existing migrations from API (SSE will provide initial data too)
+      try {
+        const existingMigrations = await migrationService.getAllMigrations();
+        setMigrations(existingMigrations);
+      } catch (error) {
+        console.warn('Failed to load migrations from API, will wait for SSE initial data:', error);
+      }
       
       toast.success('Connected to S3 Migration Dashboard');
     } catch (error) {
@@ -91,7 +115,23 @@ function App() {
 
   const handleWebSocketError = (error: any) => {
     console.error('WebSocket error:', error);
-    toast.error('Connection error - some features may not work properly');
+    // Don't show error if SSE is working
+    if (!sseService.isConnected()) {
+      toast.error('Connection error - trying alternative connection method');
+    }
+  };
+
+  const handleSSEError = (error: any) => {
+    console.error('SSE error:', error);
+    // Only show error if WebSocket is also not working
+    if (!websocketService.isConnected()) {
+      toast.error('Connection error - some features may not work properly');
+    }
+  };
+
+  const handleInitialData = (migrations: Migration[]) => {
+    console.log('Received initial migration data from SSE:', migrations.length);
+    setMigrations(migrations);
   };
 
   const handleMigrationStart = (migration: Migration) => {
@@ -135,7 +175,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header connected={connected} />
+      <Header connected={connected} connectionType={connectionType} />
       
       <div className="flex">
         <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
