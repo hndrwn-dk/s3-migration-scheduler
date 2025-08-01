@@ -1,8 +1,8 @@
-# S3 Migration Dashboard
+# S3 Management UI
 
 A comprehensive, enterprise-grade fullstack application for managing S3 bucket migrations with persistent SQLite database, real-time monitoring, and detailed reconciliation tracking. Features a modern React dashboard with TypeScript, dual real-time connections (WebSocket + SSE), and comprehensive migration difference analysis.
 
-![S3 Migration Dashboard](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![S3 Management UI](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 ![Database](https://img.shields.io/badge/Database-SQLite-blue)
 ![Node.js](https://img.shields.io/badge/Node.js-18.x-green)
 ![React](https://img.shields.io/badge/React-18.x-blue)
@@ -31,6 +31,7 @@ A comprehensive, enterprise-grade fullstack application for managing S3 bucket m
 - [🎯 Current Status & Recent Improvements](#-current-status--recent-improvements)
 - [📸 Screenshots](#-screenshots)
 - [🚀 Quick Start](#-quick-start)
+- [📝 Complete Setup Guide](#-complete-setup-guide)
 - [🚀 Features](#-features)
 - [🔧 Recent Major Improvements](#-recent-major-improvements)
 - [📋 Prerequisites](#-prerequisites)
@@ -99,12 +100,16 @@ A comprehensive, enterprise-grade fullstack application for managing S3 bucket m
 git clone https://github.com/hndrwn-dk/s3-management-ui.git
 cd s3-management-ui
 
-# 2. Run automated setup (creates start.sh)
-chmod +x scripts/setup-linux.sh
-./scripts/setup-linux.sh
+# 2. Run automated setup
+chmod +x scripts/00-setup-linux.sh
+scripts/00-setup-linux.sh
 
-# 3. Start the application
-./start.sh
+# 3. Configure environment
+cp server/.env.example server/.env
+# Edit server/.env with your settings
+
+# 4. Start the application
+scripts/02-start.sh
 ```
 
 ### Windows
@@ -113,11 +118,15 @@ chmod +x scripts/setup-linux.sh
 git clone https://github.com/hndrwn-dk/s3-management-ui.git
 cd s3-management-ui
 
-# 2. Run automated setup (creates start.bat)
-scripts\setup-windows.bat
+# 2. Run automated setup
+scripts\00-setup-windows.bat
 
-# 3. Start the application
-start.bat
+# 3. Configure environment
+copy server\.env.example server\.env
+# Edit server\.env with your settings
+
+# 4. Start the application
+scripts\02-start.bat
 ```
 
 **Dashboard available at:** http://localhost:3000  
@@ -125,11 +134,24 @@ start.bat
 
 > 💡 **Note**: The setup scripts will:
 > - Check for all prerequisites (Node.js, npm, MinIO client)
-> - Install all dependencies automatically
-> - Create platform-specific start scripts (`start.sh` or `start.bat`)
+> - Install all dependencies automatically (root, server, client)
+> - Auto-create SQLite database with proper schema
+> - For detailed troubleshooting, see [Complete Setup Guide](SETUP_GUIDE.md)
 > - Set up environment configuration
 
 ---
+
+## 📝 Complete Setup Guide
+
+For detailed setup instructions, troubleshooting, and SQLite database information, see:
+**[📖 SETUP_GUIDE.md](SETUP_GUIDE.md)**
+
+**Key Topics Covered:**
+- ✅ Step-by-step installation with automated scripts  
+- 🗄️ SQLite database auto-initialization
+- 🔧 Troubleshooting common issues ("Cannot find module 'better-sqlite3'", connection problems)
+- 📊 Verification steps and expected behavior
+- 🚀 Using existing scripts (00-setup, 01-fix-dependencies, 02-start)
 
 ## 🚀 Features
 

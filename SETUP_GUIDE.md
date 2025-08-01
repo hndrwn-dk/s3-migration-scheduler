@@ -1,4 +1,4 @@
-# 🚀 S3 Migration Dashboard - Complete Setup Guide
+# 🚀 S3 Management UI - Complete Setup Guide
 
 ## 📋 Quick Start Checklist
 
@@ -13,15 +13,20 @@ Before starting, ensure you have:
 
 ```bash
 # Clone the repository
-git clone <your-repo-url>
-cd s3-migration-dashboard
+git clone https://github.com/hndrwn-dk/s3-management-ui.git
+cd s3-management-ui
 
-# Install ALL dependencies (root, server, client)
+# Method 1: Use automated setup scripts (RECOMMENDED)
+scripts/00-setup-linux.sh    # Linux/MacOS
+# OR
+scripts\00-setup-windows.bat # Windows
+
+# Method 2: Manual installation
 npm install
 cd server && npm install && cd ..
 cd client && npm install && cd ..
 
-# OR use the automated script
+# OR use the root script
 npm run install:all
 ```
 
@@ -59,8 +64,13 @@ mc ls dest-s3
 ### ✅ 4. Start the Application
 
 ```bash
-# Start both server and client (recommended)
-npm run dev
+# Method 1: Use automated start script (RECOMMENDED)
+scripts/02-start.sh           # Linux/MacOS  
+# OR
+scripts\02-start.bat          # Windows
+
+# Method 2: Manual start
+npm run dev                   # Start both server and client
 
 # OR start separately:
 # Terminal 1: npm run server:dev
@@ -116,6 +126,12 @@ On first startup, the database service will:
 
 **Solution:**
 ```bash
+# Method 1: Use dependency fix script (RECOMMENDED)
+scripts/01-fix-dependencies.sh    # Linux/MacOS
+# OR  
+scripts\01-fix-dependencies.bat   # Windows
+
+# Method 2: Manual fix
 cd server
 npm install better-sqlite3
 npm list better-sqlite3  # Verify installation
@@ -229,7 +245,7 @@ ls -la server/data/migrations.db
 ## 📁 Directory Structure After Setup
 
 ```
-s3-migration-dashboard/
+s3-management-ui/
 ├── package.json                 # Root dependencies
 ├── server/
 │   ├── .env                    # ✅ Environment configuration
@@ -251,22 +267,32 @@ s3-migration-dashboard/
 │   │   └── types/             # TypeScript definitions
 │   └── node_modules/          # ✅ Client dependencies
 └── scripts/                   # Setup automation scripts
+    ├── 00-setup-linux.sh      # Initial setup (Linux/MacOS)
+    ├── 00-setup-windows.bat   # Initial setup (Windows)
+    ├── 01-fix-dependencies.*  # Dependency troubleshooting  
+    ├── 02-start.*             # Application startup
+    └── README.md              # Script documentation
 ```
 
 ## 🚀 Quick Commands Reference
 
 ```bash
-# Full setup from scratch
-git clone <repo> && cd s3-migration-dashboard
-npm install && npm run install:all
+# Full setup from scratch (RECOMMENDED)
+git clone https://github.com/hndrwn-dk/s3-management-ui.git
+cd s3-management-ui
+scripts/00-setup-linux.sh     # Linux/MacOS (or scripts\00-setup-windows.bat for Windows)
 cp server/.env.example server/.env
 # Edit server/.env with your settings
-npm run dev
+scripts/02-start.sh     # Linux/MacOS (or scripts\02-start.bat for Windows)
 
-# Development
+# Alternative manual commands
 npm run dev              # Start both server & client
 npm run server:dev       # Server only (with nodemon)
 npm run client:start     # Client only
+
+# Troubleshooting
+scripts/01-fix-dependencies.sh  # Fix dependency issues
+# OR scripts\01-fix-dependencies.bat for Windows
 
 # Production
 npm run build           # Build client for production
@@ -303,4 +329,52 @@ When everything is working correctly, you should see:
    # Should exist and have recent timestamp
    ```
 
-Now your S3 Migration Dashboard is ready with enterprise-grade SQLite persistence, dual real-time connectivity, and comprehensive migration tracking! 🎯
+Now your S3 Management UI is ready with enterprise-grade SQLite persistence, dual real-time connectivity, and comprehensive migration tracking! 🎯
+
+## 📝 Using the Existing Scripts
+
+The repository includes automated scripts for easy setup and maintenance:
+
+### **00-setup** (Initial Setup)
+- `scripts/00-setup-linux.sh` (Linux/MacOS)
+- `scripts\00-setup-windows.bat` (Windows)
+- **Purpose**: Installs all dependencies (root, server, client)
+- **Usage**: Run once after cloning the repository
+
+### **01-fix-dependencies** (Troubleshooting)
+- `scripts/01-fix-dependencies.sh` (Linux/MacOS)  
+- `scripts\01-fix-dependencies.bat` (Windows)
+- **Purpose**: Fixes missing or corrupted dependencies
+- **Usage**: Run when you get "Cannot find module" errors
+
+### **02-start** (Application Startup)
+- `scripts/02-start.sh` (Linux/MacOS)
+- `scripts\02-start.bat` (Windows)  
+- **Purpose**: Starts both server and client applications
+- **Usage**: Run to start the complete application
+
+### **Recommended Workflow:**
+```bash
+# 1. Clone and setup
+git clone https://github.com/hndrwn-dk/s3-management-ui.git
+cd s3-management-ui
+
+# 2. Initial setup (run once)
+scripts/00-setup-linux.sh    # Linux/MacOS
+# OR
+scripts\00-setup-windows.bat # Windows
+
+# 3. Configure environment  
+cp server/.env.example server/.env
+# Edit server/.env with your settings
+
+# 4. Start application
+scripts/02-start.sh          # Linux/MacOS
+# OR  
+scripts\02-start.bat         # Windows
+
+# 5. If you encounter issues, run:
+scripts/01-fix-dependencies.sh    # Linux/MacOS
+# OR
+scripts\01-fix-dependencies.bat   # Windows
+```
