@@ -255,19 +255,7 @@ router.post('/refresh', async (req, res) => {
 // Get system status and migration statistics
 router.get('/status', async (req, res) => {
   try {
-    const migrations = minioClient.getAllMigrations();
-    const stats = {
-      total: migrations.length,
-      running: migrations.filter(m => m.status === 'running' || m.status === 'reconciling').length,
-      completed: migrations.filter(m => m.status === 'completed' || m.status === 'verified').length,
-      failed: migrations.filter(m => m.status === 'failed').length,
-      cancelled: migrations.filter(m => m.status === 'cancelled').length,
-      recent: migrations.filter(m => {
-        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        return new Date(m.startTime) > oneDayAgo;
-      }).length
-    };
-
+    const stats = minioClient.getMigrationStats();
     res.json({ success: true, data: stats });
   } catch (error) {
     console.error('Error getting migration status:', error);

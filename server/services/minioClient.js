@@ -3,6 +3,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { broadcast } = require('./websocket');
+const database = require('./database');
 
 class MinioClientService {
   constructor() {
@@ -13,6 +14,9 @@ class MinioClientService {
     this.migrationsFile = path.join(this.logDir, 'migrations.json');
     this.ensureLogDirectory();
     this.loadMigrations();
+    
+    // Import existing JSON migrations to database on first run
+    this.importJSONMigrations();
   }
 
   detectMcPath() {
@@ -79,58 +83,63 @@ class MinioClientService {
 
   async loadMigrations() {
     try {
-      if (await fs.pathExists(this.migrationsFile)) {
-        const data = await fs.readJson(this.migrationsFile);
-        if (Array.isArray(data)) {
-          // Keep only migrations from the last 7 days and limit to 100 most recent
-          const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-          const recentMigrations = data
-            .filter(migration => new Date(migration.startTime) > oneWeekAgo)
-            .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
-            .slice(0, 100);
+      // Load all migrations from database
+      const migrations = database.getAllMigrations();
+      this.activeMigrations.clear();
+      
+      // Clean up stale running migrations (older than 10 minutes)
+      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+      let cleanedCount = 0;
+      
+      migrations.forEach(migration => {
+        // Mark old running migrations as failed if they're stuck
+        if ((migration.status === 'running' || migration.status === 'starting' || migration.status === 'reconciling') &&
+            new Date(migration.startTime) < tenMinutesAgo) {
+          migration.status = 'failed';
+          migration.progress = 0;
+          migration.endTime = migration.endTime || new Date().toISOString();
+          migration.errors = migration.errors || [];
+          migration.errors.push('Migration was terminated due to server restart or timeout');
           
-          // Clean up stale running migrations (older than 10 minutes)
-          const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-          let cleanedCount = 0;
-          
-          recentMigrations.forEach(migration => {
-            // Mark old running migrations as failed if they're stuck
-            if ((migration.status === 'running' || migration.status === 'starting' || migration.status === 'reconciling') &&
-                new Date(migration.startTime) < tenMinutesAgo) {
-              migration.status = 'failed';
-              migration.progress = 0;
-              migration.endTime = migration.endTime || new Date().toISOString();
-              migration.errors = migration.errors || [];
-              migration.errors.push('Migration was terminated due to server restart or timeout');
-              cleanedCount++;
-            }
-            this.activeMigrations.set(migration.id, migration);
+          // Update in database
+          database.updateMigration(migration.id, {
+            status: migration.status,
+            endTime: migration.endTime,
+            errors: migration.errors
           });
           
-          console.log(`Loaded ${recentMigrations.length} recent migrations from disk`);
-          if (cleanedCount > 0) {
-            console.log(`Cleaned up ${cleanedCount} stale running migrations`);
-            this.saveMigrations(); // Save the cleaned up data
-          }
-          
-          // If we filtered out old migrations, save the cleaned up list
-          if (recentMigrations.length < data.length) {
-            this.saveMigrations();
-          }
+          cleanedCount++;
         }
+        this.activeMigrations.set(migration.id, migration);
+      });
+      
+      console.log(`📊 Loaded ${migrations.length} migrations from database`);
+      if (cleanedCount > 0) {
+        console.log(`🧹 Cleaned up ${cleanedCount} stale running migrations`);
+      }
+      
+    } catch (error) {
+      console.error('Failed to load migrations from database:', error);
+    }
+  }
+
+  importJSONMigrations() {
+    try {
+      const imported = database.importFromJSON(this.migrationsFile);
+      if (imported > 0) {
+        console.log(`📥 Imported ${imported} existing migrations to database`);
+        // Optionally backup and remove JSON file after successful import
+        // fs.moveSync(this.migrationsFile, this.migrationsFile + '.backup');
       }
     } catch (error) {
-      console.error('Failed to load migrations:', error);
+      console.warn('Could not import JSON migrations:', error.message);
     }
   }
 
   async saveMigrations() {
-    try {
-      const migrations = Array.from(this.activeMigrations.values());
-      await fs.writeJson(this.migrationsFile, migrations, { spaces: 2 });
-    } catch (error) {
-      console.error('Failed to save migrations:', error);
-    }
+    // This method is kept for backward compatibility but migrations are now automatically saved to database
+    // No need to manually save to JSON file anymore
+    console.log('📊 Migrations are automatically persisted to database');
   }
 
   async checkMcInstallation() {
@@ -294,8 +303,12 @@ class MinioClientService {
 
     this.activeMigrations.set(migrationId, migration);
     
-    // Save migrations to disk for persistence
-    this.saveMigrations();
+    // Save migration to database
+    try {
+      database.insertMigration(migration);
+    } catch (error) {
+      console.error('Failed to save migration to database:', error);
+    }
 
     try {
       await this.executeMigration(migration);
@@ -620,8 +633,19 @@ class MinioClientService {
   }
 
   broadcastMigrationUpdate(migration) {
-    // Save migrations to disk for persistence
-    this.saveMigrations();
+    // Update migration in database
+    try {
+      database.updateMigration(migration.id, {
+        status: migration.status,
+        progress: migration.progress,
+        endTime: migration.endTime,
+        stats: migration.stats,
+        errors: migration.errors,
+        reconciliation: migration.reconciliation
+      });
+    } catch (error) {
+      console.error('Failed to update migration in database:', error);
+    }
     
     const updateData = {
       id: migration.id,
@@ -664,16 +688,32 @@ class MinioClientService {
   }
 
   async getMigrationLogs(migrationId) {
-    const migration = this.activeMigrations.get(migrationId);
+    // First try to get from database
+    try {
+      const dbLogs = database.getMigrationLogs(migrationId);
+      if (dbLogs && dbLogs.trim()) {
+        return dbLogs;
+      }
+    } catch (error) {
+      console.warn('Could not get logs from database:', error.message);
+    }
+
+    // Fallback to file-based logs
+    const migration = this.activeMigrations.get(migrationId) || database.getMigration(migrationId);
     if (!migration) {
       throw new Error('Migration not found');
+    }
+
+    if (!migration.logFile) {
+      return `No log file available for migration ${migrationId}`;
     }
 
     try {
       const logs = await fs.readFile(migration.logFile, 'utf8');
       return logs;
     } catch (error) {
-      throw new Error('Failed to read migration logs');
+      console.error('Error reading log file:', error);
+      return `Error reading logs: ${error.message}\n\nTip: Logs for this migration may not be available yet or the migration is still starting.`;
     }
   }
 
@@ -714,17 +754,51 @@ class MinioClientService {
   }
 
   getAllMigrations() {
-    return Array.from(this.activeMigrations.values()).map(migration => ({
-      id: migration.id,
-      config: migration.config,
-      status: migration.status,
-      progress: migration.progress,
-      startTime: migration.startTime,
-      endTime: migration.endTime,
-      stats: migration.stats,
-      errors: migration.errors,
-      reconciliation: migration.reconciliation
-    }));
+    try {
+      // Get fresh data from database to ensure consistency
+      return database.getAllMigrations();
+    } catch (error) {
+      console.error('Failed to get migrations from database:', error);
+      // Fallback to in-memory data
+      return Array.from(this.activeMigrations.values()).map(migration => ({
+        id: migration.id,
+        config: migration.config,
+        status: migration.status,
+        progress: migration.progress,
+        startTime: migration.startTime,
+        endTime: migration.endTime,
+        stats: migration.stats,
+        errors: migration.errors,
+        reconciliation: migration.reconciliation,
+        duration: migration.endTime ? 
+          (new Date(migration.endTime).getTime() - new Date(migration.startTime).getTime()) / 1000 : 
+          (new Date().getTime() - new Date(migration.startTime).getTime()) / 1000
+      }));
+    }
+  }
+
+  getMigrationStats() {
+    try {
+      return database.getMigrationStats();
+    } catch (error) {
+      console.error('Failed to get migration stats from database:', error);
+      // Fallback calculation
+      const migrations = Array.from(this.activeMigrations.values());
+      const total = migrations.length;
+      const completed = migrations.filter(m => m.status === 'completed' || m.status === 'verified').length;
+      const running = migrations.filter(m => m.status === 'running' || m.status === 'reconciling').length;
+      const failed = migrations.filter(m => m.status === 'failed').length;
+      
+      return {
+        total,
+        completed,
+        running,
+        failed,
+        cancelled: migrations.filter(m => m.status === 'cancelled').length,
+        completed_with_differences: migrations.filter(m => m.status === 'completed_with_differences').length,
+        success_rate: total > 0 ? ((completed / total) * 100) : 0
+      };
+    }
   }
 
   formatBytes(bytes) {

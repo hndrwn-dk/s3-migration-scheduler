@@ -177,7 +177,11 @@ export const migrationService = {
     completed: number;
     failed: number;
     cancelled: number;
-    recent: number;
+    completed_with_differences: number;
+    recent_activity: number;
+    total_data_transferred: number;
+    average_speed: number;
+    success_rate: number;
   }> => {
     const response = await api.get<ApiResponse<{
       total: number;
@@ -185,7 +189,11 @@ export const migrationService = {
       completed: number;
       failed: number;
       cancelled: number;
-      recent: number;
+      completed_with_differences: number;
+      recent_activity: number;
+      total_data_transferred: number;
+      average_speed: number;
+      success_rate: number;
     }>>('/migration/status');
     if (!response.data.success) {
       throw new Error(response.data.error || 'Failed to get system status');
