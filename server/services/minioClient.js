@@ -13,13 +13,9 @@ class MinioClientService {
     this.logDir = path.join(__dirname, '../logs');
     this.migrationsFile = path.join(this.logDir, 'migrations.json');
     this.ensureLogDirectory();
-    this.loadMigrations();
     
-    // Import existing JSON migrations to database on first run
-    this.importJSONMigrations();
-    
-    // Clean up any invalid migrations in the database
-    database.cleanupInvalidMigrations();
+    // Initialize migrations synchronously
+    this.initializeMigrations();
   }
 
   detectMcPath() {
@@ -84,10 +80,26 @@ class MinioClientService {
     }
   }
 
-  async loadMigrations() {
+  initializeMigrations() {
+    try {
+      // Import existing JSON migrations to database on first run
+      this.importJSONMigrations();
+      
+      // Clean up any invalid migrations in the database
+      database.cleanupInvalidMigrations();
+      
+      // Load all migrations from database synchronously
+      this.loadMigrationsSync();
+    } catch (error) {
+      console.error('Failed to initialize migrations:', error);
+    }
+  }
+
+  loadMigrationsSync() {
     try {
       // Load all migrations from database
       const migrations = database.getAllMigrations();
+      console.log(`🔄 loadMigrations: retrieved ${migrations.length} migrations from database`);
       this.activeMigrations.clear();
       
       // Clean up stale running migrations (older than 10 minutes)
@@ -116,7 +128,7 @@ class MinioClientService {
         this.activeMigrations.set(migration.id, migration);
       });
       
-      console.log(`📊 Loaded ${migrations.length} migrations from database`);
+      console.log(`📊 Loaded ${migrations.length} migrations from database, added ${this.activeMigrations.size} to activeMigrations`);
       if (cleanedCount > 0) {
         console.log(`🧹 Cleaned up ${cleanedCount} stale running migrations`);
       }
@@ -124,6 +136,11 @@ class MinioClientService {
     } catch (error) {
       console.error('Failed to load migrations from database:', error);
     }
+  }
+
+  // Async version for external calls
+  async loadMigrations() {
+    return this.loadMigrationsSync();
   }
 
   importJSONMigrations() {

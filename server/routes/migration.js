@@ -27,12 +27,14 @@ router.get('/stream', async (req, res) => {
   // Send initial migration data
   try {
     const migrations = minioClient.getAllMigrations();
+    console.log(`📡 SSE sending initial data: ${migrations.length} migrations to client ${clientId}`);
     res.write(`data: ${JSON.stringify({
       type: 'initial_data',
       data: migrations,
       timestamp: new Date().toISOString()
     })}\n\n`);
   } catch (error) {
+    console.error(`❌ SSE failed to load initial migration data for ${clientId}:`, error);
     res.write(`data: ${JSON.stringify({
       type: 'error',
       message: 'Failed to load initial migration data',
@@ -93,6 +95,8 @@ router.get('/stream', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const migrations = minioClient.getAllMigrations();
+    console.log(`📊 API getAllMigrations returning ${migrations.length} migrations`);
+    
     // Ensure all migrations have required fields
     const sanitizedMigrations = migrations.map(migration => ({
       id: migration.id || 'unknown',
@@ -109,6 +113,7 @@ router.get('/', async (req, res) => {
         migration.startTime ? (new Date().getTime() - new Date(migration.startTime).getTime()) / 1000 : 0
     }));
     
+    console.log(`📊 API returning ${sanitizedMigrations.length} sanitized migrations`);
     res.json({ success: true, data: sanitizedMigrations });
   } catch (error) {
     console.error('Error getting migrations:', error);

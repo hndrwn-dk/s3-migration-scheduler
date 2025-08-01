@@ -75,6 +75,7 @@ function App() {
       // Load existing migrations from API (SSE will provide initial data too)
       try {
         const existingMigrations = await migrationService.getAllMigrations();
+        console.log(`🔄 API loaded ${existingMigrations.length} migrations on refresh`);
         setMigrations(existingMigrations);
       } catch (error) {
         console.warn('Failed to load migrations from API, will wait for SSE initial data:', error);
@@ -130,7 +131,7 @@ function App() {
   };
 
   const handleInitialData = (migrations: Migration[]) => {
-    console.log('Received initial migration data from SSE:', migrations.length);
+    console.log(`📡 Received initial migration data from SSE: ${migrations.length} migrations`);
     setMigrations(migrations);
   };
 
