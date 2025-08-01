@@ -72,13 +72,20 @@ function App() {
       // Check server health
       await healthService.checkHealth();
       
-      // Load existing migrations from API (SSE will provide initial data too)
+      // Load existing migrations from API (primary method for refresh persistence)
       try {
         const existingMigrations = await migrationService.getAllMigrations();
         console.log(`🔄 API loaded ${existingMigrations.length} migrations on refresh`);
         setMigrations(existingMigrations);
+        
+        if (existingMigrations.length > 0) {
+          console.log('✅ Successfully restored migrations from database on refresh');
+        } else {
+          console.log('ℹ️  No existing migrations found in database');
+        }
       } catch (error) {
-        console.warn('Failed to load migrations from API, will wait for SSE initial data:', error);
+        console.error('❌ Failed to load migrations from API:', error);
+        toast.error('Failed to load existing migrations. Real-time updates will still work.');
       }
       
       toast.success('Connected to S3 Migration Dashboard');
