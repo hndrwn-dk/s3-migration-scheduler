@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   CheckCircleIcon,
   ClockIcon,
@@ -11,14 +11,66 @@ import {
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { format } from 'date-fns';
 import { Migration, TabType } from '../types';
+import { migrationService } from '../services/api';
 
 interface DashboardProps {
   migrations: Migration[];
   onTabChange?: (tab: TabType) => void;
 }
 
+interface SystemStats {
+  total: number;
+  completed: number;
+  running: number;
+  failed: number;
+  cancelled: number;
+  pending?: number;
+  recent_activity: number;
+  total_data_transferred: number;
+  average_speed: number;
+  success_rate: number;
+  completed_with_differences: number;
+}
+
 const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
+  const [systemStats, setSystemStats] = useState<SystemStats | null>(null);
+
+  // Load system stats from the database
+  useEffect(() => {
+    const loadSystemStats = async () => {
+      try {
+        const stats = await migrationService.getSystemStatus();
+        setSystemStats(stats);
+      } catch (error) {
+        console.error('Failed to load system stats:', error);
+      }
+    };
+
+    loadSystemStats();
+    // Refresh stats every 30 seconds
+    const interval = setInterval(loadSystemStats, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   const stats = useMemo(() => {
+    // Use system stats from database if available, otherwise calculate from current migrations
+    if (systemStats) {
+      return {
+        total: systemStats.total || 0,
+        completed: systemStats.completed || 0,
+        running: systemStats.running || 0,
+        failed: systemStats.failed || 0,
+        pending: systemStats.pending || 0,
+        recentActivity: systemStats.recent_activity || 0,
+        totalDataTransferred: systemStats.total_data_transferred || 0,
+        averageSpeed: systemStats.average_speed || 0,
+        successRate: systemStats.success_rate || 0,
+        completedWithDifferences: systemStats.completed_with_differences || 0
+      };
+    }
+
+    // Fallback calculation from current migrations data
     const total = migrations.length;
     const completed = migrations.filter(m => m.status === 'completed' || m.status === 'verified').length;
     const running = migrations.filter(m => m.status === 'running' || m.status === 'reconciling').length;
@@ -46,9 +98,10 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
       recentActivity,
       totalDataTransferred,
       averageSpeed,
-      successRate: total > 0 ? ((completed / total) * 100) : 0
+      successRate: total > 0 ? ((completed / total) * 100) : 0,
+      completedWithDifferences: migrations.filter(m => m.status === 'completed_with_differences').length
     };
-  }, [migrations]);
+  }, [migrations, systemStats]);
 
   const chartData = useMemo(() => {
     const last7Days = Array.from({ length: 7 }, (_, i) => {

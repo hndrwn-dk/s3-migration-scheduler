@@ -6,11 +6,13 @@ import {
   XCircleIcon,
   StopIcon,
   EyeIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 import { Migration } from '../types';
 import { migrationService } from '../services/api';
+import ReconciliationModal from './ReconciliationModal';
 
 interface HistoryTabProps {
   migrations: Migration[];
@@ -23,6 +25,8 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedMigration, setSelectedMigration] = useState<Migration | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [reconciliationModalOpen, setReconciliationModalOpen] = useState(false);
+  const [selectedReconciliation, setSelectedReconciliation] = useState<Migration | null>(null);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -90,6 +94,8 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
       case 'completed':
       case 'verified':
         return <CheckCircleIcon className="w-5 h-5 text-green-500" />;
+      case 'completed_with_differences':
+        return <CheckCircleIcon className="w-5 h-5 text-orange-500" />;
       case 'failed':
         return <XCircleIcon className="w-5 h-5 text-red-500" />;
       case 'running':
@@ -107,6 +113,8 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
       case 'completed':
       case 'verified':
         return 'bg-green-100 text-green-800';
+      case 'completed_with_differences':
+        return 'bg-orange-100 text-orange-800';
       case 'failed':
         return 'bg-red-100 text-red-800';
       case 'running':
@@ -117,6 +125,11 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
       default:
         return 'bg-yellow-100 text-yellow-800';
     }
+  };
+
+  const handleViewReconciliation = (migration: Migration) => {
+    setSelectedReconciliation(migration);
+    setReconciliationModalOpen(true);
   };
 
   const formatDuration = (seconds: number | undefined) => {
@@ -164,6 +177,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
                 <option value="all">All Statuses</option>
                 <option value="running">Running</option>
                 <option value="completed">Completed</option>
+                <option value="completed_with_differences">Completed with Differences</option>
                 <option value="failed">Failed</option>
                 <option value="cancelled">Cancelled</option>
                 <option value="verified">Verified</option>
@@ -293,13 +307,24 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
                         <button
                           onClick={() => setSelectedMigration(migration)}
                           className="text-blue-600 hover:text-blue-900"
+                          title="View details"
                         >
                           <EyeIcon className="w-4 h-4" />
                         </button>
+                        {migration.status === 'completed_with_differences' && migration.reconciliation && (
+                          <button
+                            onClick={() => handleViewReconciliation(migration)}
+                            className="text-orange-600 hover:text-orange-900"
+                            title="View reconciliation differences"
+                          >
+                            <ExclamationTriangleIcon className="w-4 h-4" />
+                          </button>
+                        )}
                         {(migration.status === 'running' || migration.status === 'reconciling') && (
                           <button
                             onClick={() => onCancel(migration.id)}
                             className="text-red-600 hover:text-red-900"
+                            title="Cancel migration"
                           >
                             <StopIcon className="w-4 h-4" />
                           </button>
@@ -554,6 +579,16 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
           </div>
         </div>
       )}
+
+      {/* Reconciliation Modal */}
+      <ReconciliationModal
+        migration={selectedReconciliation}
+        isOpen={reconciliationModalOpen}
+        onClose={() => {
+          setReconciliationModalOpen(false);
+          setSelectedReconciliation(null);
+        }}
+      />
     </div>
   );
 };

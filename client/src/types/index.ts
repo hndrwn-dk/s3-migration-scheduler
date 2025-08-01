@@ -66,9 +66,12 @@ export interface ReconciliationSummary {
 
 export interface Reconciliation {
   status: 'running' | 'completed' | 'failed';
-  startTime: string;
+  startTime?: string;
   endTime?: string;
   differences: ReconciliationDifference[];
+  missingFiles?: any[];
+  extraFiles?: any[];
+  sizeDifferences?: any[];
   error?: string;
   sourceStats?: BucketStats;
   destStats?: BucketStats;
