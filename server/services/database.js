@@ -7,6 +7,11 @@ class DatabaseService {
     this.dbPath = path.join(__dirname, '../data/migrations.db');
     this.ensureDataDirectory();
     this.db = new Database(this.dbPath);
+    
+    // Enable WAL mode for better concurrency
+    this.db.pragma('journal_mode = WAL');
+    this.db.pragma('synchronous = NORMAL');
+    
     this.initializeTables();
     console.log('📀 SQLite database initialized:', this.dbPath);
   }
@@ -87,25 +92,44 @@ class DatabaseService {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    const result = stmt.run(
-      migration.id,
-      migration.config.source,
-      migration.config.destination,
-      JSON.stringify(migration.config.options || {}),
-      migration.status,
-      migration.progress,
-      migration.startTime,
-      migration.logFile,
-      JSON.stringify(migration.errors || []),
-      migration.stats?.totalObjects || 0,
-      migration.stats?.transferredObjects || 0,
-      migration.stats?.totalSize || 0,
-      migration.stats?.transferredSize || 0,
-      migration.stats?.speed || 0
-    );
+    try {
+      const result = stmt.run(
+        migration.id,
+        migration.config.source,
+        migration.config.destination,
+        JSON.stringify(migration.config.options || {}),
+        migration.status,
+        migration.progress,
+        migration.startTime,
+        migration.logFile,
+        JSON.stringify(migration.errors || []),
+        migration.stats?.totalObjects || 0,
+        migration.stats?.transferredObjects || 0,
+        migration.stats?.totalSize || 0,
+        migration.stats?.transferredSize || 0,
+        migration.stats?.speed || 0
+      );
 
-    console.log(`✅ Migration inserted: ${migration.id}, source: ${migration.config.source}, dest: ${migration.config.destination}`);
-    return result;
+      // Verify insertion was successful
+      if (result.changes === 1) {
+        console.log(`✅ Migration inserted successfully: ${migration.id}, source: ${migration.config.source}, dest: ${migration.config.destination}`);
+        
+        // Double-check by reading it back
+        const verification = this.db.prepare('SELECT id FROM migrations WHERE id = ?').get(migration.id);
+        if (verification) {
+          console.log(`✅ Migration verified in database: ${migration.id}`);
+        } else {
+          console.error(`❌ Migration verification failed: ${migration.id} not found after insert`);
+        }
+      } else {
+        console.error(`❌ Migration insert failed: expected 1 change, got ${result.changes}`);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error(`❌ Database insert error for migration ${migration.id}:`, error);
+      throw error;
+    }
   }
 
   updateMigration(migrationId, updates) {
