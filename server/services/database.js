@@ -360,6 +360,20 @@ class DatabaseService {
     return 0;
   }
 
+  // Cleanup invalid migrations with null config
+  cleanupInvalidMigrations() {
+    const stmt = this.db.prepare(`
+      DELETE FROM migrations 
+      WHERE config_source IS NULL OR config_destination IS NULL OR config_source = '' OR config_destination = ''
+    `);
+    
+    const result = stmt.run();
+    if (result.changes > 0) {
+      console.log(`🧹 Cleaned up ${result.changes} invalid migrations with null/empty config`);
+    }
+    return result.changes;
+  }
+
   close() {
     if (this.db) {
       this.db.close();
