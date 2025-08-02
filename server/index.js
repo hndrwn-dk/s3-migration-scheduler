@@ -76,9 +76,9 @@ const wss = initializeWebSocket(server);
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Dashboard available at http://localhost:${PORT}`);
-  console.log(`🔌 WebSocket server initialized`);
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Dashboard available at http://localhost:${PORT}`);
+  console.log(`WebSocket server initialized`);
 });
 
 // Graceful shutdown
