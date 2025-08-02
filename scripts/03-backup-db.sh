@@ -3,7 +3,7 @@
 # S3 Management UI - Database Backup Script
 # Run this before git pull to preserve migration data
 
-echo "🗄️  S3 Management UI Database Backup"
+echo "S3 Management UI Database Backup"
 echo "=================================="
 
 DB_FILE="server/data/migrations.db"
