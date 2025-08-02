@@ -9,26 +9,7 @@ A comprehensive, enterprise-grade fullstack application for managing S3 bucket m
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)
 ![Real-time](https://img.shields.io/badge/Real--time-WebSocket%2BSSE-orange)
 
-## 🎯 **Current Status & Recent Improvements**
-
-### ✅ **Latest Features (v2.0.0)**
-- **🗄️ SQLite Database**: Persistent migration storage with ACID transactions
-- **📊 Accurate Statistics**: Real-time dashboard with database-driven metrics
-- **🔍 Reconciliation Tracking**: Detailed analysis of migration differences
-- **🔄 Dual Connectivity**: WebSocket + SSE fallback for reliable real-time updates
-- **📈 Enhanced Monitoring**: Comprehensive migration lifecycle tracking
-- **🎨 Improved UX**: Modern interface with detailed status indicators
-
-### 🔧 **Issues Recently Resolved**
-- ✅ Dashboard statistics now show accurate completion rates (no more 0% success)
-- ✅ Migration history persists across server restarts and page refreshes
-- ✅ "completed_with_differences" status includes detailed reconciliation reports
-- ✅ Consistent migration counts across all components
-- ✅ Real-time updates with automatic fallback mechanisms
-
 ## 📑 Table of Contents
-
-- [🎯 Current Status & Recent Improvements](#-current-status--recent-improvements)
 - [📸 Screenshots](#-screenshots)
 - [🚀 Quick Start](#-quick-start)
 - [📝 Complete Setup Guide](#-complete-setup-guide)
@@ -166,15 +147,16 @@ For detailed setup instructions, troubleshooting, and SQLite database informatio
 
 ### Migration Management
 - **Easy Configuration** - Simple setup for S3 endpoints (AWS S3, MinIO, etc.)
-- **Bucket Analysis** - Pre-migration analysis with size estimates and recommendations
+- **Bucket Analysis** - Pre and post-migration analysis with detailed file listings
 - **Advanced MinIO Options** - Enterprise-grade migration features:
   - **Checksum Verification** - CRC64NVME, CRC32, CRC32C, SHA1, SHA256 algorithms for data integrity
   - **Preserve Attributes** - Maintain file/object attributes and bucket policies/locking configurations
   - **Retry Mechanism** - Automatic retry on per-object basis for error handling
   - **Dry Run Mode** - Test migrations without actual file transfer
 - **Migration Options** - Support for overwrite, remove, and exclude patterns
-- **Data Reconciliation** - Automatic verification after migration completion
-- **Progress Tracking** - Real-time progress bars and transfer statistics
+- **Enhanced Reconciliation** - Detailed analysis with missing/extra files identification
+- **Comprehensive Logging** - Complete migration audit trail with bucket comparisons
+- **Progress Tracking** - Real-time statistics with accurate object and data counts
 
 ### User Experience
 - **Modern UI** - Clean, responsive interface built with React and Tailwind CSS
