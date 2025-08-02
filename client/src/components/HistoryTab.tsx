@@ -422,7 +422,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
               {/* Statistics */}
               <div>
                 <h4 className="text-sm font-medium text-gray-500 mb-3">Statistics</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-blue-50 p-3 rounded-lg">
                     <p className="text-xs font-medium text-blue-600">Objects Transferred</p>
                     <p className="text-lg font-bold text-blue-900">
@@ -433,12 +433,6 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
                     <p className="text-xs font-medium text-green-600">Data Transferred</p>
                     <p className="text-lg font-bold text-green-900">
                       {formatBytes(selectedMigration.stats.transferredSize)}
-                    </p>
-                  </div>
-                  <div className="bg-purple-50 p-3 rounded-lg">
-                    <p className="text-xs font-medium text-purple-600">Average Speed</p>
-                    <p className="text-lg font-bold text-purple-900">
-                      {formatBytes(selectedMigration.stats.speed)}/s
                     </p>
                   </div>
                   <div className="bg-gray-50 p-3 rounded-lg">

@@ -408,7 +408,6 @@ class MinioClientService {
     logStream.write(`Destination: ${destination}\n`);
     logStream.write(`Command: ${command}\n`);
     logStream.write(`Working directory: ${process.cwd()}\n`);
-    logStream.write(`PATH: ${process.env.PATH}\n`);
     logStream.write(`==========================================\n\n`);
 
     migration.status = 'running';
@@ -472,7 +471,6 @@ class MinioClientService {
       logStream.write(`Final Statistics:\n`);
       logStream.write(`  - Objects transferred: ${migration.stats.transferredObjects}/${migration.stats.totalObjects || 'unknown'}\n`);
       logStream.write(`  - Data transferred: ${this.formatBytes(migration.stats.transferredSize)}\n`);
-      logStream.write(`  - Average speed: ${this.formatBytes(migration.stats.speed)}/s\n`);
       logStream.write(`  - Progress: ${migration.progress.toFixed(1)}%\n`);
       logStream.write(`==========================================\n`);
       logStream.end();
@@ -571,8 +569,32 @@ class MinioClientService {
           const transferError = `[${timestamp}] ❌ ERROR: ${data.target || 'unknown file'} - ${data.error || 'Unknown error'}`;
           logStream.write(`${transferError}\n`);
           hasUpdate = true;
-        } else if (data.status === 'complete' || data.type === 'summary') {
+        } else if (data.status === 'success' && (data.total !== undefined || data.transferred !== undefined)) {
+          // This is a summary JSON output from mc mirror --json --summary
+          if (data.total !== undefined) {
+            migration.stats.totalSize = data.total;
+          }
+          if (data.transferred !== undefined) {
+            migration.stats.transferredSize = data.transferred;
+          }
+          if (data.speed !== undefined) {
+            migration.stats.speed = data.speed;
+          }
+          
           // Enhanced logging: Log migration summary
+          const timestamp = new Date().toISOString();
+          let summaryMsg = `[${timestamp}] 📊 MIGRATION SUMMARY: `;
+          
+          if (data.total !== undefined) summaryMsg += `Total: ${this.formatBytes(data.total || 0)}, `;
+          if (data.transferred !== undefined) summaryMsg += `Transferred: ${this.formatBytes(data.transferred || 0)}, `;
+          if (data.speed !== undefined) summaryMsg += `Speed: ${this.formatBytes(data.speed || 0)}/s, `;
+          if (data.duration !== undefined) summaryMsg += `Duration: ${(data.duration / 1000000000).toFixed(2)}s`;
+          
+          logStream.write(`${summaryMsg}\n`);
+          hasUpdate = true;
+          
+        } else if (data.status === 'complete' || data.type === 'summary') {
+          // Enhanced logging: Log other summary types
           const timestamp = new Date().toISOString();
           let summaryMsg = `[${timestamp}] 📊 SUMMARY: `;
           
@@ -936,19 +958,16 @@ class MinioClientService {
           let totalSize = 0;
           let objectCount = 0;
 
-          console.log(`📊 Processing ${lines.length} lines for ${bucketPath}`);
+          // console.log(`📊 Processing ${lines.length} lines for ${bucketPath}`);
 
           lines.forEach((line, index) => {
             try {
               const data = JSON.parse(line);
-              // Only count actual files (not directories)
-              if (data.type === 'file' || (data.size !== undefined && data.size > 0)) {
-                totalSize += data.size || 0;
-                objectCount++;
-                console.log(`📊 File ${index + 1}: ${data.key || data.name || 'unknown'} (${data.size || 0} bytes)`);
-              } else if (data.type === 'folder') {
-                console.log(`📁 Directory: ${data.key || data.name || 'unknown'} (skipped from count)`);
-              }
+                              // Only count actual files (not directories)
+                if (data.type === 'file' || (data.size !== undefined && data.size > 0)) {
+                  totalSize += data.size || 0;
+                  objectCount++;
+                }
             } catch (e) {
               console.warn(`📊 Skipping invalid JSON line in bucket stats: ${line}`);
             }
