@@ -14,7 +14,7 @@ function initializeWebSocket(server) {
       subscriptions: new Set()
     });
 
-    console.log(`📡 Client connected: ${clientId}`);
+    console.log(`Client connected: ${clientId}`);
 
     ws.on('message', (message) => {
       try {
