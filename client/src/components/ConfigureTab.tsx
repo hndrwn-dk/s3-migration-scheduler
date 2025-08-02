@@ -366,7 +366,7 @@ const ConfigureTab: React.FC = () => {
 
       {/* Troubleshooting Section */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-yellow-900 mb-3">🔧 Troubleshooting 400 Errors</h3>
+        <h3 className="text-lg font-semibold text-yellow-900 mb-3">Troubleshooting 400 Errors</h3>
         <div className="space-y-2 text-sm text-yellow-800">
           <p>• <strong>Invalid alias name:</strong> Use only letters, numbers, hyphens, and underscores (1-63 chars)</p>
           <p>• <strong>Invalid endpoint:</strong> Must start with http:// or https://</p>
@@ -378,7 +378,7 @@ const ConfigureTab: React.FC = () => {
 
       {/* Help Section */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-blue-900 mb-3">💡 MinIO Command Workflow</h3>
+        <h3 className="text-lg font-semibold text-blue-900 mb-3">MinIO Command Workflow</h3>
         <div className="space-y-3 text-sm text-blue-800">
           <div>
             <p><strong>Step 1 - Configure Aliases (This Page):</strong></p>

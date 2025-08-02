@@ -79,12 +79,12 @@ function App() {
         setMigrations(existingMigrations);
         
         if (existingMigrations.length > 0) {
-          console.log('✅ Successfully restored migrations from database on refresh');
+          console.log('Successfully restored migrations from database on refresh');
         } else {
-          console.log('ℹ️  No existing migrations found in database');
+          console.log('No existing migrations found in database');
         }
       } catch (error) {
-        console.error('❌ Failed to load migrations from API:', error);
+        console.error('Failed to load migrations from API:', error);
         toast.error('Failed to load existing migrations. Real-time updates will still work.');
       }
       
@@ -138,7 +138,7 @@ function App() {
   };
 
   const handleInitialData = (migrations: Migration[]) => {
-    console.log(`📡 Received initial migration data from SSE: ${migrations.length} migrations`);
+    console.log(`Received initial migration data from SSE: ${migrations.length} migrations`);
     setMigrations(migrations);
   };
 

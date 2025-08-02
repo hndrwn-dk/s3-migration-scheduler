@@ -29,13 +29,13 @@ class SSEService {
     }
 
     this.isConnecting = true;
-    console.log('🔌 Connecting to SSE:', this.url);
+    console.log('Connecting to SSE:', this.url);
 
     try {
       this.eventSource = new EventSource(this.url);
 
       this.eventSource.onopen = () => {
-        console.log('🔌 SSE connected');
+        console.log('SSE connected');
         this.isConnecting = false;
         this.reconnectAttempts = 0;
       };
@@ -50,7 +50,7 @@ class SSEService {
       };
 
       this.eventSource.onerror = (event) => {
-        console.error('🔌 SSE error:', event);
+        console.error('SSE error:', event);
         this.isConnecting = false;
         
         if (this.eventSource?.readyState === EventSource.CLOSED) {
@@ -59,7 +59,7 @@ class SSEService {
       };
 
     } catch (error) {
-      console.error('🔌 Failed to create SSE connection:', error);
+      console.error('Failed to create SSE connection:', error);
       this.isConnecting = false;
       this.scheduleReconnect();
     }
@@ -69,7 +69,7 @@ class SSEService {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.scheduleReconnect();
     } else {
-      console.error('🔌 SSE max reconnection attempts reached');
+      console.error('SSE max reconnection attempts reached');
       const errorHandler = this.messageHandlers.get('error');
       if (errorHandler) {
         errorHandler({ message: 'Connection lost and max reconnection attempts reached' });
@@ -96,11 +96,11 @@ class SSEService {
   }
 
   private handleMessage(message: SSEMessage) {
-    console.log('📨 SSE message received:', message.type);
+    console.log('SSE message received:', message.type);
     
     switch (message.type) {
       case 'connection':
-        console.log('✅ SSE connection established:', message.message);
+        console.log('SSE connection established:', message.message);
         break;
         
       case 'initial_data':
@@ -122,7 +122,7 @@ class SSEService {
         break;
         
       case 'error':
-        console.error('🔌 SSE error message:', message.message);
+        console.error('SSE error message:', message.message);
         const errorHandler = this.messageHandlers.get('error');
         if (errorHandler) {
           errorHandler(message);
@@ -130,7 +130,7 @@ class SSEService {
         break;
         
       default:
-        console.log('🔌 Unknown SSE message type:', message.type);
+        console.log('Unknown SSE message type:', message.type);
     }
   }
 
