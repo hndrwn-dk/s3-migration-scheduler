@@ -399,10 +399,17 @@ class MinioClientService {
     
     // Create log file
     const logStream = fs.createWriteStream(migration.logFile, { flags: 'a' });
-    logStream.write(`Migration started at ${new Date().toISOString()}\n`);
+    logStream.write(`==========================================\n`);
+    logStream.write(`🚀 S3 MIGRATION STARTED\n`);
+    logStream.write(`==========================================\n`);
+    logStream.write(`Migration ID: ${migrationId}\n`);
+    logStream.write(`Started at: ${new Date().toISOString()}\n`);
+    logStream.write(`Source: ${source}\n`);
+    logStream.write(`Destination: ${destination}\n`);
     logStream.write(`Command: ${command}\n`);
     logStream.write(`Working directory: ${process.cwd()}\n`);
-    logStream.write(`PATH: ${process.env.PATH}\n\n`);
+    logStream.write(`PATH: ${process.env.PATH}\n`);
+    logStream.write(`==========================================\n\n`);
 
     migration.status = 'running';
     this.broadcastMigrationUpdate(migration);
@@ -431,7 +438,9 @@ class MinioClientService {
       const output = data.toString();
       console.log('MC STDOUT:', JSON.stringify(output)); // Use JSON.stringify to see exact chars
       logStream.write(`STDOUT: ${output}`);
-      this.parseProgress(migration, output);
+      
+      // Enhanced logging: extract and log detailed file transfer information
+      this.parseAndLogProgress(migration, output, logStream);
     });
 
     childProcess.stderr.on('data', (data) => {
@@ -440,18 +449,32 @@ class MinioClientService {
       logStream.write(`STDERR: ${error}`);
       migration.errors.push(error);
       // Some MinIO progress might come through stderr, try parsing it too
-      this.parseProgress(migration, error);
+      this.parseAndLogProgress(migration, error, logStream);
       this.broadcastMigrationUpdate(migration);
     });
 
     childProcess.on('spawn', () => {
       console.log('MinIO process spawned successfully');
-      logStream.write('Process spawned successfully\n');
+      const timestamp = new Date().toISOString();
+      logStream.write(`[${timestamp}] ✅ PROCESS: MinIO migration process spawned successfully\n\n`);
+      logStream.write(`📋 TRANSFER LOG (Real-time file transfers will appear below):\n`);
+      logStream.write(`${'='.repeat(60)}\n\n`);
     });
 
     childProcess.on('close', (code) => {
-      logStream.write(`\nMigration finished at ${new Date().toISOString()}\n`);
+      logStream.write(`\n==========================================\n`);
+      logStream.write(`🏁 MIGRATION COMPLETED\n`);
+      logStream.write(`==========================================\n`);
+      logStream.write(`Migration ID: ${migrationId}\n`);
+      logStream.write(`Finished at: ${new Date().toISOString()}\n`);
       logStream.write(`Exit code: ${code}\n`);
+      logStream.write(`Status: ${code === 0 ? 'SUCCESS' : 'FAILED'}\n`);
+      logStream.write(`Final Statistics:\n`);
+      logStream.write(`  - Objects transferred: ${migration.stats.transferredObjects}/${migration.stats.totalObjects || 'unknown'}\n`);
+      logStream.write(`  - Data transferred: ${this.formatBytes(migration.stats.transferredSize)}\n`);
+      logStream.write(`  - Average speed: ${this.formatBytes(migration.stats.speed)}/s\n`);
+      logStream.write(`  - Progress: ${migration.progress.toFixed(1)}%\n`);
+      logStream.write(`==========================================\n`);
       logStream.end();
 
       migration.status = code === 0 ? 'completed' : 'failed';
@@ -469,13 +492,22 @@ class MinioClientService {
 
     childProcess.on('error', (error) => {
       console.error('MinIO process spawn error:', error);
+      const timestamp = new Date().toISOString();
+      logStream.write(`\n[${timestamp}] ❌ PROCESS ERROR: ${error.message}\n`);
+      logStream.write(`==========================================\n`);
+      logStream.write(`🚫 MIGRATION FAILED\n`);
+      logStream.write(`==========================================\n`);
+      logStream.write(`Migration ID: ${migrationId}\n`);
+      logStream.write(`Failed at: ${new Date().toISOString()}\n`);
+      logStream.write(`Error: ${error.message}\n`);
+      logStream.write(`Error code: ${error.code || 'UNKNOWN'}\n`);
+      logStream.write(`Error path: ${error.path || 'UNKNOWN'}\n`);
+      logStream.write(`==========================================\n`);
+      logStream.end();
+      
       migration.status = 'failed';
       migration.errors.push(`Process spawn error: ${error.message} (${error.code || 'UNKNOWN'})`);
       migration.endTime = new Date().toISOString();
-      logStream.write(`PROCESS ERROR: ${error.message}\n`);
-      logStream.write(`Error code: ${error.code || 'UNKNOWN'}\n`);
-      logStream.write(`Error path: ${error.path || 'UNKNOWN'}\n`);
-      logStream.end();
       this.broadcastMigrationUpdate(migration);
     });
   }
@@ -501,8 +533,8 @@ class MinioClientService {
     return commandArgs;
   }
 
-  parseProgress(migration, output) {
-    // Parse mc mirror output for progress information
+  parseAndLogProgress(migration, output, logStream) {
+    // Parse mc mirror output for progress information AND log detailed transfer info
     const lines = output.split('\n');
     let hasUpdate = false;
     
@@ -522,10 +554,34 @@ class MinioClientService {
             migration.stats.transferredSize += data.size;
           }
           hasUpdate = true;
+          
+          // Enhanced logging: Log detailed file transfer information
+          const timestamp = new Date().toISOString();
+          const sizeStr = data.size ? this.formatBytes(data.size) : 'unknown size';
+          const transferMsg = `[${timestamp}] ✅ TRANSFERRED: ${data.target} (${sizeStr})`;
           console.log(`📁 File transferred: ${data.target} (${data.size || 0} bytes)`);
+          logStream.write(`${transferMsg}\n`);
+          
         } else if (data.status === 'error') {
-          migration.errors.push(`Transfer error: ${data.error || 'Unknown error'}`);
+          const errorMsg = `Transfer error: ${data.error || 'Unknown error'}`;
+          migration.errors.push(errorMsg);
+          
+          // Enhanced logging: Log transfer errors
+          const timestamp = new Date().toISOString();
+          const transferError = `[${timestamp}] ❌ ERROR: ${data.target || 'unknown file'} - ${data.error || 'Unknown error'}`;
+          logStream.write(`${transferError}\n`);
           hasUpdate = true;
+        } else if (data.status === 'complete' || data.type === 'summary') {
+          // Enhanced logging: Log migration summary
+          const timestamp = new Date().toISOString();
+          let summaryMsg = `[${timestamp}] 📊 SUMMARY: `;
+          
+          if (data.total !== undefined) summaryMsg += `Total: ${this.formatBytes(data.total || 0)}, `;
+          if (data.transferred !== undefined) summaryMsg += `Transferred: ${this.formatBytes(data.transferred || 0)}, `;
+          if (data.speed !== undefined) summaryMsg += `Speed: ${this.formatBytes(data.speed || 0)}/s, `;
+          if (data.duration !== undefined) summaryMsg += `Duration: ${(data.duration / 1000000000).toFixed(2)}s`;
+          
+          logStream.write(`${summaryMsg}\n`);
         }
         return; // Successfully parsed JSON, skip text parsing
       } catch (e) {
@@ -541,6 +597,10 @@ class MinioClientService {
         if (objectsMatch) {
           migration.stats.totalObjects = parseInt(objectsMatch[1]);
           console.log(`📊 Total objects detected: ${migration.stats.totalObjects}`);
+          
+          // Enhanced logging: Log detected totals
+          const timestamp = new Date().toISOString();
+          logStream.write(`[${timestamp}] 📋 DETECTED: ${migration.stats.totalObjects} total objects\n`);
           hasUpdate = true;
         }
         
@@ -550,6 +610,10 @@ class MinioClientService {
           const bytes = this.convertToBytes(size, unit);
           migration.stats.totalSize = bytes;
           console.log(`📊 Total size detected: ${bytes} bytes (${size} ${unit})`);
+          
+          // Enhanced logging: Log detected size
+          const timestamp = new Date().toISOString();
+          logStream.write(`[${timestamp}] 📋 DETECTED: ${this.formatBytes(bytes)} total size\n`);
           hasUpdate = true;
         }
       }
@@ -572,6 +636,10 @@ class MinioClientService {
           migration.stats.transferredSize = bytes;
           hasUpdate = true;
         }
+        
+        // Enhanced logging: Log transfer progress
+        const timestamp = new Date().toISOString();
+        logStream.write(`[${timestamp}] 📈 PROGRESS: ${migration.stats.transferredObjects}/${migration.stats.totalObjects || '?'} objects, ${this.formatBytes(migration.stats.transferredSize)} transferred\n`);
       }
 
       // Parse speed information
@@ -582,6 +650,10 @@ class MinioClientService {
         const bytesPerSecond = this.convertToBytes(speed, unit);
         migration.stats.speed = bytesPerSecond;
         console.log(`⚡ Speed detected: ${bytesPerSecond} bytes/s (${speed} ${unit}/s)`);
+        
+        // Enhanced logging: Log current speed
+        const timestamp = new Date().toISOString();
+        logStream.write(`[${timestamp}] ⚡ SPEED: ${this.formatBytes(bytesPerSecond)}/s\n`);
         hasUpdate = true;
       }
 
@@ -593,6 +665,10 @@ class MinioClientService {
           trimmedLine.match(/\.(txt|jpg|png|pdf|zip|doc|xlsx):/)) {
         migration.stats.transferredObjects++;
         console.log(`📁 Legacy transfer detected: object ${migration.stats.transferredObjects}`);
+        
+        // Enhanced logging: Log legacy transfer detection
+        const timestamp = new Date().toISOString();
+        logStream.write(`[${timestamp}] 📁 TRANSFER: Object ${migration.stats.transferredObjects} (detected from: ${trimmedLine.substring(0, 100)}...)\n`);
         hasUpdate = true;
       }
 
@@ -615,6 +691,11 @@ class MinioClientService {
     }
   }
 
+  // Keep the original parseProgress method for backward compatibility (used by reconciliation)
+  parseProgress(migration, output) {
+    this.parseAndLogProgress(migration, output, { write: () => {} }); // No-op log stream
+  }
+
   // Helper method to convert size units to bytes
   convertToBytes(size, unit) {
     const units = {
@@ -631,6 +712,17 @@ class MinioClientService {
     return Math.round(size * (units[unit] || 1));
   }
 
+  // Helper method to format bytes as human readable string
+  formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
   async startReconciliation(migration) {
     migration.status = 'reconciling';
     migration.reconciliation = {
@@ -640,6 +732,25 @@ class MinioClientService {
     };
 
     this.broadcastMigrationUpdate(migration);
+
+    // Log reconciliation start
+    if (migration.logFile) {
+      try {
+        const logStream = fs.createWriteStream(migration.logFile, { flags: 'a' });
+        const timestamp = new Date().toISOString();
+        logStream.write(`\n==========================================\n`);
+        logStream.write(`🔍 DATA RECONCILIATION STARTED\n`);
+        logStream.write(`==========================================\n`);
+        logStream.write(`Migration ID: ${migration.id}\n`);
+        logStream.write(`Started at: ${timestamp}\n`);
+        logStream.write(`Source: ${migration.config.source}\n`);
+        logStream.write(`Destination: ${migration.config.destination}\n`);
+        logStream.write(`==========================================\n\n`);
+        logStream.end();
+      } catch (error) {
+        console.warn('Could not write reconciliation start to log file:', error.message);
+      }
+    }
 
     try {
       const reconciliationResult = await this.performReconciliation(migration.config.source, migration.config.destination);
@@ -695,6 +806,67 @@ class MinioClientService {
       
       console.log(`🔍 Reconciliation completed: ${totalDifferences} differences found`);
       console.log(`📊 Missing: ${migration.reconciliation.missingFiles.length}, Extra: ${migration.reconciliation.extraFiles.length}, Size: ${migration.reconciliation.sizeDifferences.length}`);
+      
+      // Log reconciliation completion
+      if (migration.logFile) {
+        try {
+          const logStream = fs.createWriteStream(migration.logFile, { flags: 'a' });
+          const timestamp = new Date().toISOString();
+          logStream.write(`\n==========================================\n`);
+          logStream.write(`🔍 DATA RECONCILIATION COMPLETED\n`);
+          logStream.write(`==========================================\n`);
+          logStream.write(`Migration ID: ${migration.id}\n`);
+          logStream.write(`Completed at: ${timestamp}\n`);
+          logStream.write(`Status: ${migration.status}\n`);
+          logStream.write(`Total differences found: ${totalDifferences}\n\n`);
+          
+          if (totalDifferences > 0) {
+            logStream.write(`📊 DIFFERENCE BREAKDOWN:\n`);
+            logStream.write(`  - Missing files (in destination): ${migration.reconciliation.missingFiles.length}\n`);
+            logStream.write(`  - Extra files (only in destination): ${migration.reconciliation.extraFiles.length}\n`);
+            logStream.write(`  - Size differences: ${migration.reconciliation.sizeDifferences.length}\n\n`);
+            
+            // Log detailed differences
+            if (migration.reconciliation.missingFiles.length > 0) {
+              logStream.write(`📁 MISSING FILES:\n`);
+              migration.reconciliation.missingFiles.forEach((diff, index) => {
+                logStream.write(`  ${index + 1}. ${diff.path || diff.key || 'unknown'}\n`);
+              });
+              logStream.write(`\n`);
+            }
+            
+            if (migration.reconciliation.extraFiles.length > 0) {
+              logStream.write(`📁 EXTRA FILES:\n`);
+              migration.reconciliation.extraFiles.forEach((diff, index) => {
+                logStream.write(`  ${index + 1}. ${diff.path || diff.key || 'unknown'}\n`);
+              });
+              logStream.write(`\n`);
+            }
+            
+            if (migration.reconciliation.sizeDifferences.length > 0) {
+              logStream.write(`📏 SIZE DIFFERENCES:\n`);
+              migration.reconciliation.sizeDifferences.forEach((diff, index) => {
+                logStream.write(`  ${index + 1}. ${diff.path || diff.key || 'unknown'} (${diff.type || 'size-differs'})\n`);
+              });
+              logStream.write(`\n`);
+            }
+          } else {
+            logStream.write(`✅ PERFECT MATCH: All files transferred successfully with no differences!\n\n`);
+          }
+          
+          logStream.write(`📊 FINAL BUCKET STATISTICS:\n`);
+          if (reconciliationResult.sourceStats) {
+            logStream.write(`  Source: ${reconciliationResult.sourceStats.objectCount} objects, ${this.formatBytes(reconciliationResult.sourceStats.totalSize)}\n`);
+          }
+          if (reconciliationResult.destStats) {
+            logStream.write(`  Destination: ${reconciliationResult.destStats.objectCount} objects, ${this.formatBytes(reconciliationResult.destStats.totalSize)}\n`);
+          }
+          logStream.write(`==========================================\n`);
+          logStream.end();
+        } catch (error) {
+          console.warn('Could not write reconciliation completion to log file:', error.message);
+        }
+      }
       
     } catch (error) {
       migration.reconciliation.status = 'failed';
