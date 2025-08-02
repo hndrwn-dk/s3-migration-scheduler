@@ -1,7 +1,7 @@
 {
-  "name": "s3-migration-dashboard",
+  "name": "s3-management-ui",
   "version": "1.0.0",
-  "description": "Fullstack S3 bucket migration dashboard with MinIO client",
+  "description": "Fullstack S3 Management UI with migration capabilities and MinIO client",
   "main": "server/index.js",
   "scripts": {
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
