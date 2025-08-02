@@ -14,7 +14,7 @@ The SQLite database (`server/data/migrations.db`) contains all your migration hi
 ### Step 1: Backup Your Database
 ```bash
 # Run this BEFORE git pull
-./scripts/backup-db.sh
+./scripts/03-backup-db.sh
 ```
 
 ### Step 2: Update the Code
@@ -31,7 +31,7 @@ cd client && npm install && cd ..
 ### Step 3: Restore Your Database (if needed)
 ```bash
 # If database was lost or you want to restore from backup
-./scripts/restore-db.sh
+./scripts/04-restore-db.sh
 ```
 
 ### Step 4: Start the Application
@@ -49,7 +49,7 @@ npm run dev
 ### Step 1: Backup Your Database
 ```batch
 REM Run this BEFORE git pull
-scripts\backup-db.bat
+scripts\03-backup-db.bat
 ```
 
 ### Step 2: Update the Code
@@ -64,7 +64,7 @@ scripts\01-fix-dependencies.bat
 ### Step 3: Restore Your Database (if needed)
 ```batch
 REM If database was lost or you want to restore from backup
-scripts\restore-db.bat
+scripts\04-restore-db.bat
 ```
 
 ### Step 4: Start the Application
@@ -129,10 +129,10 @@ Your data is still there! Just restart the application.
 2. If backups exist, restore the latest:
    ```bash
    # Linux/MacOS
-   ./scripts/restore-db.sh
+   ./scripts/04-restore-db.sh
    
    # Windows
-   scripts\restore-db.bat
+   scripts\04-restore-db.bat
    ```
 
 ---
@@ -145,8 +145,8 @@ Your data is still there! Just restart the application.
 ### Issue: "Permission denied" (Linux/MacOS)
 **Solution**: Make scripts executable:
 ```bash
-chmod +x scripts/backup-db.sh
-chmod +x scripts/restore-db.sh
+chmod +x scripts/03-backup-db.sh
+chmod +x scripts/04-restore-db.sh
 ```
 
 ### Issue: Database restored but no migrations showing
@@ -183,7 +183,7 @@ chmod +x scripts/restore-db.sh
 
 1. **Always backup before updates**:
    ```bash
-   ./scripts/backup-db.sh && git pull
+   ./scripts/03-backup-db.sh && git pull
    ```
 
 2. **Regular backups**: Run backup script periodically to save important migration data
