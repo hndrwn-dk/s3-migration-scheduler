@@ -9,7 +9,14 @@ A comprehensive, enterprise-grade fullstack application for managing S3 bucket m
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)
 ![Real-time](https://img.shields.io/badge/Real--time-WebSocket%2BSSE-orange)
 
+## ☕ Support Me
+
+If you find this project helpful, you can support me here:
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-yellow?style=for-the-badge&logo=buymeacoffee&logoColor=white)](https://buymeacoffee.com/hendrawan)
+
 ## 📑 Table of Contents
+- [☕ Support Me](#-support-me)
 - [📸 Screenshots](#-screenshots)
 - [🚀 Quick Start](#-quick-start)
 - [📝 Complete Setup Guide](#-complete-setup-guide)
@@ -22,9 +29,6 @@ A comprehensive, enterprise-grade fullstack application for managing S3 bucket m
 - [🏗️ Architecture](#️-architecture)
 - [📚 API Reference](#-api-reference)
 - [🔧 Development](#-development)
-- [📊 Performance](#-performance)
-- [🔒 Security](#-security)
-- [☕ Support Me](#-support-me)
 - [📄 License](#-license)
 
 ## 📸 Screenshots
@@ -65,14 +69,7 @@ A comprehensive, enterprise-grade fullstack application for managing S3 bucket m
 ![Log Viewer](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/log-viewer.svg?raw=true)
 > 📝 **Logs Tab** - Live log streaming with filtering, highlighting, and export capabilities.
 
-> **📷 Note**: The screenshots above are placeholders. To add actual UI screenshots, run the application and use:
-> ```bash
-> # Generate screenshot guidelines
-> ./scripts/generate-screenshots.sh
-> 
-> # Enable screenshots in README (after taking them)
-> ./scripts/enable-screenshots.sh
-> ```
+
 
 ## 🚀 Quick Start
 
@@ -865,45 +862,7 @@ npm run format
 4. Push to branch: `git push origin feature/new-feature`
 5. Submit a pull request
 
-## 📊 Performance
 
-### Optimization Tips
-
-1. **Concurrent Transfers**: Adjust `MAX_CONCURRENT_MIGRATIONS` in environment
-2. **Network Bandwidth**: Monitor network usage during large migrations
-3. **Memory Usage**: Large file lists may require additional memory
-4. **Disk Space**: Ensure sufficient space for log files
-
-### Monitoring
-
-- **WebSocket Connections**: Monitor active connections in production
-- **Memory Usage**: Track Node.js memory consumption
-- **Log Rotation**: Implement log rotation for large deployments
-
-## 🔒 Security
-
-### Best Practices
-
-1. **Credentials**: Store S3 credentials securely (not in source code)
-2. **Network**: Use HTTPS for all endpoints
-3. **Access Control**: Implement proper authentication/authorization
-4. **Logs**: Avoid logging sensitive information
-5. **Updates**: Keep dependencies updated
-
-### Production Checklist
-
-- [ ] Change default ports if needed
-- [ ] Set up SSL/TLS certificates
-- [ ] Configure firewall rules
-- [ ] Set up monitoring and alerting
-- [ ] Implement log rotation
-- [ ] Configure backup procedures
-
-## ☕ Support Me
-
-If you find this project helpful, you can support me here:
-
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-yellow?style=for-the-badge&logo=buymeacoffee&logoColor=white)](https://buymeacoffee.com/hendrawan)
 
 ## 📝 License
 
