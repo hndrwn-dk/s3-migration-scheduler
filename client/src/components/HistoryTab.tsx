@@ -68,6 +68,12 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
     }
     
     if (filter === 'all') return true;
+    
+    // Group 'completed' and 'verified' under the 'completed' filter
+    if (filter === 'completed') {
+      return migration.status === 'completed' || migration.status === 'verified';
+    }
+    
     return migration.status === filter;
   });
 
@@ -180,7 +186,6 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
                 <option value="completed_with_differences">Completed with Differences</option>
                 <option value="failed">Failed</option>
                 <option value="cancelled">Cancelled</option>
-                <option value="verified">Verified</option>
               </select>
             </div>
 
