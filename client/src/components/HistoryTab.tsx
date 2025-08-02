@@ -476,10 +476,10 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
                         {selectedMigration.reconciliation.status}
                       </span>
                       {selectedMigration.reconciliation.differences && selectedMigration.reconciliation.differences.length === 0 ? (
-                        <span className="text-sm text-green-600">✓ No differences found</span>
+                        <span className="text-sm text-green-600">No differences found</span>
                       ) : selectedMigration.reconciliation.differences ? (
                         <span className="text-sm text-yellow-600">
-                          ⚠ {selectedMigration.reconciliation.differences.length} differences found
+                          Warning: {selectedMigration.reconciliation.differences.length} differences found
                         </span>
                       ) : null}
                     </div>
@@ -522,13 +522,13 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
                         <div className="flex justify-between items-center">
                           <span>Object Count Match:</span>
                           <span className={selectedMigration.reconciliation.summary.objectCountMatch ? 'text-green-600' : 'text-red-600'}>
-                            {selectedMigration.reconciliation.summary.objectCountMatch ? '✓ Yes' : '✗ No'}
+                            {selectedMigration.reconciliation.summary.objectCountMatch ? 'Yes' : 'No'}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span>Total Size Match:</span>
                           <span className={selectedMigration.reconciliation.summary.totalSizeMatch ? 'text-green-600' : 'text-red-600'}>
-                            {selectedMigration.reconciliation.summary.totalSizeMatch ? '✓ Yes' : '✗ No'}
+                            {selectedMigration.reconciliation.summary.totalSizeMatch ? 'Yes' : 'No'}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
@@ -543,8 +543,8 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
                             {selectedMigration.reconciliation.summary.objectCountMatch && 
                              selectedMigration.reconciliation.summary.totalSizeMatch && 
                              !selectedMigration.reconciliation.summary.differencesFound 
-                               ? '✅ Migration Verified' 
-                               : '⚠ Needs Review'}
+                               ? 'Migration Verified'
+                        : 'Needs Review'}
                           </span>
                         </div>
                       </div>

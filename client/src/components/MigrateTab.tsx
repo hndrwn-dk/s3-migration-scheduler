@@ -208,7 +208,7 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
         <h2 className="text-3xl font-bold text-gray-900">Start Migration</h2>
         <p className="text-gray-600 mt-2">Select specific buckets from your configured aliases and start migration</p>
         <p className="text-sm text-gray-500 mt-1">
-          💡 Aliases are configured on the <strong>Configure</strong> tab. Here you select specific buckets: <code>alias/bucket-name</code>
+          Tip: Aliases are configured on the <strong>Configure</strong> tab. Here you select specific buckets: <code>alias/bucket-name</code>
         </p>
       </div>
 
@@ -539,7 +539,7 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
         {/* Command Preview */}
         {formData.sourceAlias && formData.sourceBucket && formData.destinationAlias && formData.destinationBucket && (
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-gray-900 mb-2">📋 MinIO Command Preview</h3>
+            <h3 className="text-sm font-medium text-gray-900 mb-2">MinIO Command Preview</h3>
             <div className="bg-gray-900 text-green-400 p-3 rounded font-mono text-sm overflow-x-auto">
               <div className="mb-2 text-gray-400"># This command will be executed:</div>
               <div>

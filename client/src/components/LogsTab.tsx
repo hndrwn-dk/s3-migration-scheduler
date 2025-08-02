@@ -68,7 +68,7 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
           `This process may take a moment for large buckets.\n` +
           `Please wait and try refreshing in 10-15 seconds.`;
       } else if (errorMessage.includes('timeout') || errorMessage.includes('408')) {
-        userFriendlyMessage = `⏰ Request timeout while generating comprehensive logs\n\n` +
+        userFriendlyMessage = `Request timeout while generating comprehensive logs\n\n` +
           `The system is generating detailed bucket analysis which includes:\n` +
           `• Complete file listings for source and destination buckets\n` +
           `• Object count and size summaries\n` +
@@ -76,14 +76,14 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
           `For large buckets, this may take longer.\n` +
           `Try again or check back in a few minutes.`;
       } else if (errorMessage.includes('not found')) {
-        userFriendlyMessage = `📋 Migration not found or logs not yet available\n\n` +
+        userFriendlyMessage = `Migration not found or logs not yet available\n\n` +
           `This could mean:\n` +
           `• Migration is still starting\n` +
           `• Migration hasn't been saved to database yet\n` +
           `• Migration ID is invalid\n\n` +
           `Try refreshing the page or selecting the migration again.`;
       } else {
-        userFriendlyMessage = `❌ Error loading comprehensive logs: ${errorMessage}\n\n` +
+        userFriendlyMessage = `Error loading comprehensive logs: ${errorMessage}\n\n` +
           `This might be because:\n` +
           `• The migration is still starting\n` +
           `• MinIO client is not accessible\n` +
@@ -434,7 +434,7 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
 
       {/* Log Tips */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-blue-900 mb-3">💡 Log Viewing Tips</h3>
+        <h3 className="text-lg font-semibold text-blue-900 mb-3">Log Viewing Tips</h3>
         <div className="space-y-2 text-sm text-blue-800">
           <p>• <strong>Real-time Updates:</strong> Logs for active migrations refresh automatically every 2 seconds</p>
           <p>• <strong>Filtering:</strong> Use the filter dropdown to show only errors, warnings, or all log entries</p>

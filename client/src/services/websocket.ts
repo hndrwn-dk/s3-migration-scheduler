@@ -24,7 +24,7 @@ class WebSocketService {
       this.ws = new WebSocket(wsUrl);
       
       this.ws.onopen = () => {
-        console.log('🔌 WebSocket connected');
+        console.log('WebSocket connected');
         this.isConnecting = false;
         this.reconnectAttempts = 0;
         
@@ -45,7 +45,7 @@ class WebSocketService {
       };
 
       this.ws.onclose = (event) => {
-        console.log('🔌 WebSocket disconnected:', event.code, event.reason);
+        console.log('WebSocket disconnected:', event.code, event.reason);
         this.isConnecting = false;
         this.ws = null;
         
@@ -60,12 +60,12 @@ class WebSocketService {
       };
 
       this.ws.onerror = (error) => {
-        console.error('🔌 WebSocket error:', error);
+        console.error('WebSocket error:', error);
         this.isConnecting = false;
       };
 
     } catch (error) {
-      console.error('🔌 Failed to create WebSocket connection:', error);
+      console.error('Failed to create WebSocket connection:', error);
       this.isConnecting = false;
     }
   }
@@ -82,16 +82,16 @@ class WebSocketService {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
     } else {
-      console.warn('🔌 WebSocket not connected, cannot send message:', message);
+      console.warn('WebSocket not connected, cannot send message:', message);
     }
   }
 
   private handleMessage(message: WebSocketMessage) {
-    console.log('📨 WebSocket message received:', message.type);
+    console.log('WebSocket message received:', message.type);
     
     switch (message.type) {
       case 'connection':
-        console.log('✅ WebSocket connection established:', message.message);
+        console.log('WebSocket connection established:', message.message);
         break;
         
       case 'migration_update':
@@ -102,7 +102,7 @@ class WebSocketService {
         break;
         
       case 'error':
-        console.error('🔌 WebSocket error message:', message.message);
+        console.error('WebSocket error message:', message.message);
         const errorHandler = this.messageHandlers.get('error');
         if (errorHandler) {
           errorHandler(message);
@@ -110,7 +110,7 @@ class WebSocketService {
         break;
         
       default:
-        console.log('🔌 Unknown WebSocket message type:', message.type);
+        console.log('Unknown WebSocket message type:', message.type);
     }
   }
 
