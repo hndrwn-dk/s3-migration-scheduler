@@ -27,14 +27,14 @@ router.get('/stream', async (req, res) => {
   // Send initial migration data
   try {
     const migrations = minioClient.getAllMigrations();
-    console.log(`📡 SSE sending initial data: ${migrations.length} migrations to client ${clientId}`);
+    console.log(`SSE sending initial data: ${migrations.length} migrations to client ${clientId}`);
     res.write(`data: ${JSON.stringify({
       type: 'initial_data',
       data: migrations,
       timestamp: new Date().toISOString()
     })}\n\n`);
   } catch (error) {
-    console.error(`❌ SSE failed to load initial migration data for ${clientId}:`, error);
+    console.error(`SSE failed to load initial migration data for ${clientId}:`, error);
     res.write(`data: ${JSON.stringify({
       type: 'error',
       message: 'Failed to load initial migration data',
@@ -95,7 +95,7 @@ router.get('/stream', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const migrations = minioClient.getAllMigrations();
-    console.log(`📊 API getAllMigrations returning ${migrations.length} migrations`);
+    console.log(`API getAllMigrations returning ${migrations.length} migrations`);
     
     // Ensure all migrations have required fields
     const sanitizedMigrations = migrations.map(migration => ({
@@ -113,7 +113,7 @@ router.get('/', async (req, res) => {
         migration.startTime ? (new Date().getTime() - new Date(migration.startTime).getTime()) / 1000 : 0
     }));
     
-    console.log(`📊 API returning ${sanitizedMigrations.length} sanitized migrations`);
+    console.log(`API returning ${sanitizedMigrations.length} sanitized migrations`);
     res.json({ success: true, data: sanitizedMigrations });
   } catch (error) {
     console.error('Error getting migrations:', error);
@@ -176,7 +176,7 @@ router.get('/:id', async (req, res) => {
 router.get('/:id/logs', async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`📋 Logs requested for migration: ${id}`);
+    console.log(`Logs requested for migration: ${id}`);
     
     // Add timeout to prevent hanging requests
     const timeout = setTimeout(() => {
@@ -196,7 +196,7 @@ router.get('/:id/logs', async (req, res) => {
       res.json({ success: true, data: { logs } });
     }
   } catch (error) {
-    console.error(`📋 Error getting logs for ${req.params.id}:`, error.message);
+    console.error(`Error getting logs for ${req.params.id}:`, error.message);
     if (!res.headersSent) {
       res.status(500).json({ success: false, error: error.message });
     }

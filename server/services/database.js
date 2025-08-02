@@ -13,7 +13,7 @@ class DatabaseService {
     this.db.pragma('synchronous = NORMAL');
     
     this.initializeTables();
-    console.log('📀 SQLite database initialized:', this.dbPath);
+    console.log('SQLite database initialized:', this.dbPath);
   }
 
   ensureDataDirectory() {
@@ -72,14 +72,14 @@ class DatabaseService {
       CREATE INDEX IF NOT EXISTS idx_migration_logs_timestamp ON migration_logs(timestamp);
     `);
 
-    console.log('📊 Database tables initialized successfully');
+    console.log('Database tables initialized successfully');
   }
 
   // Migration CRUD operations
   insertMigration(migration) {
     // Validate migration config before insertion
     if (!migration.config || !migration.config.source || !migration.config.destination) {
-      console.error('❌ Invalid migration config:', migration);
+      console.error('Invalid migration config:', migration);
       throw new Error('Migration config must have source and destination');
     }
 
@@ -112,22 +112,22 @@ class DatabaseService {
 
       // Verify insertion was successful
       if (result.changes === 1) {
-        console.log(`✅ Migration inserted successfully: ${migration.id}, source: ${migration.config.source}, dest: ${migration.config.destination}`);
+        console.log(`Migration inserted successfully: ${migration.id}, source: ${migration.config.source}, dest: ${migration.config.destination}`);
         
         // Double-check by reading it back
         const verification = this.db.prepare('SELECT id FROM migrations WHERE id = ?').get(migration.id);
         if (verification) {
-          console.log(`✅ Migration verified in database: ${migration.id}`);
+          console.log(`Migration verified in database: ${migration.id}`);
         } else {
-          console.error(`❌ Migration verification failed: ${migration.id} not found after insert`);
+          console.error(`Migration verification failed: ${migration.id} not found after insert`);
         }
       } else {
-        console.error(`❌ Migration insert failed: expected 1 change, got ${result.changes}`);
+        console.error(`Migration insert failed: expected 1 change, got ${result.changes}`);
       }
       
       return result;
     } catch (error) {
-      console.error(`❌ Database insert error for migration ${migration.id}:`, error);
+      console.error(`Database insert error for migration ${migration.id}:`, error);
       throw error;
     }
   }
@@ -212,9 +212,9 @@ class DatabaseService {
     `);
     
     const rows = stmt.all(limit);
-    console.log(`🗄️  Database getAllMigrations: found ${rows.length} rows`);
+    console.log(`Database getAllMigrations: found ${rows.length} rows`);
     const formatted = rows.map(row => this.formatMigrationRow(row));
-    console.log(`🗄️  Database getAllMigrations: returning ${formatted.length} formatted migrations`);
+    console.log(`Database getAllMigrations: returning ${formatted.length} formatted migrations`);
     return formatted;
   }
 
@@ -317,7 +317,7 @@ class DatabaseService {
     const logResult = logsStmt.run(cutoffTime);
     const migrationResult = migrationsStmt.run(cutoffTime);
     
-    console.log(`🧹 Cleaned up ${migrationResult.changes} old migrations and ${logResult.changes} log entries`);
+    console.log(`Cleaned up ${migrationResult.changes} old migrations and ${logResult.changes} log entries`);
     return { migrations: migrationResult.changes, logs: logResult.changes };
   }
 
@@ -325,7 +325,7 @@ class DatabaseService {
   formatMigrationRow(row) {
     // Debug logging for null values
     if (!row.config_source || !row.config_destination) {
-      console.warn(`⚠️  Migration ${row.id} has null config: source=${row.config_source}, dest=${row.config_destination}`);
+      console.warn(`Migration ${row.id} has null config: source=${row.config_source}, dest=${row.config_destination}`);
     }
 
     return {
@@ -377,7 +377,7 @@ class DatabaseService {
               console.warn(`Skipping migration ${migration.id}:`, error.message);
             }
           });
-          console.log(`📥 Imported ${imported} migrations from JSON file`);
+          console.log(`Imported ${imported} migrations from JSON file`);
           return imported;
         }
       }
@@ -396,7 +396,7 @@ class DatabaseService {
     
     const result = stmt.run();
     if (result.changes > 0) {
-      console.log(`🧹 Cleaned up ${result.changes} invalid migrations with null/empty config`);
+      console.log(`Cleaned up ${result.changes} invalid migrations with null/empty config`);
     }
     return result.changes;
   }
@@ -404,7 +404,7 @@ class DatabaseService {
   close() {
     if (this.db) {
       this.db.close();
-      console.log('📀 Database connection closed');
+      console.log('Database connection closed');
     }
   }
 }
