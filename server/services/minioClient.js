@@ -402,7 +402,7 @@ class MinioClientService {
     logStream.write(`==========================================\n`);
     logStream.write(`🚀 S3 MIGRATION STARTED\n`);
     logStream.write(`==========================================\n`);
-    logStream.write(`Migration ID: ${migrationId}\n`);
+    logStream.write(`Migration ID: ${migration.id}\n`);
     logStream.write(`Started at: ${new Date().toISOString()}\n`);
     logStream.write(`Source: ${source}\n`);
     logStream.write(`Destination: ${destination}\n`);
@@ -465,7 +465,7 @@ class MinioClientService {
       logStream.write(`\n==========================================\n`);
       logStream.write(`🏁 MIGRATION COMPLETED\n`);
       logStream.write(`==========================================\n`);
-      logStream.write(`Migration ID: ${migrationId}\n`);
+      logStream.write(`Migration ID: ${migration.id}\n`);
       logStream.write(`Finished at: ${new Date().toISOString()}\n`);
       logStream.write(`Exit code: ${code}\n`);
       logStream.write(`Status: ${code === 0 ? 'SUCCESS' : 'FAILED'}\n`);
@@ -497,7 +497,7 @@ class MinioClientService {
       logStream.write(`==========================================\n`);
       logStream.write(`🚫 MIGRATION FAILED\n`);
       logStream.write(`==========================================\n`);
-      logStream.write(`Migration ID: ${migrationId}\n`);
+      logStream.write(`Migration ID: ${migration.id}\n`);
       logStream.write(`Failed at: ${new Date().toISOString()}\n`);
       logStream.write(`Error: ${error.message}\n`);
       logStream.write(`Error code: ${error.code || 'UNKNOWN'}\n`);
