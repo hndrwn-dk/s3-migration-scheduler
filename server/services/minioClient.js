@@ -1077,33 +1077,186 @@ class MinioClientService {
   }
 
   async getMigrationLogs(migrationId) {
-    // First try to get from database
-    try {
-      const dbLogs = database.getMigrationLogs(migrationId);
-      if (dbLogs && dbLogs.trim()) {
-        return dbLogs;
-      }
-    } catch (error) {
-      console.warn('Could not get logs from database:', error.message);
-    }
-
-    // Fallback to file-based logs
+    console.log(`📋 Getting logs for migration: ${migrationId}`);
+    
+    // Get migration info
     const migration = this.activeMigrations.get(migrationId) || database.getMigration(migrationId);
     if (!migration) {
       throw new Error('Migration not found');
     }
 
-    if (!migration.logFile) {
-      return `No log file available for migration ${migrationId}`;
+    let logs = '';
+
+    // 1. First try to get migration logs from database or file
+    try {
+      const dbLogs = database.getMigrationLogs(migrationId);
+      if (dbLogs && dbLogs.trim()) {
+        logs = dbLogs;
+      } else if (migration.logFile) {
+        logs = await fs.readFile(migration.logFile, 'utf8');
+      } else {
+        logs = `No migration log file available for migration ${migrationId}`;
+      }
+    } catch (error) {
+      console.warn('Could not get migration logs:', error.message);
+      logs = `Error reading migration logs: ${error.message}`;
     }
 
-    try {
-      const logs = await fs.readFile(migration.logFile, 'utf8');
-      return logs;
-    } catch (error) {
-      console.error('Error reading log file:', error);
-      return `Error reading logs: ${error.message}\n\nTip: Logs for this migration may not be available yet or the migration is still starting.`;
+    // 2. Add bucket comparison section
+    logs += `\n\n${'='.repeat(80)}\n`;
+    logs += `📊 BUCKET COMPARISON & ANALYSIS\n`;
+    logs += `${'='.repeat(80)}\n`;
+    logs += `Migration ID: ${migrationId}\n`;
+    logs += `Generated at: ${new Date().toISOString()}\n`;
+    logs += `Source: ${migration.config?.source || 'Unknown'}\n`;
+    logs += `Destination: ${migration.config?.destination || 'Unknown'}\n`;
+    logs += `${'='.repeat(80)}\n\n`;
+
+    // 3. Get source bucket listing
+    if (migration.config?.source) {
+      try {
+        logs += `📁 SOURCE BUCKET ANALYSIS (${migration.config.source})\n`;
+        logs += `${'─'.repeat(60)}\n`;
+        const sourceListing = await this.getBucketListing(migration.config.source);
+        logs += sourceListing;
+        logs += `\n`;
+      } catch (error) {
+        console.warn('Could not get source bucket listing:', error.message);
+        logs += `❌ Error getting source bucket listing: ${error.message}\n\n`;
+      }
     }
+
+    // 4. Get destination bucket listing
+    if (migration.config?.destination) {
+      try {
+        logs += `📁 DESTINATION BUCKET ANALYSIS (${migration.config.destination})\n`;
+        logs += `${'─'.repeat(60)}\n`;
+        const destListing = await this.getBucketListing(migration.config.destination);
+        logs += destListing;
+        logs += `\n`;
+      } catch (error) {
+        console.warn('Could not get destination bucket listing:', error.message);
+        logs += `❌ Error getting destination bucket listing: ${error.message}\n\n`;
+      }
+    }
+
+    // 5. Add analysis section
+    logs += `📊 BUCKET COMPARISON SUMMARY\n`;
+    logs += `${'─'.repeat(60)}\n`;
+    logs += `This section helps identify:\n`;
+    logs += `• Missing files: Objects in source but not in destination\n`;
+    logs += `• Extra files: Objects in destination but not in source\n`;
+    logs += `• Size differences: Objects with different sizes\n`;
+    logs += `• Total object count and size comparison\n\n`;
+    
+    if (migration.reconciliation) {
+      logs += `🔍 RECONCILIATION RESULTS:\n`;
+      logs += `• Status: ${migration.status}\n`;
+      logs += `• Missing files: ${migration.reconciliation.missingFiles?.length || 0}\n`;
+      logs += `• Extra files: ${migration.reconciliation.extraFiles?.length || 0}\n`;
+      logs += `• Size differences: ${migration.reconciliation.sizeDifferences?.length || 0}\n`;
+      logs += `• Total differences: ${migration.reconciliation.differences?.length || 0}\n\n`;
+    }
+
+    logs += `${'='.repeat(80)}\n`;
+    logs += `📋 END OF COMPREHENSIVE MIGRATION LOG\n`;
+    logs += `${'='.repeat(80)}\n`;
+
+    return logs;
+  }
+
+  async getBucketListing(bucketPath) {
+    return new Promise((resolve, reject) => {
+      const command = `${this.quoteMcPath()} ls ${bucketPath} --recursive --summarize`;
+      console.log(`📊 Getting bucket listing: ${command}`);
+      
+      exec(command, { maxBuffer: 1024 * 1024 * 10 }, (error, stdout, stderr) => {
+        if (error) {
+          console.log(`📊 Bucket listing error for ${bucketPath}:`, error.message);
+          // Don't reject, return error message instead
+          resolve(`❌ Error listing bucket: ${error.message}\n` +
+                  `Command: ${command}\n` +
+                  `This might indicate:\n` +
+                  `• Bucket doesn't exist\n` +
+                  `• Access permission issues\n` +
+                  `• Network connectivity problems\n` +
+                  `• MinIO client configuration issues\n\n`);
+          return;
+        }
+
+        if (stderr && stderr.trim()) {
+          console.log(`📊 Bucket listing stderr for ${bucketPath}:`, stderr);
+        }
+
+        try {
+          if (!stdout || stdout.trim() === '') {
+            resolve(`📂 Bucket is empty: ${bucketPath}\n` +
+                   `Total: 0 objects, 0 B\n\n`);
+            return;
+          }
+
+          let listing = `📂 Bucket: ${bucketPath}\n`;
+          listing += `Command: ${command}\n`;
+          listing += `Generated: ${new Date().toISOString()}\n\n`;
+
+          // Parse the output to extract file listings and summary
+          const lines = stdout.split('\n');
+          let fileCount = 0;
+          let totalSize = 0;
+          let summaryFound = false;
+          
+          listing += `📋 FILE LISTING:\n`;
+          listing += `${'─'.repeat(40)}\n`;
+
+          lines.forEach(line => {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) return;
+
+            // Check for summary line (usually at the end)
+            if (trimmedLine.includes('Total:') || trimmedLine.includes('objects')) {
+              listing += `\n📊 SUMMARY:\n`;
+              listing += `${trimmedLine}\n`;
+              summaryFound = true;
+              
+              // Extract numbers from summary for our own tracking
+              const objectMatch = trimmedLine.match(/(\d+)\s+objects?/i);
+              const sizeMatch = trimmedLine.match(/(\d+(?:\.\d+)?)\s*([KMGT]?B)/i);
+              
+              if (objectMatch) {
+                fileCount = parseInt(objectMatch[1]);
+              }
+              if (sizeMatch) {
+                const size = parseFloat(sizeMatch[1]);
+                const unit = sizeMatch[2];
+                totalSize = this.convertToBytes(size, unit);
+              }
+            } else {
+              // Regular file listing line
+              if (trimmedLine.length > 0 && !trimmedLine.startsWith('[') && 
+                  !trimmedLine.startsWith('mc:') && !trimmedLine.includes('WARNING')) {
+                listing += `${trimmedLine}\n`;
+                if (!summaryFound) fileCount++;
+              }
+            }
+          });
+
+          // Add our own summary if not found in output
+          if (!summaryFound) {
+            listing += `\n📊 ANALYSIS:\n`;
+            listing += `Files detected: ${fileCount}\n`;
+            listing += `Total size: ${this.formatBytes(totalSize)} (estimated)\n`;
+          }
+
+          listing += `\n`;
+          resolve(listing);
+
+        } catch (parseError) {
+          console.error(`📊 Parse error in getBucketListing:`, parseError);
+          resolve(`❌ Error parsing bucket listing: ${parseError.message}\n` +
+                  `Raw output:\n${stdout}\n\n`);
+        }
+      });
+    });
   }
 
   async cancelMigration(migrationId) {

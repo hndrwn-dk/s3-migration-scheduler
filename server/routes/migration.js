@@ -176,10 +176,30 @@ router.get('/:id', async (req, res) => {
 router.get('/:id/logs', async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(`📋 Logs requested for migration: ${id}`);
+    
+    // Add timeout to prevent hanging requests
+    const timeout = setTimeout(() => {
+      if (!res.headersSent) {
+        res.status(408).json({ 
+          success: false, 
+          error: 'Request timeout while generating comprehensive logs. Please try again.' 
+        });
+      }
+    }, 30000); // 30 second timeout
+
     const logs = await minioClient.getMigrationLogs(id);
-    res.json({ success: true, data: { logs } });
+    
+    clearTimeout(timeout);
+    
+    if (!res.headersSent) {
+      res.json({ success: true, data: { logs } });
+    }
   } catch (error) {
-    res.status(404).json({ success: false, error: error.message });
+    console.error(`📋 Error getting logs for ${req.params.id}:`, error.message);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, error: error.message });
+    }
   }
 });
 

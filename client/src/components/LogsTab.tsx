@@ -54,13 +54,58 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      if (errorMessage.includes('not found')) {
-        setLogs('Migration not found or logs not yet available.');
+      console.error('Error loading logs:', error);
+      
+      let userFriendlyMessage = '';
+      
+      if (errorMessage.includes('429')) {
+        userFriendlyMessage = `⏳ Server is busy generating comprehensive logs...\n\n` +
+          `The system is currently:\n` +
+          `• Reading migration logs\n` +
+          `• Analyzing source bucket (mc ls --recursive --summarize)\n` +
+          `• Analyzing destination bucket (mc ls --recursive --summarize)\n` +
+          `• Generating reconciliation comparison\n\n` +
+          `This process may take a moment for large buckets.\n` +
+          `Please wait and try refreshing in 10-15 seconds.`;
+      } else if (errorMessage.includes('timeout') || errorMessage.includes('408')) {
+        userFriendlyMessage = `⏰ Request timeout while generating comprehensive logs\n\n` +
+          `The system is generating detailed bucket analysis which includes:\n` +
+          `• Complete file listings for source and destination buckets\n` +
+          `• Object count and size summaries\n` +
+          `• Migration reconciliation results\n\n` +
+          `For large buckets, this may take longer.\n` +
+          `Try again or check back in a few minutes.`;
+      } else if (errorMessage.includes('not found')) {
+        userFriendlyMessage = `📋 Migration not found or logs not yet available\n\n` +
+          `This could mean:\n` +
+          `• Migration is still starting\n` +
+          `• Migration hasn't been saved to database yet\n` +
+          `• Migration ID is invalid\n\n` +
+          `Try refreshing the page or selecting the migration again.`;
       } else {
-        setLogs(`Error loading logs: ${errorMessage}\n\nThis might be because:\n- The migration is still starting\n- The migration logs haven't been generated yet\n- There was a connection issue\n\nTry refreshing in a few moments.`);
+        userFriendlyMessage = `❌ Error loading comprehensive logs: ${errorMessage}\n\n` +
+          `This might be because:\n` +
+          `• The migration is still starting\n` +
+          `• MinIO client is not accessible\n` +
+          `• Network connectivity issues\n` +
+          `• Bucket access permission problems\n\n` +
+          `The enhanced logs include bucket analysis which requires:\n` +
+          `• Access to source bucket\n` +
+          `• Access to destination bucket\n` +
+          `• MinIO client (mc) functionality\n\n` +
+          `Try refreshing in a few moments or check MinIO configuration.`;
       }
+      
+      setLogs(userFriendlyMessage);
+      
       if (showToast) {
-        toast.error(`Failed to load logs: ${errorMessage}`);
+        if (errorMessage.includes('429')) {
+          toast.info('Server is busy generating logs. Please wait...');
+        } else if (errorMessage.includes('timeout')) {
+          toast.warning('Request timeout. Large buckets take longer to analyze.');
+        } else {
+          toast.error(`Failed to load logs: ${errorMessage}`);
+        }
       }
     } finally {
       setLoading(false);
