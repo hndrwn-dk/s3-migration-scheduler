@@ -445,29 +445,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
                 </div>
               </div>
 
-              {/* Options */}
-              <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-2">Configuration</h4>
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <div className="flex flex-wrap gap-2">
-                    {selectedMigration.config.options.overwrite && (
-                      <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                        Overwrite enabled
-                      </span>
-                    )}
-                    {selectedMigration.config.options.remove && (
-                      <span className="inline-flex items-center px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-                        Remove enabled
-                      </span>
-                    )}
-                    {selectedMigration.config.options.exclude.length > 0 && (
-                      <span className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">
-                        {selectedMigration.config.options.exclude.length} exclusion patterns
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
+
 
               {/* Errors */}
               {selectedMigration.errors.length > 0 && (

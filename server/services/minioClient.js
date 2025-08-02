@@ -510,50 +510,125 @@ class MinioClientService {
       const trimmedLine = line.trim();
       if (!trimmedLine) return;
       
-      console.log('Parsing line:', trimmedLine);
+      console.log('📋 Parsing line:', trimmedLine);
+
+      // Try to parse JSON output first (mc mirror --json)
+      try {
+        const data = JSON.parse(trimmedLine);
+        if (data.status === 'success' && data.target) {
+          // File successfully transferred
+          migration.stats.transferredObjects++;
+          if (data.size) {
+            migration.stats.transferredSize += data.size;
+          }
+          hasUpdate = true;
+          console.log(`📁 File transferred: ${data.target} (${data.size || 0} bytes)`);
+        } else if (data.status === 'error') {
+          migration.errors.push(`Transfer error: ${data.error || 'Unknown error'}`);
+          hasUpdate = true;
+        }
+        return; // Successfully parsed JSON, skip text parsing
+      } catch (e) {
+        // Not JSON, continue with text parsing
+      }
       
-      // Look for various MinIO output patterns
-      if (trimmedLine.includes('Total:') || trimmedLine.includes('total objects')) {
-        const totalMatch = trimmedLine.match(/(\d+)/);
-        if (totalMatch) {
-          migration.stats.totalObjects = parseInt(totalMatch[1]);
+      // Parse summary output patterns
+      if (trimmedLine.includes('Total:') && trimmedLine.includes('Objects:')) {
+        // Format: "Total: 1.2 GB, Objects: 150"
+        const objectsMatch = trimmedLine.match(/Objects:\s*(\d+)/);
+        const sizeMatch = trimmedLine.match(/Total:\s*([\d.]+)\s*([KMGT]?B)/);
+        
+        if (objectsMatch) {
+          migration.stats.totalObjects = parseInt(objectsMatch[1]);
+          console.log(`📊 Total objects detected: ${migration.stats.totalObjects}`);
+          hasUpdate = true;
+        }
+        
+        if (sizeMatch) {
+          const size = parseFloat(sizeMatch[1]);
+          const unit = sizeMatch[2];
+          const bytes = this.convertToBytes(size, unit);
+          migration.stats.totalSize = bytes;
+          console.log(`📊 Total size detected: ${bytes} bytes (${size} ${unit})`);
           hasUpdate = true;
         }
       }
-      
-      // Look for transfer speed patterns
-      if (trimmedLine.includes('B/s') || trimmedLine.includes('KB/s') || trimmedLine.includes('MB/s')) {
-        const match = trimmedLine.match(/(\d+(?:\.\d+)?)\s*([KMGT]?B)\/s/);
-        if (match) {
-          migration.stats.speed = this.parseSize(match[1] + match[2]);
+
+      // Parse transferred information  
+      if (trimmedLine.includes('Transferred:') && trimmedLine.includes('Objects:')) {
+        // Format: "Transferred: 800 MB, Objects: 120"
+        const objectsMatch = trimmedLine.match(/Objects:\s*(\d+)/);
+        const sizeMatch = trimmedLine.match(/Transferred:\s*([\d.]+)\s*([KMGT]?B)/);
+        
+        if (objectsMatch) {
+          migration.stats.transferredObjects = parseInt(objectsMatch[1]);
+          hasUpdate = true;
+        }
+        
+        if (sizeMatch) {
+          const size = parseFloat(sizeMatch[1]);
+          const unit = sizeMatch[2];
+          const bytes = this.convertToBytes(size, unit);
+          migration.stats.transferredSize = bytes;
           hasUpdate = true;
         }
       }
-      
-      // Count transferred objects (various patterns including new MinIO format)
+
+      // Parse speed information
+      const speedMatch = trimmedLine.match(/([\d.]+)\s*([KMGT]?B)\/s/);
+      if (speedMatch) {
+        const speed = parseFloat(speedMatch[1]);
+        const unit = speedMatch[2];
+        const bytesPerSecond = this.convertToBytes(speed, unit);
+        migration.stats.speed = bytesPerSecond;
+        console.log(`⚡ Speed detected: ${bytesPerSecond} bytes/s (${speed} ${unit}/s)`);
+        hasUpdate = true;
+      }
+
+      // Legacy file transfer detection (fallback for older mc versions)
       if (trimmedLine.includes('->') || 
           trimmedLine.includes('copied') || 
           trimmedLine.includes('COPY') ||
           trimmedLine.includes('PUT') ||
-          trimmedLine.match(/\.txt:|\.jpg:|\.png:|\.pdf:|\.zip:/) || // File transfer lines
-          trimmedLine.includes('[=') || // Progress bar
-          trimmedLine.includes('KiB /') || trimmedLine.includes('MiB /') || trimmedLine.includes('GiB /')) {
+          trimmedLine.match(/\.(txt|jpg|png|pdf|zip|doc|xlsx):/)) {
         migration.stats.transferredObjects++;
-        migration.progress = Math.min(95, (migration.stats.transferredObjects / Math.max(1, migration.stats.totalObjects || 1)) * 100);
+        console.log(`📁 Legacy transfer detected: object ${migration.stats.transferredObjects}`);
         hasUpdate = true;
-        console.log(`Progress update: ${migration.stats.transferredObjects}/${migration.stats.totalObjects || 'unknown'} (${migration.progress.toFixed(1)}%)`);
       }
-      
-      // Any activity means we're making progress
-      if (trimmedLine.length > 0) {
+
+      // Calculate progress
+      if (migration.stats.totalObjects > 0) {
+        migration.progress = Math.min(95, (migration.stats.transferredObjects / migration.stats.totalObjects) * 100);
+      } else if (migration.stats.transferredObjects > 0) {
+        migration.progress = Math.min(95, Math.max(migration.progress, 25)); // At least 25% if transferring
+      } else if (trimmedLine.length > 0) {
         migration.progress = Math.max(migration.progress, 5); // At least 5% if we have output
-        hasUpdate = true;
+      }
+
+      if (hasUpdate) {
+        console.log(`📊 Stats update: ${migration.stats.transferredObjects}/${migration.stats.totalObjects || 'unknown'} objects, ${migration.stats.transferredSize} bytes transferred, ${migration.stats.speed} B/s (${migration.progress.toFixed(1)}%)`);
       }
     });
 
     if (hasUpdate) {
       this.broadcastMigrationUpdate(migration);
     }
+  }
+
+  // Helper method to convert size units to bytes
+  convertToBytes(size, unit) {
+    const units = {
+      'B': 1,
+      'KB': 1024,
+      'MB': 1024 * 1024,
+      'GB': 1024 * 1024 * 1024,
+      'TB': 1024 * 1024 * 1024 * 1024,
+      'KiB': 1024,
+      'MiB': 1024 * 1024,
+      'GiB': 1024 * 1024 * 1024,
+      'TiB': 1024 * 1024 * 1024 * 1024
+    };
+    return Math.round(size * (units[unit] || 1));
   }
 
   async startReconciliation(migration) {
@@ -604,6 +679,19 @@ class MinioClientService {
       
       const totalDifferences = reconciliationResult.differences.length;
       migration.status = totalDifferences === 0 ? 'verified' : 'completed_with_differences';
+      
+      // Update final statistics from reconciliation
+      if (reconciliationResult.sourceStats && migration.stats.totalObjects === 0) {
+        migration.stats.totalObjects = reconciliationResult.sourceStats.objectCount;
+        migration.stats.totalSize = reconciliationResult.sourceStats.totalSize;
+        console.log(`📊 Updated total stats from reconciliation: ${migration.stats.totalObjects} objects, ${migration.stats.totalSize} bytes`);
+      }
+      
+      if (reconciliationResult.destStats && migration.stats.transferredObjects === 0) {
+        migration.stats.transferredObjects = reconciliationResult.destStats.objectCount;
+        migration.stats.transferredSize = reconciliationResult.destStats.totalSize;
+        console.log(`📊 Updated transferred stats from reconciliation: ${migration.stats.transferredObjects} objects, ${migration.stats.transferredSize} bytes`);
+      }
       
       console.log(`🔍 Reconciliation completed: ${totalDifferences} differences found`);
       console.log(`📊 Missing: ${migration.reconciliation.missingFiles.length}, Extra: ${migration.reconciliation.extraFiles.length}, Size: ${migration.reconciliation.sizeDifferences.length}`);
