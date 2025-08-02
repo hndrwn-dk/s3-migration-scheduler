@@ -164,7 +164,7 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
     m.config && m.id && (m.status === 'running' || m.status === 'reconciling' || m.status === 'starting')
   );
   const completedMigrations = migrations.filter(m => 
-    m.config && m.id && (m.status === 'completed' || m.status === 'failed' || m.status === 'cancelled' || m.status === 'verified')
+    m.config && m.id && (m.status === 'completed' || m.status === 'failed' || m.status === 'cancelled' || m.status === 'verified' || m.status === 'completed_with_differences')
   );
 
   return (

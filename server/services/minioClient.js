@@ -567,12 +567,46 @@ class MinioClientService {
     this.broadcastMigrationUpdate(migration);
 
     try {
-      const differences = await this.performReconciliation(migration.config.source, migration.config.destination);
+      const reconciliationResult = await this.performReconciliation(migration.config.source, migration.config.destination);
       
       migration.reconciliation.status = 'completed';
       migration.reconciliation.endTime = new Date().toISOString();
-      migration.reconciliation.differences = differences;
-      migration.status = differences.length === 0 ? 'verified' : 'completed_with_differences';
+      
+      // Properly structure the reconciliation data
+      migration.reconciliation.differences = reconciliationResult.differences || [];
+      migration.reconciliation.sourceStats = reconciliationResult.sourceStats;
+      migration.reconciliation.destStats = reconciliationResult.destStats;
+      migration.reconciliation.summary = reconciliationResult.summary;
+      
+      // Categorize differences for better display
+      migration.reconciliation.missingFiles = [];
+      migration.reconciliation.extraFiles = [];
+      migration.reconciliation.sizeDifferences = [];
+      
+      reconciliationResult.differences.forEach(diff => {
+        switch (diff.status) {
+          case 'missing':
+            migration.reconciliation.missingFiles.push(diff);
+            break;
+          case 'extra':
+            migration.reconciliation.extraFiles.push(diff);
+            break;
+          case 'size-differs':
+          case 'newer':
+          case 'older':
+            migration.reconciliation.sizeDifferences.push(diff);
+            break;
+          default:
+            // Keep in general differences
+            break;
+        }
+      });
+      
+      const totalDifferences = reconciliationResult.differences.length;
+      migration.status = totalDifferences === 0 ? 'verified' : 'completed_with_differences';
+      
+      console.log(`🔍 Reconciliation completed: ${totalDifferences} differences found`);
+      console.log(`📊 Missing: ${migration.reconciliation.missingFiles.length}, Extra: ${migration.reconciliation.extraFiles.length}, Size: ${migration.reconciliation.sizeDifferences.length}`);
       
     } catch (error) {
       migration.reconciliation.status = 'failed';
@@ -584,6 +618,8 @@ class MinioClientService {
   }
 
   async performReconciliation(source, destination) {
+    console.log(`🔍 Starting reconciliation: ${source} ↔ ${destination}`);
+    
     try {
       // Get bucket statistics for both source and destination
       const [sourceStats, destStats, differences] = await Promise.all([
@@ -591,6 +627,14 @@ class MinioClientService {
         this.getBucketStats(destination),
         this.compareDirectories(source, destination)
       ]);
+
+      console.log(`📊 Source stats: ${sourceStats.objectCount} objects, ${sourceStats.totalSize} bytes`);
+      console.log(`📊 Dest stats: ${destStats.objectCount} objects, ${destStats.totalSize} bytes`);
+      console.log(`🔍 Found ${differences.length} differences`);
+      
+      if (differences.length > 0) {
+        console.log('📋 Differences:', differences.map(d => `${d.path} (${d.status})`).join(', '));
+      }
 
       return {
         differences,
@@ -603,6 +647,7 @@ class MinioClientService {
         }
       };
     } catch (error) {
+      console.error(`❌ Reconciliation failed for ${source} ↔ ${destination}:`, error);
       throw new Error(`Reconciliation failed: ${error.message}`);
     }
   }
@@ -645,35 +690,54 @@ class MinioClientService {
   async compareDirectories(source, destination) {
     return new Promise((resolve, reject) => {
       const command = `${this.quoteMcPath()} diff ${source} ${destination} --json`;
+      console.log(`🔍 Comparing directories: ${command}`);
       
       exec(command, (error, stdout, stderr) => {
-        if (error && !stdout) {
+        console.log(`📋 mc diff output - Error: ${!!error}, Stdout length: ${stdout?.length || 0}, Stderr: ${stderr}`);
+        
+        // mc diff returns exit code 1 when differences are found, but this is normal
+        if (error && !stdout && stderr) {
+          console.error(`❌ Directory comparison failed: ${stderr}`);
           reject(new Error(`Directory comparison failed: ${stderr || error.message}`));
           return;
         }
 
         try {
-          const lines = stdout.trim().split('\n').filter(line => line);
+          if (!stdout || stdout.trim() === '') {
+            console.log('✅ No differences found (empty output)');
+            resolve([]);
+            return;
+          }
+
+          const lines = stdout.trim().split('\n').filter(line => line.trim());
           const differences = [];
 
-          lines.forEach(line => {
+          console.log(`📋 Processing ${lines.length} output lines`);
+          
+          lines.forEach((line, index) => {
             try {
               const data = JSON.parse(line);
+              console.log(`📋 Line ${index + 1}:`, data);
+              
               if (data.status && data.status !== 'same') {
-                differences.push({
-                  path: data.source || data.target,
+                const diff = {
+                  path: data.source || data.target || `unknown-${index}`,
                   status: data.status,
                   sourceSize: data.sourceSize || 0,
                   targetSize: data.targetSize || 0
-                });
+                };
+                differences.push(diff);
+                console.log(`📋 Added difference:`, diff);
               }
             } catch (e) {
-              // Skip invalid JSON lines
+              console.warn(`⚠️  Skipping invalid JSON line ${index + 1}: ${line}`);
             }
           });
 
+          console.log(`✅ Found ${differences.length} valid differences`);
           resolve(differences);
         } catch (parseError) {
+          console.error(`❌ Parse error in compareDirectories:`, parseError);
           resolve([]); // Return empty array if parsing fails
         }
       });

@@ -179,6 +179,29 @@ const ReconciliationModal: React.FC<ReconciliationModalProps> = ({ migration, is
             </div>
           )}
 
+          {/* Debug Information */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 mb-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-2">Debug Info</h4>
+              <div className="text-xs text-gray-600 space-y-1">
+                <div>Reconciliation Status: {reconciliation.status}</div>
+                <div>General Differences: {reconciliation.differences?.length || 0}</div>
+                <div>Missing Files: {reconciliation.missingFiles?.length || 0}</div>
+                <div>Extra Files: {reconciliation.extraFiles?.length || 0}</div>
+                <div>Size Differences: {reconciliation.sizeDifferences?.length || 0}</div>
+                <div>Has Differences: {hasDifferences.toString()}</div>
+                {reconciliation.differences && reconciliation.differences.length > 0 && (
+                  <div className="mt-2">
+                    <div className="text-xs font-semibold">Raw Differences:</div>
+                    <pre className="text-xs bg-white p-2 rounded border mt-1 overflow-auto max-h-32">
+                      {JSON.stringify(reconciliation.differences, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* No Differences Found */}
           {!hasDifferences && (
             <div className="border rounded-lg p-4 bg-green-50 border-green-200">
@@ -191,6 +214,9 @@ const ReconciliationModal: React.FC<ReconciliationModalProps> = ({ migration, is
                 <div>
                   <h4 className="text-md font-semibold text-green-800">All Files Match</h4>
                   <p className="text-sm text-green-700">No differences were found between source and destination.</p>
+                  <p className="text-xs text-green-600 mt-1">
+                    Migration was marked as "completed_with_differences" but no categorized differences found.
+                  </p>
                 </div>
               </div>
             </div>
