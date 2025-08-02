@@ -21,24 +21,24 @@ fi
 if [ -f "$DB_FILE" ]; then
     # Create backup
     cp "$DB_FILE" "$BACKUP_FILE"
-    echo "✅ Database backed up to: $BACKUP_FILE"
+    echo "Database backed up to: $BACKUP_FILE"
     
     # Keep only last 10 backups
     ls -t ${BACKUP_DIR}/migrations_backup_*.db | tail -n +11 | xargs -r rm
-    echo "🧹 Cleaned up old backups (keeping last 10)"
+    echo "Cleaned up old backups (keeping last 10)"
     
     # Show backup info
     echo ""
-    echo "📊 Backup Information:"
+    echo "   Backup Information:"
     echo "   Original: $DB_FILE"
     echo "   Backup:   $BACKUP_FILE"
     echo "   Size:     $(du -h $BACKUP_FILE | cut -f1)"
     echo ""
-    echo "💡 To restore after git pull, run: ./scripts/restore-db.sh"
+    echo "   To restore after git pull, run: ./scripts/restore-db.sh"
 else
-    echo "⚠️  No database found at $DB_FILE"
+    echo "   No database found at $DB_FILE"
     echo "   This is normal for fresh installations."
 fi
 
 echo ""
-echo "✅ Backup complete. You can now safely run 'git pull'."
+echo "Backup complete. You can now safely run 'git pull'."
