@@ -30,7 +30,7 @@ function initializeWebSocket(server) {
     });
 
     ws.on('close', () => {
-      console.log(`📡 Client disconnected: ${clientId}`);
+      console.log(`Client disconnected: ${clientId}`);
       clients.delete(clientId);
     });
 
