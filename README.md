@@ -43,6 +43,7 @@ A comprehensive, enterprise-grade fullstack application for managing S3 bucket m
 - [🔧 Development](#-development)
 - [📊 Performance](#-performance)
 - [🔒 Security](#-security)
+- [☕ Support Me](#-support-me)
 - [📄 License](#-license)
 
 ## 📸 Screenshots
@@ -156,10 +157,12 @@ For detailed setup instructions, troubleshooting, and SQLite database informatio
 ## 🚀 Features
 
 ### Dashboard & Monitoring
-- **Real-time Dashboard** - Live migration statistics and progress tracking
+- **Real-time Dashboard** - Live migration statistics with accurate progress tracking
 - **Interactive Charts** - Migration trends and status distribution
-- **WebSocket Updates** - Real-time progress updates without page refresh
-- **Comprehensive Logging** - Detailed migration logs with filtering and export
+- **Dual Connectivity** - WebSocket + Server-Sent Events (SSE) for reliable real-time updates
+- **Comprehensive Logging** - Enhanced logs with bucket analysis and reconciliation details
+- **SQLite Database** - Persistent migration history with ACID transactions
+- **Accurate Statistics** - Real transfer data, object counts, and completion rates
 
 ### Migration Management
 - **Easy Configuration** - Simple setup for S3 endpoints (AWS S3, MinIO, etc.)
@@ -913,6 +916,12 @@ npm run format
 - [ ] Set up monitoring and alerting
 - [ ] Implement log rotation
 - [ ] Configure backup procedures
+
+## ☕ Support Me
+
+If you find this project helpful, you can support me here:
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-yellow?style=for-the-badge&logo=buymeacoffee&logoColor=white)](https://buymeacoffee.com/hendrawan)
 
 ## 📝 License
 
