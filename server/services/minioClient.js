@@ -654,33 +654,50 @@ class MinioClientService {
 
   async getBucketStats(bucketPath) {
     return new Promise((resolve, reject) => {
-      const command = `${this.quoteMcPath()} du ${bucketPath} --json`;
+      // Use mc ls --recursive to get actual file count, not directory count
+      const command = `${this.quoteMcPath()} ls ${bucketPath} --recursive --json`;
+      console.log(`📊 Getting bucket stats: ${command}`);
       
       exec(command, (error, stdout, stderr) => {
         if (error) {
+          console.log(`📊 Bucket stats error for ${bucketPath}:`, error.message);
           resolve({ objectCount: 0, totalSize: 0 }); // Default if bucket is empty or inaccessible
           return;
         }
 
         try {
-          const lines = stdout.trim().split('\n').filter(line => line);
+          if (!stdout || stdout.trim() === '') {
+            console.log(`📊 Empty bucket: ${bucketPath}`);
+            resolve({ objectCount: 0, totalSize: 0 });
+            return;
+          }
+
+          const lines = stdout.trim().split('\n').filter(line => line.trim());
           let totalSize = 0;
           let objectCount = 0;
 
-          lines.forEach(line => {
+          console.log(`📊 Processing ${lines.length} lines for ${bucketPath}`);
+
+          lines.forEach((line, index) => {
             try {
               const data = JSON.parse(line);
-              if (data.size !== undefined) {
+              // Only count actual files (not directories)
+              if (data.type === 'file' || (data.size !== undefined && data.size > 0)) {
                 totalSize += data.size || 0;
                 objectCount++;
+                console.log(`📊 File ${index + 1}: ${data.key || data.name || 'unknown'} (${data.size || 0} bytes)`);
+              } else if (data.type === 'folder') {
+                console.log(`📁 Directory: ${data.key || data.name || 'unknown'} (skipped from count)`);
               }
             } catch (e) {
-              // Skip invalid JSON lines
+              console.warn(`📊 Skipping invalid JSON line in bucket stats: ${line}`);
             }
           });
 
+          console.log(`📊 Final stats for ${bucketPath}: ${objectCount} files, ${totalSize} bytes`);
           resolve({ objectCount, totalSize });
         } catch (error) {
+          console.error(`📊 Parse error in getBucketStats:`, error);
           resolve({ objectCount: 0, totalSize: 0 });
         }
       });
