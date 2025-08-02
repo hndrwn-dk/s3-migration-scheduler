@@ -1,7 +1,7 @@
 {
-  "name": "s3-migration-server",
+  "name": "s3-management-ui-server",
   "version": "1.0.0",
-  "description": "Backend server for S3 migration dashboard",
+  "description": "Backend server for S3 Management UI",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

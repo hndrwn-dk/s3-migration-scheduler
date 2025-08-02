@@ -20,6 +20,7 @@ If you find this project helpful, you can support me here:
 - [📸 Screenshots](#-screenshots)
 - [🚀 Quick Start](#-quick-start)
 - [📝 Complete Setup Guide](#-complete-setup-guide)
+- [🔄 Update Guide](#-update-guide)
 - [🚀 Features](#-features)
 - [🔧 Recent Major Improvements](#-recent-major-improvements)
 - [📋 Prerequisites](#-prerequisites)
@@ -122,15 +123,180 @@ scripts\02-start.bat
 
 ## 📝 Complete Setup Guide
 
-For detailed setup instructions, troubleshooting, and SQLite database information, see:
-**[📖 SETUP_GUIDE.md](SETUP_GUIDE.md)**
+### 🚀 Automated Setup (Recommended)
 
-**Key Topics Covered:**
-- ✅ Step-by-step installation with automated scripts  
-- 🗄️ SQLite database auto-initialization
-- 🔧 Troubleshooting common issues ("Cannot find module 'better-sqlite3'", connection problems)
-- 📊 Verification steps and expected behavior
-- 🚀 Using existing scripts (00-setup, 01-fix-dependencies, 02-start)
+#### **🐧 Linux/MacOS**
+```bash
+# 1. Clone and setup
+git clone https://github.com/hndrwn-dk/s3-management-ui.git
+cd s3-management-ui
+
+# 2. Run automated setup
+./scripts/00-setup-linux.sh
+
+# 3. Configure environment
+cp server/.env.example server/.env
+# Edit server/.env with your settings
+
+# 4. Configure MinIO client
+mc alias set source-s3 https://s3.amazonaws.com ACCESS_KEY SECRET_KEY
+mc alias set dest-s3 https://your-minio.com ACCESS_KEY SECRET_KEY
+
+# 5. Start application
+./scripts/02-start.sh
+```
+
+#### **🪟 Windows**
+```batch
+REM 1. Clone and setup
+git clone https://github.com/hndrwn-dk/s3-management-ui.git
+cd s3-management-ui
+
+REM 2. Run automated setup
+scripts\00-setup-windows.bat
+
+REM 3. Configure environment
+copy server\.env.example server\.env
+REM Edit server\.env with your settings
+
+REM 4. Configure MinIO client
+mc alias set source-s3 https://s3.amazonaws.com ACCESS_KEY SECRET_KEY
+mc alias set dest-s3 https://your-minio.com ACCESS_KEY SECRET_KEY
+
+REM 5. Start application
+scripts\02-start.bat
+```
+
+### 🗄️ Database Auto-Initialization
+
+The SQLite database (`server/data/migrations.db`) is **automatically created** when the server starts:
+
+- ✅ **Auto-creates** `server/data/` directory if needed
+- ✅ **Initializes** SQLite database with proper schema
+- ✅ **Creates tables** for migrations and logs automatically
+- ✅ **Imports** existing JSON data for backward compatibility
+- ✅ **Ready** for migrations immediately after startup
+
+### 🔧 Troubleshooting Quick Fixes
+
+#### **"Cannot find module 'better-sqlite3'"**
+```bash
+# Linux/MacOS: ./scripts/01-fix-dependencies.sh
+# Windows: scripts\01-fix-dependencies.bat
+```
+
+#### **"UI shows disconnected"**
+```bash
+# Check server health
+curl http://localhost:5000/api/health
+# Should return: {"status": "OK"}
+```
+
+#### **"Failed to check MinIO healthy"**
+```bash
+# Install and configure MinIO client
+mc --version
+mc alias set myhost https://your-minio-server ACCESS_KEY SECRET_KEY
+```
+
+### 📋 Verification Steps
+
+1. **Server**: `curl http://localhost:5000/api/health` → `{"status": "OK"}`
+2. **Database**: `ls -la server/data/migrations.db` → Should exist
+3. **Client**: Open `http://localhost:3000` → Should show "Connected (WebSocket)"
+4. **Test**: Start a small migration → Should show real-time progress
+
+For comprehensive setup instructions, advanced troubleshooting, and detailed SQLite information, see: **[📖 SETUP_GUIDE.md](SETUP_GUIDE.md)**
+
+## 🔄 Update Guide
+
+### 📋 How to Update While Preserving Migration Data
+
+When updating S3 Management UI with `git pull`, follow these steps to preserve your migration data:
+
+> **🔒 IMPORTANT**: Your SQLite database (`server/data/migrations.db`) contains all migration history and is **NOT** committed to git. However, it will be preserved during updates if you follow this guide.
+
+#### **🐧 Linux/MacOS Update Process**
+
+```bash
+# 1. Backup your database BEFORE git pull
+./scripts/03-backup-db.sh
+
+# 2. Update the code
+git pull origin main
+
+# 3. Update dependencies if needed
+npm install
+cd server && npm install && cd ..
+cd client && npm install && cd ..
+
+# 4. Restore database if needed (optional)
+./scripts/04-restore-db.sh
+
+# 5. Start the application
+./scripts/02-start.sh
+```
+
+#### **🪟 Windows Update Process**
+
+```batch
+REM 1. Backup your database BEFORE git pull
+scripts\03-backup-db.bat
+
+REM 2. Update the code
+git pull origin main
+
+REM 3. Update dependencies if needed
+scripts\01-fix-dependencies.bat
+
+REM 4. Restore database if needed (optional)
+scripts\04-restore-db.bat
+
+REM 5. Start the application
+scripts\02-start.bat
+```
+
+#### **🗄️ Database Backup Features**
+
+- ✅ **Timestamped backups**: Each backup has a unique timestamp
+- ✅ **Automatic cleanup**: Keeps only the last 10 backups
+- ✅ **Size reporting**: Shows backup file size
+- ✅ **Safe operation**: Never overwrites existing backups
+
+**Backup Location:**
+```
+database-backups/
+├── migrations_backup_20240801_143022.db
+├── migrations_backup_20240801_142055.db
+└── migrations_backup_20240801_141234.db
+```
+
+#### **🚨 Quick Recovery (If You Forgot to Backup)**
+
+If you already ran `git pull` and your data seems missing:
+
+1. **Check if database exists:**
+   ```bash
+   # Linux/MacOS: ls -la server/data/migrations.db
+   # Windows: dir server\data\migrations.db
+   ```
+
+2. **If database exists**: Your data is still there! Just restart the application.
+
+3. **If database missing**: Check for existing backups and restore:
+   ```bash
+   # Linux/MacOS: ./scripts/04-restore-db.sh
+   # Windows: scripts\04-restore-db.bat
+   ```
+
+#### **💡 Best Practices**
+
+- **Always backup before updates**: `./scripts/03-backup-db.sh && git pull`
+- **Regular backups**: Run backup script periodically
+- **Verify after update**: Check migration data in Dashboard/History
+- **Test functionality**: Run a small test migration after update
+
+For detailed update instructions and troubleshooting, see: **[📖 UPDATE_GUIDE.md](UPDATE_GUIDE.md)**
 
 ## 🚀 Features
 
