@@ -14,28 +14,28 @@ set BACKUP_FILE=%BACKUP_DIR%\migrations_backup_%TIMESTAMP%.db
 REM Create backup directory if it doesn't exist
 if not exist "%BACKUP_DIR%" (
     mkdir "%BACKUP_DIR%"
-    echo 📁 Created backup directory: %BACKUP_DIR%
+    echo Created backup directory: %BACKUP_DIR%
 )
 
 REM Check if database exists
 if exist "%DB_FILE%" (
     REM Create backup
     copy "%DB_FILE%" "%BACKUP_FILE%" >nul
-    echo ✅ Database backed up to: %BACKUP_FILE%
+    echo Database backed up to: %BACKUP_FILE%
     
     REM Show backup info
     echo.
-    echo 📊 Backup Information:
+    echo    Backup Information:
     echo    Original: %DB_FILE%
     echo    Backup:   %BACKUP_FILE%
     for %%A in ("%BACKUP_FILE%") do echo    Size:     %%~zA bytes
     echo.
-    echo 💡 To restore after git pull, run: scripts\restore-db.bat
+    echo To restore after git pull, run: scripts\restore-db.bat
 ) else (
-    echo ⚠️  No database found at %DB_FILE%
-    echo    This is normal for fresh installations.
+    echo No database found at %DB_FILE%
+    echo This is normal for fresh installations.
 )
 
 echo.
-echo ✅ Backup complete. You can now safely run 'git pull'.
+echo Backup complete. You can now safely run 'git pull'.
 pause
