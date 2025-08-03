@@ -355,11 +355,18 @@ router.post('/:id/update-reconciliation-sizes', async (req, res) => {
 
 // Scheduled migration endpoints
 router.get('/scheduled', async (req, res) => {
+  console.log('GET /scheduled route called');
   try {
+    console.log('Loading cronScheduler...');
     const cronScheduler = require('../services/cronScheduler');
     
+    console.log('Getting scheduled migrations...');
     const scheduledMigrations = cronScheduler.getScheduledMigrations();
+    console.log('Getting scheduler stats...');
     const schedulerStats = cronScheduler.getStats();
+    
+    console.log('Scheduled migrations count:', scheduledMigrations.length);
+    console.log('Scheduler stats:', schedulerStats);
     
     res.json({ 
       success: true, 
