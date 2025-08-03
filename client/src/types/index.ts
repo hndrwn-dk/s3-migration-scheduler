@@ -4,7 +4,7 @@ export interface SystemStatsResponse {
   completed: number;
   failed: number;
   cancelled: number;
-  scheduled?: number; // Optional for backward compatibility
+  scheduled: number; // Backend does provide this
   completed_with_differences: number;
   recent_activity: number;
   total_data_transferred: number;

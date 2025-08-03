@@ -17,20 +17,7 @@ interface DashboardProps {
   onTabChange?: (tab: TabType) => void;
 }
 
-interface SystemStats {
-  total: number;
-  completed: number;
-  running: number;
-  failed: number;
-  cancelled: number;
-  scheduled: number;
-  pending?: number;
-  recent_activity: number;
-  total_data_transferred: number;
-  average_speed: number;
-  success_rate: number;
-  completed_with_differences: number;
-}
+// Removed unused SystemStats interface - using SystemStatsResponse from types instead
 
 const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
   const [systemStats, setSystemStats] = useState<SystemStatsResponse | null>(null);
@@ -40,13 +27,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
     const loadSystemStats = async () => {
       try {
         const stats = await migrationService.getSystemStatus();
-        // Ensure all required fields are present with defaults
-        const enhancedStats = {
-          ...stats,
-          scheduled: stats.scheduled || 0,
-          cancelled: stats.cancelled || 0
-        };
-        setSystemStats(enhancedStats);
+        setSystemStats(stats);
       } catch (error) {
         console.error('Failed to load system stats:', error);
       }
@@ -62,6 +43,9 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
   const stats = useMemo(() => {
     // Use system stats from database if available, otherwise calculate from current migrations
     if (systemStats) {
+      // Calculate pending from current migrations since backend doesn't provide it
+      const pending = migrations.filter(m => m.status === 'starting').length;
+      
       return {
         total: systemStats.total || 0,
         completed: systemStats.completed || 0,
@@ -69,7 +53,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
         failed: systemStats.failed || 0,
         cancelled: systemStats.cancelled || 0,
         scheduled: systemStats.scheduled || 0,
-        pending: systemStats.pending || 0,
+        pending: pending,
         recentActivity: systemStats.recent_activity || 0,
         totalDataTransferred: systemStats.total_data_transferred || 0,
         averageSpeed: systemStats.average_speed || 0,
