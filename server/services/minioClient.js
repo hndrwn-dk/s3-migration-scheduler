@@ -469,9 +469,20 @@ class MinioClientService {
       logStream.write(`Exit code: ${code}\n`);
       logStream.write(`Status: ${code === 0 ? 'SUCCESS' : 'FAILED'}\n`);
       logStream.write(`Final Statistics:\n`);
-      logStream.write(`  - Objects transferred: ${migration.stats.transferredObjects}/${migration.stats.totalObjects || 'unknown'}\n`);
-      logStream.write(`  - Data transferred: ${this.formatBytes(migration.stats.transferredSize)}\n`);
-      logStream.write(`  - Progress: ${migration.progress.toFixed(1)}%\n`);
+      // Only show statistics if we have meaningful data
+      if (migration.stats.transferredObjects > 0 || migration.stats.transferredSize > 0) {
+        if (migration.stats.totalObjects > 0) {
+          logStream.write(`  - Objects transferred: ${migration.stats.transferredObjects}/${migration.stats.totalObjects}\n`);
+        } else if (migration.stats.transferredObjects > 0) {
+          logStream.write(`  - Objects transferred: ${migration.stats.transferredObjects}\n`);
+        }
+        logStream.write(`  - Data transferred: ${this.formatBytes(migration.stats.transferredSize)}\n`);
+        if (migration.progress > 0) {
+          logStream.write(`  - Progress: ${migration.progress.toFixed(1)}%\n`);
+        }
+      } else {
+        logStream.write(`  - See reconciliation results below for detailed transfer information\n`);
+      }
       logStream.write(`==========================================\n`);
       logStream.end();
 
@@ -1159,18 +1170,11 @@ class MinioClientService {
       }
     }
 
-    // 5. Add analysis section
-    logs += `BUCKET COMPARISON SUMMARY\n`;
-    logs += `${'─'.repeat(60)}\n`;
-    logs += `This section helps identify:\n`;
-    logs += `• Missing files: Objects in source but not in destination\n`;
-    logs += `• Extra files: Objects in destination but not in source\n`;
-    logs += `• Size differences: Objects with different sizes\n`;
-    logs += `• Total object count and size comparison\n\n`;
-    
-    if (migration.reconciliation) {
-      logs += `RECONCILIATION RESULTS:\n`;
-      logs += `• Status: ${migration.status}\n`;
+    // 5. Add reconciliation details if available (only if there are actual differences to show)
+    if (migration.reconciliation && migration.reconciliation.differences && migration.reconciliation.differences.length > 0) {
+      logs += `RECONCILIATION DETAILS\n`;
+      logs += `${'─'.repeat(60)}\n`;
+      logs += `Migration completed with differences found during verification:\n`;
       logs += `• Missing files: ${migration.reconciliation.missingFiles?.length || 0}\n`;
       logs += `• Extra files: ${migration.reconciliation.extraFiles?.length || 0}\n`;
       logs += `• Size differences: ${migration.reconciliation.sizeDifferences?.length || 0}\n`;
@@ -1254,16 +1258,37 @@ class MinioClientService {
               if (trimmedLine.length > 0 && !trimmedLine.startsWith('[') && 
                   !trimmedLine.startsWith('mc:') && !trimmedLine.includes('WARNING')) {
                 listing += `${trimmedLine}\n`;
-                if (!summaryFound) fileCount++;
+                // Don't increment here, we'll get correct count from summary or manual parsing
               }
             }
           });
 
-          // Add our own summary if not found in output
-          if (!summaryFound) {
-            listing += `\nANALYSIS:\n`;
+          // Add analysis section with correct data from summary or manual parsing
+          listing += `\nANALYSIS:\n`;
+          if (summaryFound) {
             listing += `Files detected: ${fileCount}\n`;
-            listing += `Total size: ${this.formatBytes(totalSize)} (estimated)\n`;
+            listing += `Total size: ${this.formatBytes(totalSize)}\n`;
+          } else {
+            // Manual parsing for files and sizes if no summary
+            let manualFileCount = 0;
+            let manualTotalSize = 0;
+            
+            lines.forEach(line => {
+              const trimmedLine = line.trim();
+              // Look for file entries with timestamps and sizes
+              if (trimmedLine.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)) {
+                const fileSizeMatch = trimmedLine.match(/(\d+(?:\.\d+)?)\s*([KMGT]?B)/);
+                if (fileSizeMatch) {
+                  const size = parseFloat(fileSizeMatch[1]);
+                  const unit = fileSizeMatch[2];
+                  manualTotalSize += this.convertToBytes(size, unit);
+                  manualFileCount++;
+                }
+              }
+            });
+            
+            listing += `Files detected: ${manualFileCount}\n`;
+            listing += `Total size: ${this.formatBytes(manualTotalSize)} (estimated)\n`;
           }
 
           listing += `\n`;
