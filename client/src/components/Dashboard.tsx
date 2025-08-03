@@ -23,7 +23,7 @@ interface SystemStats {
   running: number;
   failed: number;
   cancelled: number;
-  scheduled: number;
+  scheduled?: number; // Optional for backward compatibility
   pending?: number;
   recent_activity: number;
   total_data_transferred: number;
@@ -40,7 +40,13 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
     const loadSystemStats = async () => {
       try {
         const stats = await migrationService.getSystemStatus();
-        setSystemStats(stats);
+        // Ensure all required fields are present with defaults
+        const enhancedStats = {
+          ...stats,
+          scheduled: stats.scheduled || 0,
+          cancelled: stats.cancelled || 0
+        };
+        setSystemStats(enhancedStats);
       } catch (error) {
         console.error('Failed to load system stats:', error);
       }
@@ -61,6 +67,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
         completed: systemStats.completed || 0,
         running: systemStats.running || 0,
         failed: systemStats.failed || 0,
+        cancelled: systemStats.cancelled || 0,
         scheduled: systemStats.scheduled || 0,
         pending: systemStats.pending || 0,
         recentActivity: systemStats.recent_activity || 0,
@@ -76,6 +83,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
     const completed = migrations.filter(m => m.status === 'completed' || m.status === 'verified').length;
     const running = migrations.filter(m => m.status === 'running' || m.status === 'reconciling').length;
     const failed = migrations.filter(m => m.status === 'failed').length;
+    const cancelled = migrations.filter(m => m.status === 'cancelled').length;
     const scheduled = migrations.filter(m => m.status === 'scheduled').length;
     const pending = migrations.filter(m => m.status === 'starting').length;
 
@@ -96,6 +104,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
       completed,
       running,
       failed,
+      cancelled,
       scheduled,
       pending,
       recentActivity,

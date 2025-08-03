@@ -47,7 +47,7 @@ const ScheduledTab: React.FC<ScheduledTabProps> = ({ onRefresh }) => {
   };
 
   const handleCancel = async (migrationId: string) => {
-    if (!confirm('Are you sure you want to cancel this scheduled migration?')) {
+    if (!window.confirm('Are you sure you want to cancel this scheduled migration?')) {
       return;
     }
 
