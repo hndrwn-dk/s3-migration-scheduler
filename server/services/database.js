@@ -45,6 +45,8 @@ class DatabaseService {
         reconciliation_missing_files TEXT DEFAULT '[]',
         reconciliation_extra_files TEXT DEFAULT '[]',
         reconciliation_size_differences TEXT DEFAULT '[]',
+        scheduled_time TEXT,
+        execution_status TEXT DEFAULT 'immediate',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
@@ -68,11 +70,42 @@ class DatabaseService {
       CREATE INDEX IF NOT EXISTS idx_migrations_status ON migrations(status);
       CREATE INDEX IF NOT EXISTS idx_migrations_start_time ON migrations(start_time);
       CREATE INDEX IF NOT EXISTS idx_migrations_updated_at ON migrations(updated_at);
+      CREATE INDEX IF NOT EXISTS idx_migrations_scheduled_time ON migrations(scheduled_time);
+      CREATE INDEX IF NOT EXISTS idx_migrations_execution_status ON migrations(execution_status);
       CREATE INDEX IF NOT EXISTS idx_migration_logs_migration_id ON migration_logs(migration_id);
       CREATE INDEX IF NOT EXISTS idx_migration_logs_timestamp ON migration_logs(timestamp);
     `);
 
+    // Handle database schema migration for existing installations
+    this.migrateSchemaIfNeeded();
+
     console.log('Database tables initialized successfully');
+  }
+
+  // Handle database schema migration for existing installations
+  migrateSchemaIfNeeded() {
+    try {
+      // Check if scheduled_time column exists
+      const columns = this.db.prepare("PRAGMA table_info(migrations)").all();
+      const hasScheduledTime = columns.some(col => col.name === 'scheduled_time');
+      const hasExecutionStatus = columns.some(col => col.name === 'execution_status');
+
+      if (!hasScheduledTime) {
+        console.log('Adding scheduled_time column to migrations table');
+        this.db.exec('ALTER TABLE migrations ADD COLUMN scheduled_time TEXT');
+      }
+
+      if (!hasExecutionStatus) {
+        console.log('Adding execution_status column to migrations table');
+        this.db.exec("ALTER TABLE migrations ADD COLUMN execution_status TEXT DEFAULT 'immediate'");
+      }
+
+      if (!hasScheduledTime || !hasExecutionStatus) {
+        console.log('Database schema migration completed for scheduled migrations');
+      }
+    } catch (error) {
+      console.error('Error during database schema migration:', error);
+    }
   }
 
   // Migration CRUD operations
@@ -399,6 +432,48 @@ class DatabaseService {
       console.log(`Cleaned up ${result.changes} invalid migrations with null/empty config`);
     }
     return result.changes;
+  }
+
+  // Scheduled migration methods
+  getScheduledMigrations() {
+    const stmt = this.db.prepare(`
+      SELECT * FROM migrations 
+      WHERE execution_status = 'scheduled' 
+      AND scheduled_time > datetime('now')
+      ORDER BY scheduled_time ASC
+    `);
+    return stmt.all().map(row => this.formatMigrationRow(row));
+  }
+
+  getPendingScheduledMigrations() {
+    const stmt = this.db.prepare(`
+      SELECT * FROM migrations 
+      WHERE execution_status = 'scheduled' 
+      AND scheduled_time <= datetime('now')
+      ORDER BY scheduled_time ASC
+    `);
+    return stmt.all().map(row => this.formatMigrationRow(row));
+  }
+
+  updateMigrationExecutionStatus(migrationId, status) {
+    const stmt = this.db.prepare(`
+      UPDATE migrations 
+      SET execution_status = ?, updated_at = datetime('now')
+      WHERE id = ?
+    `);
+    return stmt.run(status, migrationId);
+  }
+
+  getScheduledMigrationStats() {
+    const stmt = this.db.prepare(`
+      SELECT 
+        COUNT(*) as total_scheduled,
+        COUNT(CASE WHEN scheduled_time > datetime('now') THEN 1 END) as future_scheduled,
+        COUNT(CASE WHEN scheduled_time <= datetime('now') AND execution_status = 'scheduled' THEN 1 END) as pending_execution
+      FROM migrations 
+      WHERE execution_status = 'scheduled'
+    `);
+    return stmt.get();
   }
 
   close() {

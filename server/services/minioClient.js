@@ -312,12 +312,19 @@ class MinioClientService {
     const migrationId = uuidv4();
     const logFile = path.join(this.logDir, `migration-${migrationId}.log`);
     
+    // Determine execution type and status
+    const isScheduled = migrationConfig.scheduledTime && new Date(migrationConfig.scheduledTime) > new Date();
+    const executionStatus = isScheduled ? 'scheduled' : 'immediate';
+    const status = isScheduled ? 'scheduled' : 'starting';
+    
     const migration = {
       id: migrationId,
       config: migrationConfig,
-      status: 'starting',
+      status: status,
       progress: 0,
-      startTime: new Date().toISOString(),
+      startTime: isScheduled ? null : new Date().toISOString(),
+      scheduledTime: migrationConfig.scheduledTime || null,
+      executionStatus: executionStatus,
       logFile,
       errors: [],
       stats: {
@@ -360,14 +367,60 @@ class MinioClientService {
       throw error;
     }
 
+    if (isScheduled) {
+      // For scheduled migrations, hand over to scheduler
+      const scheduler = require('./scheduler');
+      const scheduled = scheduler.scheduleOneTime(migrationId, migrationConfig.scheduledTime);
+      
+      if (scheduled) {
+        return { migrationId, status: 'scheduled', scheduledTime: migrationConfig.scheduledTime };
+      } else {
+        throw new Error('Failed to schedule migration');
+      }
+    } else {
+      // For immediate migrations, execute right away
+      try {
+        await this.executeMigration(migration);
+        return { migrationId, status: 'started' };
+      } catch (error) {
+        migration.status = 'failed';
+        migration.errors.push(error.message);
+        this.broadcastMigrationUpdate(migration);
+        throw error;
+      }
+    }
+  }
+
+  async startScheduledMigration(migration) {
+    console.log(`Starting scheduled migration: ${migration.id}`);
+    
     try {
+      // Update migration start time and status
+      migration.startTime = new Date().toISOString();
+      migration.status = 'starting';
+      migration.executionStatus = 'running';
+      
+      // Add to active migrations
+      this.activeMigrations.set(migration.id, migration);
+      
+      // Update database
+      database.updateMigration(migration.id, migration);
+      
+      // Broadcast the status update
+      this.broadcastMigrationUpdate(migration);
+      
+      // Execute the migration
       await this.executeMigration(migration);
-      return { migrationId, status: 'started' };
+      
     } catch (error) {
+      console.error(`Scheduled migration ${migration.id} failed:`, error);
       migration.status = 'failed';
       migration.errors.push(error.message);
-      this.broadcastMigrationUpdate(migration); // Broadcast the failed status
-      throw error;
+      migration.executionStatus = 'failed';
+      
+      // Update database and broadcast
+      database.updateMigration(migration.id, migration);
+      this.broadcastMigrationUpdate(migration);
     }
   }
 

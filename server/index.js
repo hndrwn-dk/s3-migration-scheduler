@@ -73,6 +73,10 @@ app.use((req, res) => {
 // Initialize WebSocket server
 const wss = initializeWebSocket(server);
 
+// Initialize migration scheduler
+const scheduler = require('./services/scheduler');
+console.log('Migration scheduler initialized');
+
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
@@ -84,6 +88,10 @@ server.listen(PORT, () => {
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received. Shutting down gracefully...');
+  
+  // Shutdown scheduler
+  scheduler.shutdown();
+  
   server.close(() => {
     console.log('Process terminated');
   });
