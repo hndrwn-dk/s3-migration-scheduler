@@ -1028,24 +1028,60 @@ class MinioClientService {
 
   async getFileSizeFromUrl(fileUrl) {
     return new Promise((resolve, reject) => {
-      // Use mc stat to get file information
-      const command = `${this.quoteMcPath()} stat "${fileUrl}" --json`;
+      // Try mc ls first (more reliable), then fall back to mc stat
+      const lsCommand = `${this.quoteMcPath()} ls "${fileUrl}" --json`;
+      console.log(`Getting file size with command: ${lsCommand}`);
       
-      exec(command, (error, stdout, stderr) => {
-        if (error) {
-          console.warn(`Failed to get file size for ${fileUrl}:`, error.message);
-          resolve(0); // Return 0 if we can't get the size
-          return;
+      exec(lsCommand, { timeout: 10000 }, (error, stdout, stderr) => {
+        if (!error && stdout && stdout.trim()) {
+          try {
+            const lines = stdout.trim().split('\n');
+            for (const line of lines) {
+              if (line.trim()) {
+                const fileInfo = JSON.parse(line);
+                if (fileInfo.size !== undefined) {
+                  console.log(`Extracted size via mc ls for ${fileUrl}: ${fileInfo.size} bytes`);
+                  resolve(fileInfo.size);
+                  return;
+                }
+              }
+            }
+          } catch (parseError) {
+            console.warn(`Failed to parse mc ls output for ${fileUrl}:`, parseError.message);
+          }
         }
         
-        try {
-          const statInfo = JSON.parse(stdout.trim());
-          const size = statInfo.size || 0;
-          resolve(size);
-        } catch (parseError) {
-          console.warn(`Failed to parse stat output for ${fileUrl}:`, parseError.message);
-          resolve(0);
-        }
+        // Fallback to mc stat
+        const statCommand = `${this.quoteMcPath()} stat "${fileUrl}" --json`;
+        console.log(`Fallback to mc stat: ${statCommand}`);
+        
+        exec(statCommand, { timeout: 10000 }, (statError, statStdout, statStderr) => {
+          if (statError) {
+            console.warn(`Both mc ls and mc stat failed for ${fileUrl}:`, statError.message);
+            if (statStderr) console.warn(`Stderr: ${statStderr}`);
+            resolve(0);
+            return;
+          }
+          
+          console.log(`mc stat output for ${fileUrl}:`, statStdout);
+          
+          try {
+            if (!statStdout || statStdout.trim() === '') {
+              console.warn(`Empty output from mc stat for ${fileUrl}`);
+              resolve(0);
+              return;
+            }
+            
+            const statInfo = JSON.parse(statStdout.trim());
+            const size = statInfo.size || 0;
+            console.log(`Extracted size via mc stat for ${fileUrl}: ${size} bytes`);
+            resolve(size);
+          } catch (parseError) {
+            console.warn(`Failed to parse stat output for ${fileUrl}:`, parseError.message);
+            console.warn(`Raw output was:`, statStdout);
+            resolve(0);
+          }
+        });
       });
     });
   }
