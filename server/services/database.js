@@ -121,8 +121,9 @@ class DatabaseService {
         id, config_source, config_destination, config_options,
         status, progress, start_time, log_file,
         errors, stats_total_objects, stats_transferred_objects,
-        stats_total_size, stats_transferred_size, stats_speed
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        stats_total_size, stats_transferred_size, stats_speed,
+        scheduled_time, execution_status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     try {
@@ -140,7 +141,9 @@ class DatabaseService {
         migration.stats?.transferredObjects || 0,
         migration.stats?.totalSize || 0,
         migration.stats?.transferredSize || 0,
-        migration.stats?.speed || 0
+        migration.stats?.speed || 0,
+        migration.scheduledTime,
+        migration.executionStatus || 'immediate'
       );
 
       // Verify insertion was successful
