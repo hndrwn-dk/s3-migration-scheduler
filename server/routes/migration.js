@@ -356,11 +356,10 @@ router.post('/:id/update-reconciliation-sizes', async (req, res) => {
 // Scheduled migration endpoints
 router.get('/scheduled', async (req, res) => {
   try {
-    const database = require('../services/database');
-    const scheduler = require('../services/scheduler');
+    const persistentScheduler = require('../services/persistentScheduler');
     
-    const scheduledMigrations = database.getScheduledMigrations();
-    const schedulerStats = scheduler.getStats();
+    const scheduledMigrations = persistentScheduler.getScheduledMigrations();
+    const schedulerStats = persistentScheduler.getStats();
     
     res.json({ 
       success: true, 
@@ -378,9 +377,9 @@ router.get('/scheduled', async (req, res) => {
 router.delete('/scheduled/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const scheduler = require('../services/scheduler');
+    const persistentScheduler = require('../services/persistentScheduler');
     
-    const cancelled = scheduler.cancelScheduled(id);
+    const cancelled = persistentScheduler.cancelScheduledMigration(id);
     
     if (cancelled) {
       res.json({ 

@@ -313,9 +313,16 @@ class MinioClientService {
     const logFile = path.join(this.logDir, `migration-${migrationId}.log`);
     
     // Determine execution type and status
+    console.log(`DEBUG: Migration config scheduledTime: ${migrationConfig.scheduledTime}`);
+    console.log(`DEBUG: Current time: ${new Date().toISOString()}`);
+    
     const isScheduled = migrationConfig.scheduledTime && new Date(migrationConfig.scheduledTime) > new Date();
+    console.log(`DEBUG: isScheduled: ${isScheduled}`);
+    
     const executionStatus = isScheduled ? 'scheduled' : 'immediate';
     const status = isScheduled ? 'scheduled' : 'starting';
+    
+    console.log(`DEBUG: Final status: ${status}, executionStatus: ${executionStatus}`);
     
     const migration = {
       id: migrationId,
@@ -368,9 +375,9 @@ class MinioClientService {
     }
 
     if (isScheduled) {
-      // For scheduled migrations, hand over to scheduler
-      const scheduler = require('./scheduler');
-      const scheduled = scheduler.scheduleOneTime(migrationId, migrationConfig.scheduledTime);
+      // For scheduled migrations, hand over to persistent scheduler
+      const persistentScheduler = require('./persistentScheduler');
+      const scheduled = persistentScheduler.scheduleMigration(migrationId, migrationConfig.scheduledTime);
       
       if (scheduled) {
         return { migrationId, status: 'scheduled', scheduledTime: migrationConfig.scheduledTime };
