@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const minioClient = require('../services/minioClient');
 
+console.log('Migration routes file loaded - scheduled routes should be available');
+
 // SSE endpoint for streaming migration updates
 router.get('/stream', async (req, res) => {
   // Set headers for SSE
@@ -351,6 +353,12 @@ router.post('/:id/update-reconciliation-sizes', async (req, res) => {
     console.error(`Error updating reconciliation sizes for ${req.params.id}:`, error);
     res.status(500).json({ success: false, error: error.message });
   }
+});
+
+// Test route to verify routes are loading
+router.get('/test', (req, res) => {
+  console.log('TEST route called - routes are loading properly');
+  res.json({ success: true, message: 'Test route working', timestamp: new Date().toISOString() });
 });
 
 // Scheduled migration endpoints
