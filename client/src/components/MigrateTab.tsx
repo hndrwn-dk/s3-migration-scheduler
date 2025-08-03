@@ -155,12 +155,15 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
 
     setLoading(true);
     try {
-      const migrationConfig = {
+      // Debug frontend form data
+      console.log('FRONTEND DEBUG: formData.executionType:', formData.executionType);
+      console.log('FRONTEND DEBUG: formData.scheduledTime:', formData.scheduledTime);
+      console.log('FRONTEND DEBUG: scheduledTime type:', typeof formData.scheduledTime);
+      console.log('FRONTEND DEBUG: scheduledTime length:', formData.scheduledTime?.length);
+      
+      const migrationConfig: any = {
         source: `${formData.sourceAlias}/${formData.sourceBucket}`,
         destination: `${formData.destinationAlias}/${formData.destinationBucket}`,
-        ...(formData.executionType === 'scheduled' && { 
-          scheduledTime: formData.scheduledTime // Keep as local datetime string, let backend handle conversion
-        }),
         options: {
           overwrite: formData.overwrite,
           remove: formData.remove,
@@ -173,6 +176,13 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
           watch: formData.watch
         }
       };
+
+      // Add scheduledTime only if it's a scheduled migration with a valid time
+      if (formData.executionType === 'scheduled' && formData.scheduledTime) {
+        migrationConfig.scheduledTime = formData.scheduledTime;
+      }
+      
+      console.log('FRONTEND DEBUG: Final migrationConfig:', JSON.stringify(migrationConfig, null, 2));
 
       const result = await migrationService.startMigration(migrationConfig);
       
