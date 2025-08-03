@@ -477,7 +477,7 @@ class DatabaseService {
       
       // Find migrations that are stuck in running/starting state
       const stuckMigrations = this.db.prepare(`
-        SELECT id, status, execution_status, source, destination 
+        SELECT id, status, execution_status, config_source, config_destination 
         FROM migrations 
         WHERE status IN ('running', 'starting') 
            OR execution_status IN ('running', 'pending')
@@ -501,7 +501,7 @@ class DatabaseService {
 
         stuckMigrations.forEach(migration => {
           updateStmt.run(endTime, errorMessage, migration.id);
-          console.log(`Fixed stuck migration: ${migration.id} (${migration.source} → ${migration.destination})`);
+          console.log(`Fixed stuck migration: ${migration.id} (${migration.config_source} → ${migration.config_destination})`);
         });
 
         console.log(`Successfully fixed ${stuckMigrations.length} stuck migration(s)`);
