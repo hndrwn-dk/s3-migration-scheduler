@@ -9,6 +9,7 @@ import ConfigureTab from './components/ConfigureTab';
 import MigrateTab from './components/MigrateTab';
 import HistoryTab from './components/HistoryTab';
 import LogsTab from './components/LogsTab';
+import ScheduledTab from './components/ScheduledTab';
 import LoadingSpinner from './components/LoadingSpinner';
 
 import { TabType, Migration } from './types';
@@ -168,6 +169,8 @@ function App() {
         return <HistoryTab migrations={migrations} onCancel={handleMigrationCancel} />;
       case 'logs':
         return <LogsTab migrations={migrations} />;
+      case 'scheduled':
+        return <ScheduledTab onRefresh={loadMigrations} />;
       default:
         return <Dashboard migrations={migrations} />;
     }
