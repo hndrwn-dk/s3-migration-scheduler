@@ -170,7 +170,7 @@ function App() {
       case 'logs':
         return <LogsTab migrations={migrations} />;
       case 'scheduled':
-        return <ScheduledTab onRefresh={loadMigrations} />;
+        return <ScheduledTab onRefresh={initializeApp} />;
       default:
         return <Dashboard migrations={migrations} />;
     }
