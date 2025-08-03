@@ -288,4 +288,30 @@ router.get('/status', async (req, res) => {
   }
 });
 
+// Update reconciliation sizes for existing migration
+router.post('/:id/update-reconciliation-sizes', async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(`API request to update reconciliation sizes for migration: ${id}`);
+    
+    const updatedMigration = await minioClient.updateReconciliationSizes(id);
+    
+    if (updatedMigration) {
+      res.json({ 
+        success: true, 
+        message: 'Reconciliation sizes updated successfully',
+        data: updatedMigration 
+      });
+    } else {
+      res.status(404).json({ 
+        success: false, 
+        error: 'Migration not found or no reconciliation data available' 
+      });
+    }
+  } catch (error) {
+    console.error(`Error updating reconciliation sizes for ${req.params.id}:`, error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;
