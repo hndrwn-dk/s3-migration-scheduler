@@ -394,7 +394,9 @@ class DatabaseService {
       } : null,
       duration: row.end_time ? 
         (new Date(row.end_time).getTime() - new Date(row.start_time).getTime()) / 1000 : 
-        (new Date().getTime() - new Date(row.start_time).getTime()) / 1000
+        (new Date().getTime() - new Date(row.start_time).getTime()) / 1000,
+      scheduledTime: row.scheduled_time,
+      executionStatus: row.execution_status || 'immediate'
     };
   }
 
