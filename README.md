@@ -1,8 +1,8 @@
-# S3 Management UI
+# S3 Bucket Migration UI
 
-A comprehensive, enterprise-grade fullstack application for managing S3 bucket migrations with persistent SQLite database, real-time monitoring, and detailed reconciliation tracking. Features a modern React dashboard with TypeScript, dual real-time connections (WebSocket + SSE), and comprehensive migration difference analysis.
+A comprehensive, enterprise-grade fullstack application for S3 bucket migrations with persistent SQLite database, real-time monitoring, and detailed reconciliation tracking. Features a modern React dashboard with TypeScript, dual real-time connections (WebSocket + SSE), and comprehensive migration difference analysis.
 
-![S3 Management UI](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![S3 Bucket Migration UI](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 ![Database](https://img.shields.io/badge/Database-SQLite-blue)
 ![Node.js](https://img.shields.io/badge/Node.js-18.x-green)
 ![React](https://img.shields.io/badge/React-18.x-blue)
@@ -18,201 +18,148 @@ If you find this project helpful, you can support me here:
 ## 📑 Table of Contents
 - [☕ Support Me](#-support-me)
 - [📸 Screenshots](#-screenshots)
-- [🚀 Quick Start](#-quick-start)
-- [📝 Complete Setup Guide](#-complete-setup-guide)
+- [🚀 Setup & Installation](#-setup--installation)
 - [🔄 Update Guide](#-update-guide)
 - [🚀 Features](#-features)
-- [🔧 Recent Major Improvements](#-recent-major-improvements)
-- [📋 Prerequisites](#-prerequisites)
-- [🛠️ Installation](#️-installation)
-- [⚙️ Configuration](#️-configuration)
 - [📖 Usage Guide](#-usage-guide)
 - [🏗️ Architecture](#️-architecture)
 - [📚 API Reference](#-api-reference)
-- [🔧 Development](#-development)
 - [📄 License](#-license)
 
 ## 📸 Screenshots
 
-### Dashboard Overview
-*Real-time migration statistics and progress monitoring*
+### Enhanced Dashboard with SQLite Persistence
+*Real-time migration statistics with persistent data and accurate metrics*
 
 ![Dashboard Overview](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/dashboard-overview.svg?raw=true)
-> 📊 **Main Dashboard** - Shows migration statistics, recent activity, and visual charts for tracking migration trends and status distribution.
+> 📊 **Main Dashboard** - Shows persistent migration statistics with SQLite database, real-time updates via WebSocket+SSE, accurate completion rates, and recent migration activity. No more "0 Completed" issues!
 
-### Migration Configuration
-*Easy setup for S3 endpoints and connections*
+### S3 Endpoint Configuration
+*Simple S3 alias setup with connection validation*
 
 ![Configuration](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/configuration.svg?raw=true)
-> ⚙️ **Configuration Tab** - Simple interface to add and manage S3 endpoints with connection testing capabilities.
+> ⚙️ **Configuration Tab** - Clean interface for adding AWS S3, MinIO, and other S3-compatible endpoints with built-in connection testing and alias management.
 
-### Migration Wizard
-*Step-by-step migration setup with bucket analysis*
+### Advanced Migration Setup
+*Comprehensive migration wizard with bucket analysis and options*
 
-![Migration Wizard](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/migration-wizard.svg?raw=true)
-> 🚀 **Migration Tab** - Guided migration setup with bucket analysis, size estimates, and advanced options.
+![Migration Setup](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/migration-setup.svg?raw=true)
+> 🛠️ **Migration Tab** - Enhanced wizard with pre-migration bucket analysis, size estimation, advanced options (overwrite, preserve, exclude patterns), and dry-run capabilities.
 
-### Real-time Progress
-*Live migration monitoring with detailed progress*
-
-![Progress Monitoring](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/progress-monitoring.svg?raw=true)
-> 📈 **Progress Tracking** - Real-time migration progress with transfer statistics and WebSocket updates.
-
-### Migration History
-*Complete history with detailed views and filtering*
+### Migration History with Reconciliation
+*Complete migration tracking with detailed difference analysis*
 
 ![Migration History](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/migration-history.svg?raw=true)
-> 📋 **History Tab** - Comprehensive migration history with filtering, sorting, and detailed modal views.
+> 📚 **History Tab** - Persistent migration history with status filtering, detailed reconciliation reports showing missing/extra/size differences, and actionable reconciliation modals with file-level details.
 
-### Live Log Viewer
-*Real-time log streaming with filtering and export*
+### Real-time Logs with Enhanced Details
+*Live monitoring with comprehensive reconciliation and bucket analysis*
 
-![Log Viewer](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/log-viewer.svg?raw=true)
-> 📝 **Logs Tab** - Live log streaming with filtering, highlighting, and export capabilities.
+![Migration Logs](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/migration-logs.svg?raw=true)
+> 📊 **Logs Tab** - Real-time migration monitoring with enhanced logs including detailed reconciliation reports, bucket comparison analysis, file-by-file transfer tracking, and comprehensive error handling.
 
+### Detailed Reconciliation Reports
+*In-depth difference analysis with actionable insights*
 
+![Reconciliation Modal](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/reconciliation-modal.svg?raw=true)
+> 🔍 **Reconciliation Modal** - Advanced difference analysis showing missing files, extra files, size differences, and other discrepancies with full file paths, sizes, and URLs for manual verification or remediation.
 
-## 🚀 Quick Start
+## 🚀 Setup & Installation
 
-### Linux/macOS
+### Prerequisites
+
+- **Node.js** 18.x or higher
+- **npm** 7.x or higher  
+- **MinIO Client** (`mc`) installed and configured
+- **Git** for cloning the repository
+
+### Automated Setup (Recommended)
+
+#### **🐧 Linux/MacOS**
 ```bash
-# 1. Clone the repository
+# 1. Clone and navigate
 git clone https://github.com/hndrwn-dk/s3-management-ui.git
 cd s3-management-ui
 
 # 2. Run automated setup
 chmod +x scripts/00-setup-linux.sh
-scripts/00-setup-linux.sh
-
-# 3. Configure environment
-cp server/.env.example server/.env
-# Edit server/.env with your settings
-
-# 4. Start the application
-scripts/02-start.sh
-```
-
-### Windows
-```batch
-# 1. Clone the repository
-git clone https://github.com/hndrwn-dk/s3-management-ui.git
-cd s3-management-ui
-
-# 2. Run automated setup
-scripts\00-setup-windows.bat
-
-# 3. Configure environment
-copy server\.env.example server\.env
-# Edit server\.env with your settings
-
-# 4. Start the application
-scripts\02-start.bat
-```
-
-**Dashboard available at:** http://localhost:3000  
-**API server available at:** http://localhost:5000
-
-> 💡 **Note**: The setup scripts will:
-> - Check for all prerequisites (Node.js, npm, MinIO client)
-> - Install all dependencies automatically (root, server, client)
-> - Auto-create SQLite database with proper schema
-> - For detailed troubleshooting, see [Complete Setup Guide](SETUP_GUIDE.md)
-> - Set up environment configuration
-
----
-
-## 📝 Complete Setup Guide
-
-### 🚀 Automated Setup (Recommended)
-
-#### **🐧 Linux/MacOS**
-```bash
-# 1. Clone and setup
-git clone https://github.com/hndrwn-dk/s3-management-ui.git
-cd s3-management-ui
-
-# 2. Run automated setup
 ./scripts/00-setup-linux.sh
 
-# 3. Configure environment
-cp server/.env.example server/.env
-# Edit server/.env with your settings
+# 3. Fix dependencies if needed
+./scripts/01-fix-dependencies.sh
 
-# 4. Configure MinIO client
-mc alias set source-s3 https://s3.amazonaws.com ACCESS_KEY SECRET_KEY
-mc alias set dest-s3 https://your-minio.com ACCESS_KEY SECRET_KEY
-
-# 5. Start application
+# 4. Start the application
 ./scripts/02-start.sh
 ```
 
 #### **🪟 Windows**
 ```batch
-REM 1. Clone and setup
+REM 1. Clone and navigate
 git clone https://github.com/hndrwn-dk/s3-management-ui.git
 cd s3-management-ui
 
 REM 2. Run automated setup
 scripts\00-setup-windows.bat
 
-REM 3. Configure environment
-copy server\.env.example server\.env
-REM Edit server\.env with your settings
+REM 3. Fix dependencies if needed
+scripts\01-fix-dependencies.bat
 
-REM 4. Configure MinIO client
-mc alias set source-s3 https://s3.amazonaws.com ACCESS_KEY SECRET_KEY
-mc alias set dest-s3 https://your-minio.com ACCESS_KEY SECRET_KEY
-
-REM 5. Start application
+REM 4. Start the application
 scripts\02-start.bat
 ```
 
-### 🗄️ Database Auto-Initialization
+### Manual Setup (Alternative)
 
-The SQLite database (`server/data/migrations.db`) is **automatically created** when the server starts:
+If automated setup fails, follow these steps:
 
-- ✅ **Auto-creates** `server/data/` directory if needed
-- ✅ **Initializes** SQLite database with proper schema
-- ✅ **Creates tables** for migrations and logs automatically
-- ✅ **Imports** existing JSON data for backward compatibility
-- ✅ **Ready** for migrations immediately after startup
-
-### 🔧 Troubleshooting Quick Fixes
-
-#### **"Cannot find module 'better-sqlite3'"**
 ```bash
-# Linux/MacOS: ./scripts/01-fix-dependencies.sh
-# Windows: scripts\01-fix-dependencies.bat
+# 1. Clone repository
+git clone https://github.com/hndrwn-dk/s3-management-ui.git
+cd s3-management-ui
+
+# 2. Install root dependencies
+npm install
+
+# 3. Install server dependencies
+cd server && npm install && cd ..
+
+# 4. Install client dependencies  
+cd client && npm install && cd ..
+
+# 5. Build client for production
+cd client && npm run build && cd ..
+
+# 6. Start the application
+npm start
 ```
 
-#### **"UI shows disconnected"**
-```bash
-# Check server health
-curl http://localhost:5000/api/health
-# Should return: {"status": "OK"}
-```
+### Database Initialization
 
-#### **"Failed to check MinIO healthy"**
-```bash
-# Install and configure MinIO client
-mc --version
-mc alias set myhost https://your-minio-server ACCESS_KEY SECRET_KEY
-```
+The SQLite database is **automatically created** on first startup:
+- **Location**: `server/data/migrations.db`
+- **Auto-creation**: Database and tables created automatically
+- **Persistent**: All migration data preserved between restarts
 
-### 📋 Verification Steps
+### Access the Application
 
-1. **Server**: `curl http://localhost:5000/api/health` → `{"status": "OK"}`
-2. **Database**: `ls -la server/data/migrations.db` → Should exist
-3. **Client**: Open `http://localhost:3000` → Should show "Connected (WebSocket)"
-4. **Test**: Start a small migration → Should show real-time progress
+Once started, access the application at:
+- **Dashboard**: http://localhost:3000 (React development server)
+- **API Server**: http://localhost:5000 (Express backend)
 
-For comprehensive setup instructions, advanced troubleshooting, and detailed SQLite information, see: **[📖 SETUP_GUIDE.md](SETUP_GUIDE.md)**
+> **Note**: The setup scripts run in development mode with separate frontend (3000) and backend (5000) ports for optimal development experience.
+
+### Initial Configuration
+
+1. **Open the Configuration tab**
+2. **Add your S3 endpoints** (AWS, MinIO, etc.)
+3. **Test connections** to verify setup
+4. **Start your first migration**
 
 ## 🔄 Update Guide
 
 ### 📋 How to Update While Preserving Migration Data
 
-When updating S3 Management UI with `git pull`, follow these steps to preserve your migration data:
+When updating S3 Bucket Migration UI with `git pull`, follow these steps to preserve your migration data:
 
 > **🔒 IMPORTANT**: Your SQLite database (`server/data/migrations.db`) contains all migration history and is **NOT** committed to git. However, it will be preserved during updates if you follow this guide.
 
@@ -301,739 +248,164 @@ For detailed update instructions and troubleshooting, see: **[📖 UPDATE_GUIDE.
 ## 🚀 Features
 
 ### Dashboard & Monitoring
-- **Real-time Dashboard** - Live migration statistics with accurate progress tracking
-- **Interactive Charts** - Migration trends and status distribution
-- **Dual Connectivity** - WebSocket + Server-Sent Events (SSE) for reliable real-time updates
-- **Comprehensive Logging** - Enhanced logs with bucket analysis and reconciliation details
-- **SQLite Database** - Persistent migration history with ACID transactions
-- **Accurate Statistics** - Real transfer data, object counts, and completion rates
+- 📊 **Real-time migration statistics** with live updates
+- 📈 **Interactive charts** for progress tracking
+- 🔄 **Recent migration activity** with status indicators
+- 📱 **Responsive design** for mobile and desktop
 
 ### Migration Management
-- **Easy Configuration** - Simple setup for S3 endpoints (AWS S3, MinIO, etc.)
-- **Bucket Analysis** - Pre and post-migration analysis with detailed file listings
-- **Advanced MinIO Options** - Enterprise-grade migration features:
-  - **Checksum Verification** - CRC64NVME, CRC32, CRC32C, SHA1, SHA256 algorithms for data integrity
-  - **Preserve Attributes** - Maintain file/object attributes and bucket policies/locking configurations
-  - **Retry Mechanism** - Automatic retry on per-object basis for error handling
-  - **Dry Run Mode** - Test migrations without actual file transfer
-- **Migration Options** - Support for overwrite, remove, and exclude patterns
-- **Enhanced Reconciliation** - Detailed analysis with missing/extra files identification
-- **Comprehensive Logging** - Complete migration audit trail with bucket comparisons
-- **Progress Tracking** - Real-time statistics with accurate object and data counts
-
-### User Experience
-- **Modern UI** - Clean, responsive interface built with React and Tailwind CSS
-- **Error Handling** - Comprehensive error logging and user feedback
-- **Mobile Responsive** - Works seamlessly on desktop and mobile devices
-- **Accessibility** - WCAG compliant with keyboard navigation support
-
-## 🔧 Recent Major Improvements
-
-### 🗄️ **SQLite Database Implementation**
-
-**Replaced JSON file storage with robust SQLite database for enterprise-grade data persistence:**
-
-```
-Previous Architecture    =>    New Architecture
-┌─────────────────────┐       ┌──────────────────────┐
-│ JSON File Storage   │       │ SQLite Database      │
-│ - In-memory Map     │       │ - Persistent tables  │
-│ - Manual file writes│       │ - Auto transactions  │
-│ - Data loss restart │       │ - ACID compliance    │
-│ - No relationships  │       │ - Indexed queries    │
-└─────────────────────┘       └──────────────────────┘
-```
-
-**Benefits:**
-- ✅ **Data Persistence**: Survives server restarts and crashes
-- ✅ **ACID Transactions**: Guaranteed data integrity
-- ✅ **Performance**: Indexed queries for fast data retrieval
-- ✅ **Scalability**: Handles thousands of migrations efficiently
-
-### 📊 **Enhanced Dashboard Statistics**
-
-**Fixed critical dashboard issues and added real-time database-driven statistics:**
-
-- ✅ **Accurate Completion Rates**: No more "0 Completed, 0.0% success rate" despite active migrations
-- ✅ **Real-time Updates**: Auto-refresh every 30 seconds with live data
-- ✅ **Persistent Statistics**: Data remains consistent across page refreshes
-- ✅ **Enhanced Metrics**: Recent activity tracking, data transfer volumes, average speeds
-
-### 🔍 **Migration Reconciliation & Difference Tracking**
-
-**New comprehensive reconciliation system for "completed_with_differences" migrations:**
-
-**ReconciliationModal Features:**
-- 🔴 **Missing Files**: Files in source but not in destination
-- 🔵 **Extra Files**: Files in destination but not in source  
-- 🟠 **Size Differences**: Files with different sizes between source/destination
-- 🟡 **General Differences**: Other reconciliation issues and conflicts
-
-**Visual Indicators:**
-- Orange warning badges for migrations with differences
-- Detailed modal dialogs with categorized file listings
-- File count summaries and size difference analysis
-- Export capabilities for reconciliation reports
-
-### 🔄 **Dual Real-time Connectivity**
-
-**Enhanced real-time updates with automatic fallback mechanisms:**
-
-**Implementation:**
-```
-WebSocket (Primary) + Server-Sent Events (Fallback)
-     ↓                           ↓
-Real-time Dashboard ←→ Auto-switching Connection
-```
-
-**Features:**
-- ✅ **Primary WebSocket**: Low-latency bidirectional communication
-- ✅ **SSE Fallback**: Automatic fallback when WebSocket fails
-- ✅ **Connection Status**: Visual indicators showing active connection type
-- ✅ **Automatic Recovery**: Seamless reconnection with exponential backoff
-
-### 📈 **Improved Migration Lifecycle Management**
-
-**Enhanced tracking and monitoring throughout the complete migration process:**
-
-- ✅ **Persistent Status Tracking**: Migration states survive server restarts
-- ✅ **Comprehensive Logging**: Database-backed logs with file fallback
-- ✅ **Auto-cleanup**: Automatic detection and cleanup of stale migrations
-- ✅ **Consistent UI**: Synchronized data across Dashboard, History, and Logs
-
-### 🎨 **User Experience Enhancements**
-
-**Modern interface improvements with better information display:**
-
-- ✅ **Recent Migrations Section**: Quick access to recent activity on Dashboard
-- ✅ **Enhanced History Tab**: Proper filtering and reconciliation integration
-- ✅ **Improved Logs Tab**: Better error handling and auto-refresh for active migrations
-- ✅ **Color-coded Status**: Intuitive visual indicators for all migration states
-- ✅ **Action Buttons**: Quick access to logs and reconciliation details
-
-### 🔧 **Technical Improvements**
-
-**Backend architecture enhancements for reliability and performance:**
-
-**Database Schema:**
-```sql
--- Comprehensive migration tracking
-CREATE TABLE migrations (
-  id TEXT PRIMARY KEY,
-  config_source TEXT NOT NULL,
-  config_destination TEXT NOT NULL,
-  status TEXT NOT NULL,
-  progress INTEGER DEFAULT 0,
-  start_time TEXT NOT NULL,
-  reconciliation_differences TEXT DEFAULT '[]',
-  -- ... additional fields for complete tracking
-);
-
--- Structured logging
-CREATE TABLE migration_logs (
-  migration_id TEXT NOT NULL,
-  timestamp TEXT NOT NULL,
-  level TEXT NOT NULL,
-  message TEXT NOT NULL,
-  FOREIGN KEY (migration_id) REFERENCES migrations (id)
-);
-```
-
-**API Enhancements:**
-- ✅ **New Endpoints**: `/api/migration/status` for system statistics
-- ✅ **SSE Streaming**: `/api/migration/stream` for real-time updates
-- ✅ **Enhanced Responses**: Comprehensive data sanitization and validation
-- ✅ **Backward Compatibility**: Automatic import of existing JSON data
-
-## 📋 System Requirements & Prerequisites
-
-### Linux Requirements
-**Required Software:**
-- **Operating System**: Ubuntu 18.04+, CentOS 7+, Debian 9+, RHEL 7+, or similar
-- **Node.js**: Version 18.x or higher (LTS recommended)
-- **npm**: Version 8.x or higher (included with Node.js)
-- **Git**: For repository cloning
-- **curl/wget**: For downloading packages and MinIO client
-
-**System Dependencies:**
-```bash
-# Ubuntu/Debian
-sudo apt update
-sudo apt install nodejs npm git curl build-essential
-
-# CentOS/RHEL/Rocky/AlmaLinux
-sudo yum install nodejs npm git curl gcc-c++ make
-# Or for newer versions: sudo dnf install nodejs npm git curl gcc-c++ make
-
-# Arch Linux
-sudo pacman -S nodejs npm git curl base-devel
-
-# Verify installation
-node --version    # Should show 18.x or higher
-npm --version     # Should show 8.x or higher
-git --version
-```
-
-**MinIO Client Installation (Linux):**
-```bash
-# Method 1: Direct download (recommended)
-sudo curl https://dl.min.io/client/mc/release/linux-amd64/mc \
-  -o /usr/local/bin/mc
-sudo chmod +x /usr/local/bin/mc
-
-# Method 2: User directory
-curl https://dl.min.io/client/mc/release/linux-amd64/mc \
-  --create-dirs -o $HOME/.local/bin/mc
-chmod +x $HOME/.local/bin/mc
-echo 'export PATH=$PATH:$HOME/.local/bin' >> ~/.bashrc
-source ~/.bashrc
-
-# Verify installation
-mc --version
-```
-
-### Windows Requirements
-**Required Software:**
-- **Operating System**: Windows 10 (version 1903+) or Windows 11
-- **Node.js**: Version 18.x or higher (LTS from nodejs.org)
-- **npm**: Version 8.x or higher (included with Node.js)
-- **Git for Windows**: Latest version from git-scm.com
-- **PowerShell**: 5.1+ (built-in) or PowerShell 7+ (recommended)
-
-**Installation Steps:**
-1. **Install Node.js:**
-   - Download from: https://nodejs.org/en/download/
-   - Choose "Windows Installer" (.msi) for your architecture
-   - During installation: Check "Add to PATH" and "Install additional tools"
-   - Restart terminal after installation
-
-2. **Install Git for Windows:**
-   - Download from: https://git-scm.com/download/win
-   - Use default settings during installation
-   - Choose "Git from the command line and also from 3rd-party software"
-
-3. **Verify Installation:**
-   ```batch
-   node --version
-   npm --version
-   git --version
-   ```
-
-**MinIO Client Installation (Windows):**
-```batch
-# Method 1: Using winget (Windows 10 1809+/Windows 11)
-winget install MinIO.MinIOClient
-
-# Method 2: Direct download
-curl -L https://dl.min.io/client/mc/release/windows-amd64/mc.exe -o mc.exe
-# Move mc.exe to a directory in your PATH (e.g., C:\Windows\System32)
-
-# Method 3: PowerShell download
-powershell -Command "Invoke-WebRequest -Uri 'https://dl.min.io/client/mc/release/windows-amd64/mc.exe' -OutFile 'mc.exe'"
-
-# Verify installation
-mc --version
-```
-
-### macOS Requirements
-**Required Software:**
-- **Operating System**: macOS 10.15 (Catalina) or higher
-- **Node.js**: Version 18.x or higher
-- **npm**: Version 8.x or higher
-- **Git**: Pre-installed or via Xcode Command Line Tools
-- **Homebrew**: Package manager (recommended)
-
-**Installation:**
-```bash
-# Install Homebrew (if not already installed)
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# Install Node.js and Git
-brew install node git
-
-# Or install Node.js directly from nodejs.org
-# Verify installation
-node --version
-npm --version
-git --version
-```
-
-**MinIO Client Installation (macOS):**
-```bash
-# Method 1: Using Homebrew (recommended)
-brew install minio/stable/mc
-
-# Method 2: Direct download
-curl https://dl.min.io/client/mc/release/darwin-amd64/mc \
-  -o /usr/local/bin/mc
-chmod +x /usr/local/bin/mc
-
-# Verify installation
-mc --version
-```
-
-### Storage Requirements
-- **S3 Compatible Storage**: AWS S3, MinIO, DigitalOcean Spaces, or similar
-- **Network Access**: Internet connection for S3 operations
-- **Disk Space**: At least 1GB free space for dependencies and logs
-
-### 📦 Portable Deployment Setup (Recommended)
-
-For **portable, self-contained deployment**:
-
-1. **Download MinIO Client (`mc`)** from: https://min.io/download#/linux or https://min.io/download#/windows
-2. **Copy to your project root**: 
-   - **Windows**: `s3-management-ui/mc.exe`
-   - **Linux/macOS**: `s3-management-ui/mc`
-3. **The application automatically detects and uses the local MinIO client**
-
-> 🎯 **Detection Priority (Portable-First):**
-> 1. ✅ **Project root**: `./mc.exe` or `./mc` (YOUR SETUP)
-> 2. ✅ **Server folder**: `./server/mc.exe` or `./server/mc`  
-> 3. ✅ **Bin folder**: `./bin/mc.exe` or `./bin/mc`
-> 4. 🔄 System locations (fallback only)
-> 5. 🔄 PATH (final fallback)
-
-> 💡 **Benefits of Portable Setup:**
-> - ✅ **Self-contained**: No system-wide installation needed
-> - ✅ **Consistent**: Same mc version across all deployments
-> - ✅ **Portable**: Copy entire folder to any machine
-> - ✅ **No Admin Rights**: No system modifications required
-> - ✅ **Easy Distribution**: Zip and deploy anywhere
-
-## 🛠️ Installation
-
-### Platform-Specific Setup
-
-Choose the setup script for your operating system:
-
-#### Linux/macOS
-```bash
-# Make script executable and run
-chmod +x scripts/00-setup-linux.sh
-./scripts/00-setup-linux.sh
-
-# Start the application
-./scripts/02-start.sh
-```
-
-#### Windows
-```batch
-# Run the Windows setup script
-scripts\00-setup-windows.bat
-
-# Start the application
-scripts\02-start.bat
-```
-
-#### 📋 Script Overview
-All scripts are numbered for easy execution order:
-- `00-setup-*`: Initial environment setup (run once)
-- `01-fix-*`: Dependency troubleshooting (if needed)  
-- `02-start.*`: Application startup (daily use)
-
-For detailed script information, see [`scripts/README.md`](scripts/README.md).
-
-### Manual Installation
-
-If you prefer to set up manually:
-
-1. **Clone the repository**
-```bash
-git clone https://github.com/hndrwn-dk/s3-management-ui.git
-cd s3-management-ui
-```
-
-2. **Install dependencies**
-```bash
-# Install root dependencies
-npm install
-
-# Install all dependencies (server + client)
-npm run install:all
-```
-
-3. **Configure environment**
-```bash
-# Copy server environment file
-cp server/.env.example server/.env
-
-# Edit server/.env with your configuration
-```
-
-4. **Start the application**
-```bash
-# Development mode (runs both server and client)
-npm run dev
-
-# Or start individually
-npm run server:dev  # Backend only
-npm run client:dev  # Frontend only
-```
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-#### "concurrently is not recognized" Error
-If you see this error when running `start.bat` or `npm run dev`:
-```
-'concurrently' is not recognized as an internal or external command
-```
-
-**Solution:**
-```bash
-# Run the dependency fix script
-# For Windows:
-scripts\01-fix-dependencies.bat
-
-# For Linux/macOS:
-chmod +x scripts/01-fix-dependencies.sh
-./scripts/01-fix-dependencies.sh
-```
-
-Or manually install dependencies:
-```bash
-npm install                    # Install root dependencies
-cd server && npm install      # Install server dependencies  
-cd ../client && npm install   # Install client dependencies
-```
-
-#### Port Already in Use
-If ports 3000 or 5000 are already in use:
-- **Option 1**: Stop the conflicting service
-- **Option 2**: Change ports in `server/.env`:
-  ```
-  PORT=5001  # Change server port
-  ```
-  And update `FRONTEND_URL` accordingly.
-
-#### MinIO Client Issues
-- **Linux/macOS**: Ensure `mc` is in your PATH
-- **Windows**: Try running `mc --version` to verify installation
-- **Alternative**: The dashboard will work without `mc`, but migrations won't function
-
-#### Node.js Version Issues
-Ensure you're using Node.js 18.x or higher:
-```bash
-node --version  # Should show v18.x or higher
-```
-
-If you have an older version, update Node.js from https://nodejs.org/
-
-### 📦 Project Structure & Dependencies
-
-This project uses a **monorepo structure** with multiple `package.json` files:
-
-```
-s3-migration-dashboard/
-├── package.json           # Root package (monorepo management)
-├── package-lock.json      # Root lockfile
-├── server/
-│   ├── package.json      # Backend dependencies (Express, WebSocket, etc.)
-│   ├── package-lock.json # Server lockfile
-│   └── ...
-├── client/
-│   ├── package.json      # Frontend dependencies (React, TypeScript, etc.)
-│   ├── package-lock.json # Client lockfile
-│   └── ...
-└── scripts/              # Numbered automation scripts
-    ├── 00-setup-*
-    ├── 01-fix-*
-    └── 02-start.*
-```
-
-#### Why Multiple package.json Files?
-
-1. **Root `package.json`**: 
-   - Manages workspace-level scripts (`dev`, `build`, `start`)
-   - Contains `concurrently` for running server + client together
-   - Handles monorepo dependencies and configuration
-
-2. **Server `package.json`**:
-   - Backend-specific dependencies (Express, cors, ws, SQLite, etc.)
-   - Database management (better-sqlite3, migration tools)
-   - Server-only scripts and build configuration
-   - Production deployment settings
-
-3. **Client `package.json`**:
-   - Frontend-specific dependencies (React, TypeScript, Tailwind, etc.)
-   - Client build tools and development server
-   - Browser-specific configurations
-
-This structure provides:
-- ✅ **Independent dependency management** for frontend/backend
-- ✅ **Separate build processes** for optimal deployment
-- ✅ **Clear separation of concerns** 
-- ✅ **Development convenience** (single command starts both)
-- ✅ **Easy scalability** for microservices architecture
-
-5. **Access the dashboard**
-     - Frontend: http://localhost:3000
-     - Backend API: http://localhost:5000
-
-### Production Deployment
-
-1. **Build the application**
-```bash
-npm run build
-```
-
-2. **Start in production mode**
-```bash
-npm start
-```
-
-## ⚙️ Configuration
-
-### Environment Variables
-
-Create `server/.env` file with the following variables:
-
-```env
-# Server Configuration
-PORT=5000
-NODE_ENV=production
-
-# MinIO/S3 Configuration
-MC_PATH=/usr/local/bin/mc
-LOG_LEVEL=info
-MAX_CONCURRENT_MIGRATIONS=3
-
-# CORS Configuration
-FRONTEND_URL=http://localhost:3000
-```
-
-### S3 Endpoint Configuration
-
-The application supports any S3-compatible storage:
-
-#### AWS S3
-- **Endpoint**: `https://s3.amazonaws.com`
-- **Access Key**: Your AWS Access Key ID
-- **Secret Key**: Your AWS Secret Access Key
-
-#### MinIO
-- **Endpoint**: `https://your-minio-server.com`
-- **Access Key**: MinIO Access Key
-- **Secret Key**: MinIO Secret Key
-
-#### Other S3-Compatible Services
-- **DigitalOcean Spaces**: `https://region.digitaloceanspaces.com`
-- **Wasabi**: `https://s3.region.wasabisys.com`
-- **Backblaze B2**: `https://s3.region.backblazeb2.com`
+- 🚀 **Automated S3 migrations** with comprehensive options
+- 🔍 **Bucket content analysis** before migration
+- ⚙️ **Flexible migration options** (overwrite, preserve, exclude patterns)
+- 🛡️ **Dry-run mode** for safe testing
+- 🔁 **Retry mechanisms** for failed transfers
+
+### Real-time Monitoring
+- 🔌 **Dual connection system** (WebSocket + Server-Sent Events)
+- 📺 **Live progress updates** during migration
+- 📊 **Real-time statistics** (objects transferred, speed, ETA)
+- 🔔 **Instant status notifications**
+
+### Comprehensive Reconciliation
+- 🔍 **Post-migration verification** with detailed analysis
+- 📋 **Missing file detection** with source/destination comparison
+- 📊 **Size difference analysis** with byte-level accuracy
+- 📄 **Detailed reconciliation reports** with downloadable logs
+- 🔄 **File-by-file comparison** for complete accuracy
+
+### Data Persistence & History
+- 🗄️ **SQLite database** for reliable data storage
+- 📚 **Complete migration history** with filtering options
+- 🔍 **Advanced search and filtering** by status, date, source/destination
+- 📊 **Historical statistics** and trend analysis
+- 💾 **Data backup and restore** functionality
 
 ## 📖 Usage Guide
 
-### 1. Configure S3 Connections
+### 1. Configure S3 Endpoints
 
-1. Navigate to the **Configure** tab
-2. Click **Add S3 Connection**
-3. Fill in your S3 endpoint details:
-   - **Alias Name**: A unique identifier (e.g., "source-aws", "dest-minio")
-   - **Endpoint URL**: Your S3 endpoint
-   - **Access Key**: S3 access credentials
-   - **Secret Key**: S3 secret credentials
-4. Click **Test Connection** to verify
-5. Save the configuration
+Start by adding your S3 endpoints in the **Configuration** tab:
 
-### 2. Start a Migration
+```bash
+# Example MinIO endpoints
+Source: source-aws (AWS S3)
+Destination: target-aws (MinIO Server)
+```
 
-1. Go to the **Migrate** tab
-2. Select your **source** connection and bucket
-3. Select your **destination** connection and bucket
-4. Review the bucket analysis (size, objects, estimated time)
-5. Configure migration options:
-   - **Overwrite**: Replace existing files
-   - **Remove**: Delete files not in source
-   - **Exclude patterns**: Skip certain files
-6. Click **Validate** to check configuration
-7. Click **Start Migration**
+### 2. Set Up Migration
+
+In the **Migrate** tab:
+1. **Select source and destination** buckets
+2. **Configure migration options** (overwrite, preserve metadata, etc.)
+3. **Run bucket analysis** to preview migration
+4. **Start migration** with real-time monitoring
 
 ### 3. Monitor Progress
 
-1. **Dashboard**: Real-time overview of all migrations
-2. **History**: Detailed view of past and current migrations
-3. **Logs**: Live logs with filtering and export options
+Use the **Logs** tab to:
+- **Monitor live progress** with real-time updates
+- **View detailed logs** of the migration process
+- **Track file-by-file transfers**
+- **Monitor error messages** and resolution
 
-### 4. Data Reconciliation
+### 4. Review Results
 
-After migration completion, the system automatically:
-- Compares source and destination
-- Reports any differences
-- Provides verification status
+After migration completion:
+- **Check Dashboard** for updated statistics
+- **Review History** for detailed migration records
+- **Open Reconciliation Report** for difference analysis
+- **Download logs** for archival or troubleshooting
 
 ## 🏗️ Architecture
 
-### Backend (Node.js/Express)
-```
-server/
-├── index.js              # Main server file
-├── routes/
-│   ├── migration.js      # Migration API endpoints + SSE streaming
-│   └── buckets.js        # S3 bucket management
-├── services/
-│   ├── database.js       # SQLite database service (NEW)
-│   ├── minioClient.js    # MinIO client wrapper + DB integration
-│   └── websocket.js      # Real-time communication (WebSocket + SSE)
-├── data/
-│   └── migrations.db     # SQLite database (auto-created)
-└── logs/                 # Migration log files
-```
+### Technology Stack
+- **Frontend**: React 18 with TypeScript
+- **Backend**: Node.js with Express
+- **Database**: SQLite with better-sqlite3
+- **Real-time**: WebSocket + Server-Sent Events
+- **Storage**: MinIO Client for S3 operations
 
-**Key Components:**
-- 🗄️ **SQLite Database**: Persistent storage for migrations and logs
-- 🔄 **Dual Real-time**: WebSocket + Server-Sent Events fallback
-- 📊 **Enhanced APIs**: Database-driven statistics and streaming
-- 🔍 **Reconciliation**: Detailed difference tracking and analysis
-
-### Frontend (React/TypeScript)
+### Project Structure
 ```
-client/src/
-├── components/           # React components
-│   ├── Dashboard.tsx     # Main dashboard with real-time stats
-│   ├── ConfigureTab.tsx  # S3 configuration
-│   ├── MigrateTab.tsx    # Migration interface
-│   ├── HistoryTab.tsx    # Migration history + reconciliation
-│   ├── LogsTab.tsx       # Log viewer with auto-refresh
-│   └── ReconciliationModal.tsx  # Difference analysis (NEW)
-├── services/
-│   ├── api.ts           # API client with enhanced endpoints
-│   ├── websocket.ts     # WebSocket client
-│   └── sse.ts           # Server-Sent Events client (NEW)
-├── types/
-│   └── index.ts         # TypeScript definitions + reconciliation types
-└── App.tsx              # Main application with dual connectivity
+s3-management-ui/
+├── client/                 # React frontend application
+│   ├── src/
+│   │   ├── components/     # React components
+│   │   ├── services/       # API and WebSocket services
+│   │   └── types/          # TypeScript type definitions
+├── server/                 # Node.js backend application
+│   ├── routes/             # Express API routes
+│   ├── services/           # Business logic services
+│   └── data/               # SQLite database storage
+├── scripts/                # Automation scripts
+└── docs/                   # Documentation and guides
 ```
 
-**Enhanced Features:**
-- 🎨 **Modern UI**: Responsive design with real-time updates
-- 🔄 **Dual Connectivity**: Automatic WebSocket/SSE fallback
-- 📊 **Live Statistics**: Database-driven dashboard metrics
-- 🔍 **Difference Analysis**: Detailed reconciliation modal
+### Key Components
 
-## 🔧 API Reference
+#### Backend Services
+- **MinIO Client Service**: Handles S3 operations and migrations
+- **Database Service**: SQLite operations and data persistence
+- **WebSocket Service**: Real-time communication
+- **SSE Service**: Server-Sent Events fallback
 
-### Migration Endpoints
+#### Frontend Components
+- **Dashboard**: Main statistics and overview
+- **Migration Wizard**: Step-by-step migration setup
+- **History Manager**: Migration tracking and filtering
+- **Logs Viewer**: Real-time monitoring and log analysis
 
-#### Start Migration
-```http
-POST /api/migration/start
-Content-Type: application/json
+## 📚 API Reference
 
+### Base URL
+```
+http://localhost:5000/api
+```
+
+### Endpoints
+
+#### Migrations
+```bash
+GET    /migration              # Get all migrations
+GET    /migration/:id          # Get specific migration
+POST   /migration              # Start new migration
+DELETE /migration/:id          # Cancel migration
+GET    /migration/:id/logs     # Get migration logs
+```
+
+#### Real-time
+```bash
+GET    /migration/events       # Server-Sent Events stream
+```
+
+### Example API Response
+```json
 {
-  "source": "source-alias/bucket-name",
-  "destination": "dest-alias/bucket-name",
-  "options": {
-    "overwrite": false,
-    "remove": false,
-    "exclude": ["*.tmp", "logs/*"]
+  "success": true,
+  "data": {
+    "id": "ace7d551-c1f3-4c61-9d88-4c04d6e777b5",
+    "config": {
+      "source": "source-aws/awssourcebucket202",
+      "destination": "target-aws/awstargetbucket502"
+    },
+    "sourceBucket": "awssourcebucket202",
+    "destinationBucket": "awstargetbucket502",
+    "status": "completed_with_differences",
+    "progress": 100,
+    "stats": {
+      "totalObjects": 161,
+      "transferredObjects": 165,
+      "totalSize": 2621443910,
+      "transferredSize": 2806998464
+    }
   }
 }
 ```
 
-#### Get Migration Status
-```http
-GET /api/migration/{migrationId}
-```
+## 📄 License
 
-#### Cancel Migration
-```http
-POST /api/migration/{migrationId}/cancel
-```
-
-### Bucket Endpoints
-
-#### Configure S3 Alias
-```http
-POST /api/buckets/alias
-Content-Type: application/json
-
-{
-  "aliasName": "my-s3",
-  "endpoint": "https://s3.amazonaws.com",
-  "accessKey": "your-access-key",
-  "secretKey": "your-secret-key"
-}
-```
-
-#### List Buckets
-```http
-GET /api/buckets/list/{aliasName}
-```
-
-## 🚨 Error Handling
-
-### Common Issues
-
-#### MinIO Client Not Found
-```
-Error: MinIO client not detected
-```
-**Solution**: Install MinIO client and ensure it's in your PATH
-
-#### Connection Failed
-```
-Error: Failed to configure alias
-```
-**Solutions**:
-- Verify endpoint URL is correct
-- Check access credentials
-- Ensure network connectivity
-- Validate SSL certificates
-
-#### Permission Denied
-```
-Error: Access denied
-```
-**Solutions**:
-- Verify IAM permissions for source/destination buckets
-- Check bucket policies
-- Ensure cross-region access is configured
-
-### Logs and Debugging
-
-- **Migration Logs**: Available in `server/logs/` directory
-- **Application Logs**: Check console output for detailed errors
-- **Debug Mode**: Set `LOG_LEVEL=debug` in environment variables
-
-## 🧪 Development
-
-### Running Tests
-```bash
-# Backend tests
-cd server && npm test
-
-# Frontend tests
-cd client && npm test
-```
-
-### Code Quality
-```bash
-# Linting
-npm run lint
-
-# Type checking
-npm run type-check
-
-# Formatting
-npm run format
-```
-
-### Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/new-feature`
-3. Commit changes: `git commit -m 'Add new feature'`
-4. Push to branch: `git push origin feature/new-feature`
-5. Submit a pull request
-
-
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-Built with ❤️ using React, Node.js, and MinIO
+**Built with ❤️ for efficient S3 management and migration**
