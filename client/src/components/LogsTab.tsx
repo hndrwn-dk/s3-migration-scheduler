@@ -116,15 +116,17 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
     if (selectedMigration) {
       loadLogs();
       
+      // Disable auto-refresh to prevent constant loading state
+      // Users can manually refresh when needed
       // Auto-refresh logs for active migrations
-      const migration = migrations.find(m => m.id === selectedMigration);
-      if (migration && (migration.status === 'running' || migration.status === 'reconciling' || migration.status === 'starting')) {
-        const interval = setInterval(() => {
-          loadLogs();
-        }, 3000); // Increased to 3 seconds to reduce server load
-        
-        return () => clearInterval(interval);
-      }
+      // const migration = migrations.find(m => m.id === selectedMigration);
+      // if (migration && (migration.status === 'running' || migration.status === 'reconciling' || migration.status === 'starting')) {
+      //   const interval = setInterval(() => {
+      //     loadLogs();
+      //   }, 3000); // Increased to 3 seconds to reduce server load
+      //   
+      //   return () => clearInterval(interval);
+      // }
     }
   }, [selectedMigration, migrations, loadLogs]);
 
@@ -207,10 +209,11 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
 
   const activeMigrations = migrations.filter(m => 
     m.config && m.id && (m.status === 'running' || m.status === 'reconciling' || m.status === 'starting')
-  );
+  ).sort((a, b) => new Date(b.startTime || 0).getTime() - new Date(a.startTime || 0).getTime()); // Latest first
+  
   const completedMigrations = migrations.filter(m => 
     m.config && m.id && (m.status === 'completed' || m.status === 'failed' || m.status === 'cancelled' || m.status === 'verified' || m.status === 'completed_with_differences')
-  );
+  ).sort((a, b) => new Date(b.startTime || 0).getTime() - new Date(a.startTime || 0).getTime()); // Latest first
 
   return (
     <div className="space-y-6">
@@ -236,7 +239,7 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
                 <optgroup label="Active Migrations">
                   {activeMigrations.map(migration => (
                     <option key={migration.id} value={migration.id}>
-                      {migration.config?.source || 'Unknown'} → {migration.config?.destination || 'Unknown'} ({migration.status})
+                      {migration.config?.source || 'Unknown'} → {migration.config?.destination || 'Unknown'} | ID: {migration.id.slice(0, 8)} | {migration.startTime ? format(new Date(migration.startTime), 'MMM dd, HH:mm') : 'No timestamp'} | ({migration.status})
                     </option>
                   ))}
                 </optgroup>
@@ -246,7 +249,7 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
                 <optgroup label="Completed Migrations">
                   {completedMigrations.map(migration => (
                     <option key={migration.id} value={migration.id}>
-                      {migration.config?.source || 'Unknown'} → {migration.config?.destination || 'Unknown'} ({migration.status})
+                      {migration.config?.source || 'Unknown'} → {migration.config?.destination || 'Unknown'} | ID: {migration.id.slice(0, 8)} | {migration.startTime ? format(new Date(migration.startTime), 'MMM dd, HH:mm') : 'No timestamp'} | ({migration.status})
                     </option>
                   ))}
                 </optgroup>
