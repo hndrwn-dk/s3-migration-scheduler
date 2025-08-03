@@ -313,7 +313,9 @@ class MinioClientService {
     const logFile = path.join(this.logDir, `migration-${migrationId}.log`);
     
     // Determine execution type and status
+    console.log(`DEBUG: Full migration config:`, JSON.stringify(migrationConfig, null, 2));
     console.log(`DEBUG: Migration config scheduledTime: ${migrationConfig.scheduledTime}`);
+    console.log(`DEBUG: Migration config scheduledTime type: ${typeof migrationConfig.scheduledTime}`);
     console.log(`DEBUG: Current time: ${new Date().toISOString()}`);
     
     let isScheduled = false;
