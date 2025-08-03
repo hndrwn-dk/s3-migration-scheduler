@@ -172,9 +172,11 @@ For maximum portability and ease of deployment, the repository includes pre-comp
 
 # Windows verification:
 certutil -hashfile mc.exe SHA256
+# Expected: 8b6db6d54f97a133efbf7430896e3bb0105c231d3c9fce9a63ba9f2adec9c605
 
 # Linux verification:  
 sha256sum mc
+# Expected: [checksum will be added after Linux binary inclusion]
 ```
 
 > **🔒 Security**: These are official MinIO client binaries downloaded from https://min.io/download with verified checksums for integrity.
