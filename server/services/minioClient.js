@@ -12,6 +12,9 @@ class MinioClientService {
     this.activeMigrations = new Map();
     this.logDir = path.join(__dirname, '../logs');
     this.migrationsFile = path.join(this.logDir, 'migrations.json');
+    // Cache for bucket listings to avoid repeated expensive operations
+    this.bucketListingCache = new Map();
+    this.cacheTimeout = 5 * 60 * 1000; // 5 minutes cache
     this.ensureLogDirectory();
     
     // Initialize migrations synchronously
@@ -1485,41 +1488,77 @@ class MinioClientService {
       logs = `Error reading migration logs: ${error.message}`;
     }
 
+    // Check if migration is completed - if so, use cached data instead of live bucket listing
+    const isCompleted = migration.status === 'completed' || 
+                       migration.status === 'verified' || 
+                       migration.status === 'completed_with_differences' ||
+                       migration.status === 'failed';
+
     // 2. Add bucket comparison section
     logs += `\n\n${'='.repeat(80)}\n`;
     logs += `BUCKET COMPARISON & ANALYSIS\n`;
     logs += `${'='.repeat(80)}\n`;
     logs += `Migration ID: ${migrationId}\n`;
+    logs += `Status: ${migration.status || 'Unknown'}\n`;
     logs += `Generated at: ${new Date().toISOString()}\n`;
     logs += `Source: ${migration.config?.source || 'Unknown'}\n`;
     logs += `Destination: ${migration.config?.destination || 'Unknown'}\n`;
+    
+    if (isCompleted) {
+      logs += `Note: Using cached data for completed migration (no live bucket scan)\n`;
+    }
     logs += `${'='.repeat(80)}\n\n`;
 
-    // 3. Get source bucket listing
-    if (migration.config?.source) {
-      try {
-        logs += `SOURCE BUCKET ANALYSIS (${migration.config.source})\n`;
-        logs += `${'─'.repeat(60)}\n`;
-        const sourceListing = await this.getBucketListing(migration.config.source);
-        logs += sourceListing;
-        logs += `\n`;
-      } catch (error) {
-        console.warn('Could not get source bucket listing:', error.message);
-        logs += `Error getting source bucket listing: ${error.message}\n\n`;
+    if (isCompleted && migration.reconciliation) {
+      // 3. For completed migrations, use reconciliation data instead of live bucket listing
+      logs += `SOURCE BUCKET STATS (from reconciliation data)\n`;
+      logs += `${'─'.repeat(60)}\n`;
+      if (migration.reconciliation.sourceStats) {
+        logs += `Files detected: ${migration.reconciliation.sourceStats.objectCount || 0}\n`;
+        logs += `Total size: ${this.formatBytes(migration.reconciliation.sourceStats.totalSize || 0)}\n`;
+      } else {
+        logs += `Files detected: ${migration.stats?.totalObjects || 0}\n`;
+        logs += `Total size: ${this.formatBytes(migration.stats?.totalSize || 0)}\n`;
       }
-    }
+      logs += `\n`;
 
-    // 4. Get destination bucket listing
-    if (migration.config?.destination) {
-      try {
-        logs += `DESTINATION BUCKET ANALYSIS (${migration.config.destination})\n`;
-        logs += `${'─'.repeat(60)}\n`;
-        const destListing = await this.getBucketListing(migration.config.destination);
-        logs += destListing;
-        logs += `\n`;
-      } catch (error) {
-        console.warn('Could not get destination bucket listing:', error.message);
-        logs += `Error getting destination bucket listing: ${error.message}\n\n`;
+      logs += `DESTINATION BUCKET STATS (from reconciliation data)\n`;
+      logs += `${'─'.repeat(60)}\n`;
+      if (migration.reconciliation.destStats) {
+        logs += `Files detected: ${migration.reconciliation.destStats.objectCount || 0}\n`;
+        logs += `Total size: ${this.formatBytes(migration.reconciliation.destStats.totalSize || 0)}\n`;
+      } else {
+        logs += `Files detected: ${migration.stats?.transferredObjects || 0}\n`;
+        logs += `Total size: ${this.formatBytes(migration.stats?.transferredSize || 0)}\n`;
+      }
+      logs += `\n`;
+    } else {
+      // 3. For active migrations, get live source bucket listing
+      if (migration.config?.source) {
+        try {
+          logs += `SOURCE BUCKET ANALYSIS (${migration.config.source}) - LIVE SCAN\n`;
+          logs += `${'─'.repeat(60)}\n`;
+          const sourceListing = await this.getBucketListing(migration.config.source);
+          logs += sourceListing;
+          logs += `\n`;
+        } catch (error) {
+          console.warn('Could not get source bucket listing:', error.message);
+          logs += `Error getting source bucket listing: ${error.message}\n\n`;
+        }
+      }
+
+      // 4. For active migrations, get live destination bucket listing
+      if (migration.config?.destination) {
+        try {
+          logs += `DESTINATION BUCKET ANALYSIS (${migration.config.destination}) - LIVE SCAN\n`;
+          logs += `${'─'.repeat(60)}\n`;
+          const destListing = await this.getBucketListing(migration.config.destination);
+          logs += destListing;
+          logs += `\n`;
+        } catch (error) {
+          console.warn('Could not get destination bucket listing:', error.message);
+          logs += `Error getting destination bucket listing: ${error.message}\n\n`;
+        }
       }
     }
 
@@ -1542,6 +1581,14 @@ class MinioClientService {
   }
 
   async getBucketListing(bucketPath) {
+    // Check cache first
+    const cacheKey = bucketPath;
+    const cachedResult = this.bucketListingCache.get(cacheKey);
+    if (cachedResult && (Date.now() - cachedResult.timestamp) < this.cacheTimeout) {
+      console.log(`Using cached bucket listing for: ${bucketPath} (cached ${Math.round((Date.now() - cachedResult.timestamp) / 1000)}s ago)`);
+      return cachedResult.data;
+    }
+
     return new Promise((resolve, reject) => {
       const command = `${this.quoteMcPath()} ls ${bucketPath} --recursive --summarize`;
       console.log(`Getting bucket listing: ${command}`);
@@ -1550,13 +1597,21 @@ class MinioClientService {
         if (error) {
           console.log(`Bucket listing error for ${bucketPath}:`, error.message);
           // Don't reject, return error message instead
-          resolve(`Error listing bucket: ${error.message}\n` +
+          const errorMessage = `Error listing bucket: ${error.message}\n` +
                   `Command: ${command}\n` +
                   `This might indicate:\n` +
                   `• Bucket doesn't exist\n` +
                   `• Access permission issues\n` +
                   `• Network connectivity problems\n` +
-                  `• MinIO client configuration issues\n\n`);
+                  `• MinIO client configuration issues\n\n`;
+          
+          // Cache error results briefly (1 minute) to avoid repeated failures
+          this.bucketListingCache.set(cacheKey, {
+            data: errorMessage,
+            timestamp: Date.now()
+          });
+          
+          resolve(errorMessage);
           return;
         }
 
@@ -1566,8 +1621,16 @@ class MinioClientService {
 
         try {
           if (!stdout || stdout.trim() === '') {
-            resolve(`Bucket is empty: ${bucketPath}\n` +
-                   `Total: 0 objects, 0 B\n\n`);
+            const emptyMessage = `Bucket is empty: ${bucketPath}\n` +
+                   `Total: 0 objects, 0 B\n\n`;
+            
+            // Cache empty bucket results
+            this.bucketListingCache.set(cacheKey, {
+              data: emptyMessage,
+              timestamp: Date.now()
+            });
+            
+            resolve(emptyMessage);
             return;
           }
 
@@ -1619,6 +1682,13 @@ class MinioClientService {
           // Don't add ANALYSIS section as it's redundant with SUMMARY
 
           listing += `\n`;
+          
+          // Cache the result for future use
+          this.bucketListingCache.set(cacheKey, {
+            data: listing,
+            timestamp: Date.now()
+          });
+          
           resolve(listing);
 
         } catch (parseError) {
