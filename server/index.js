@@ -73,6 +73,10 @@ app.use((req, res) => {
 // Initialize WebSocket server
 const wss = initializeWebSocket(server);
 
+// Fix any stuck migrations from previous server shutdown
+const database = require('./services/database');
+database.fixStuckMigrations();
+
 // Initialize cron migration scheduler
 const cronScheduler = require('./services/cronScheduler');
 cronScheduler.start();
