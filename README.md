@@ -1,9 +1,10 @@
 # S3 Bucket Migration UI
 
-A comprehensive, enterprise-grade fullstack application for S3 bucket migrations with persistent SQLite database, real-time monitoring, and detailed reconciliation tracking. Features a modern React dashboard with TypeScript, dual real-time connections (WebSocket + SSE), and comprehensive migration difference analysis.
+A comprehensive, enterprise-grade fullstack application for S3 bucket migrations with persistent SQLite database, scheduled migration support, real-time monitoring, and detailed reconciliation tracking. Features a modern React dashboard with TypeScript, node-cron scheduling, dual real-time connections (WebSocket + SSE), and comprehensive migration difference analysis.
 
 ![S3 Bucket Migration UI](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 ![Database](https://img.shields.io/badge/Database-SQLite-blue)
+![Scheduling](https://img.shields.io/badge/Scheduling-node--cron-purple)
 ![Node.js](https://img.shields.io/badge/Node.js-18.x-green)
 ![React](https://img.shields.io/badge/React-18.x-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)
@@ -40,11 +41,17 @@ If you find this project helpful, you can support me here:
 ![Configuration](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/configuration.png?raw=true)
 > ⚙️ **Configuration Tab** - Clean interface for adding AWS S3, GCP Cloud Storage, Azure Blob Storage, MinIO, wasabi, and other S3-compatible endpoints (Cloudian S3 Hyperstore, IBM Cloud Object Storage, Huawei S3, Pure Storage flashblade, etc.) with built-in connection testing and alias management.
 
-### Advanced Migration Setup
-*Comprehensive migration wizard*
+### Advanced Migration Setup with Scheduling
+*Comprehensive migration wizard with scheduling capabilities*
 
 ![Migration Setup](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/migration-advance-options-with_preview.png?raw=true)
-> 🛠️ **Migration Tab** - Enhanced wizard with advanced options (overwrite, preserve, exclude patterns), and dry-run capabilities.
+> 🛠️ **Migration Tab** - Enhanced wizard with advanced options (overwrite, preserve, exclude patterns), scheduling capabilities, and dry-run capabilities.
+
+### Scheduled Migration Management
+*Schedule and manage future migrations*
+
+![Scheduled Migrations](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/scheduled-migrations.png?raw=true)
+> ⏰ **Scheduled Tab** - Complete scheduling system with `node-cron` backend, showing pending migrations with countdown timers, reschedule/cancel options, and automatic execution at specified times.
 
 ### Migration History with Reconciliation
 *Complete migration tracking with detailed difference analysis*
@@ -327,6 +334,7 @@ For detailed update instructions and troubleshooting, see: **[📖 UPDATE_GUIDE.
 
 ### Migration Management
 - 🚀 **Automated S3 migrations** with comprehensive options
+- ⏰ **Scheduled migrations** with precise timing control using `node-cron`
 - 🔍 **Bucket content analysis** before migration
 - ⚙️ **Flexible migration options** (overwrite, preserve, exclude patterns)
 - 🛡️ **Dry-run mode** for safe testing
@@ -344,6 +352,15 @@ For detailed update instructions and troubleshooting, see: **[📖 UPDATE_GUIDE.
 - 📊 **Size difference analysis** with byte-level accuracy
 - 📄 **Detailed reconciliation reports** with downloadable logs
 - 🔄 **File-by-file comparison** for complete accuracy
+
+### Migration Scheduling
+- ⏰ **Future migration scheduling** with date/time picker
+- 🕐 **Precise timing control** down to the minute
+- 📅 **Scheduled migration management** with dedicated interface
+- ⏸️ **Reschedule and cancel** options for pending migrations
+- 🔄 **Automatic execution** at specified times
+- 📊 **Scheduling statistics** and active job monitoring
+- 🌍 **Timezone-aware** scheduling with local time display
 
 ### Data Persistence & History
 - 🗄️ **SQLite database** for reliable data storage
@@ -369,10 +386,28 @@ Destination: target-aws (MinIO Server)
 In the **Migrate** tab:
 1. **Select source and destination** buckets
 2. **Configure migration options** (overwrite, preserve metadata, etc.)
-3. **Run bucket analysis** to preview migration
-4. **Start migration** with real-time monitoring
+3. **Choose execution timing**:
+   - **Start Immediately**: Begin migration right away
+   - **Schedule for Later**: Set specific date and time
+4. **Run bucket analysis** to preview migration
+5. **Start or schedule migration** with real-time monitoring
 
-### 3. Monitor Progress
+#### Scheduling Options
+- **Date/Time Picker**: Select precise execution time
+- **Timezone Display**: Shows your local timezone
+- **Countdown Timer**: See time remaining until execution
+- **Future Validation**: Ensures scheduled time is in the future
+
+### 3. Manage Scheduled Migrations
+
+Use the **Scheduled** tab to:
+- **View all pending migrations** with countdown timers
+- **Reschedule migrations** to different times
+- **Cancel scheduled migrations** before execution
+- **Monitor scheduler statistics** (total, future, pending, active jobs)
+- **Track execution status** and remaining time
+
+### 4. Monitor Progress
 
 Use the **Logs** tab to:
 - **Monitor live progress** with real-time updates
@@ -380,7 +415,7 @@ Use the **Logs** tab to:
 - **Track file-by-file transfers**
 - **Monitor error messages** and resolution
 
-### 4. Review Results
+### 5. Review Results
 
 After migration completion:
 - **Check Dashboard** for updated statistics
@@ -395,6 +430,7 @@ After migration completion:
 - **Backend**: Node.js with Express
 - **Database**: SQLite with better-sqlite3
 - **Real-time**: WebSocket + Server-Sent Events
+- **Scheduling**: node-cron for precise job scheduling
 - **Storage**: MinIO Client for S3 operations
 
 ### Project Structure
@@ -418,12 +454,14 @@ s3-management-ui/
 #### Backend Services
 - **MinIO Client Service**: Handles S3 operations and migrations
 - **Database Service**: SQLite operations and data persistence
+- **Cron Scheduler Service**: Node-cron based migration scheduling
 - **WebSocket Service**: Real-time communication
 - **SSE Service**: Server-Sent Events fallback
 
 #### Frontend Components
 - **Dashboard**: Main statistics and overview
-- **Migration Wizard**: Step-by-step migration setup
+- **Migration Wizard**: Step-by-step migration setup with scheduling
+- **Scheduled Manager**: Future migration management and monitoring
 - **History Manager**: Migration tracking and filtering
 - **Logs Viewer**: Real-time monitoring and log analysis
 
@@ -440,9 +478,16 @@ http://localhost:5000/api
 ```bash
 GET    /migration              # Get all migrations
 GET    /migration/:id          # Get specific migration
-POST   /migration              # Start new migration
+POST   /migration/start        # Start new migration (immediate or scheduled)
 DELETE /migration/:id          # Cancel migration
 GET    /migration/:id/logs     # Get migration logs
+
+# Scheduled Migrations
+GET    /migration/scheduled           # Get all scheduled migrations
+DELETE /migration/scheduled/:id      # Cancel scheduled migration
+PUT    /migration/scheduled/:id      # Reschedule migration
+GET    /migration/scheduler/stats    # Get scheduler statistics
+GET    /migration/scheduler/info     # Get detailed scheduler info
 ```
 
 #### Real-time
