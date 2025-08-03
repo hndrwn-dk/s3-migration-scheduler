@@ -100,8 +100,20 @@ const ReconciliationModal: React.FC<ReconciliationModalProps> = ({ migration, is
               </p>
               <div className="bg-red-50 rounded-md p-3 max-h-32 overflow-y-auto">
                 {reconciliation.missingFiles.map((file, index) => (
-                  <div key={index} className="text-sm text-red-800 py-1 border-b border-red-100 last:border-b-0">
-                    {typeof file === 'string' ? file : file.path || 'Unknown file'}
+                  <div key={index} className="text-sm text-red-800 py-2 border-b border-red-100 last:border-b-0">
+                    <div className="font-medium">
+                      {typeof file === 'string' ? file : file.path || 'Unknown file'}
+                    </div>
+                    {typeof file === 'object' && file.sourceUrl && (
+                      <div className="text-xs text-red-600 mt-1 truncate">
+                        Source: {file.sourceUrl}
+                      </div>
+                    )}
+                    {typeof file === 'object' && file.sourceSize && (
+                      <div className="text-xs text-red-600 mt-1">
+                        Size: {formatFileSize(file.sourceSize)}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -122,8 +134,20 @@ const ReconciliationModal: React.FC<ReconciliationModalProps> = ({ migration, is
               </p>
               <div className="bg-blue-50 rounded-md p-3 max-h-32 overflow-y-auto">
                 {reconciliation.extraFiles.map((file, index) => (
-                  <div key={index} className="text-sm text-blue-800 py-1 border-b border-blue-100 last:border-b-0">
-                    {typeof file === 'string' ? file : file.path || 'Unknown file'}
+                  <div key={index} className="text-sm text-blue-800 py-2 border-b border-blue-100 last:border-b-0">
+                    <div className="font-medium">
+                      {typeof file === 'string' ? file : file.path || 'Unknown file'}
+                    </div>
+                    {typeof file === 'object' && file.targetUrl && (
+                      <div className="text-xs text-blue-600 mt-1 truncate">
+                        Destination: {file.targetUrl}
+                      </div>
+                    )}
+                    {typeof file === 'object' && file.targetSize && (
+                      <div className="text-xs text-blue-600 mt-1">
+                        Size: {formatFileSize(file.targetSize)}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -157,24 +181,45 @@ const ReconciliationModal: React.FC<ReconciliationModalProps> = ({ migration, is
             </div>
           )}
 
-          {/* General Differences */}
-          {reconciliation.differences && reconciliation.differences.length > 0 && (
+          {/* General Differences - Only show if there are valid differences */}
+          {reconciliation.differences && reconciliation.differences.length > 0 && 
+           reconciliation.differences.some(diff => 
+             typeof diff === 'string' || 
+             (diff.path && !diff.path.startsWith('unknown-') && diff.status !== 'success')
+           ) && (
             <div className="border rounded-lg p-4">
               <div className="flex items-center mb-3">
                 {getDifferenceIcon('general')}
                 <h4 className="text-md font-semibold text-gray-900 ml-2">
-                  Other Differences ({reconciliation.differences.length})
+                  Other Differences ({reconciliation.differences.filter(diff => 
+                    typeof diff === 'string' || 
+                    (diff.path && !diff.path.startsWith('unknown-') && diff.status !== 'success')
+                  ).length})
                 </h4>
               </div>
               <p className="text-sm text-gray-600 mb-3">
                 Additional differences found during reconciliation:
               </p>
               <div className="bg-yellow-50 rounded-md p-3 max-h-32 overflow-y-auto">
-                {reconciliation.differences.map((diff, index) => (
-                  <div key={index} className="text-sm text-yellow-800 py-1 border-b border-yellow-100 last:border-b-0">
-                    {typeof diff === 'string' ? diff : JSON.stringify(diff)}
-                  </div>
-                ))}
+                {reconciliation.differences
+                  .filter(diff => 
+                    typeof diff === 'string' || 
+                    (diff.path && !diff.path.startsWith('unknown-') && diff.status !== 'success')
+                  )
+                  .map((diff, index) => (
+                    <div key={index} className="text-sm text-yellow-800 py-2 border-b border-yellow-100 last:border-b-0">
+                      <div className="font-medium">
+                        {typeof diff === 'string' ? diff : diff.path || 'Unknown file'}
+                      </div>
+                      {typeof diff === 'object' && (
+                        <div className="text-xs text-yellow-600 mt-1">
+                          Status: {diff.status} | 
+                          Source: {diff.sourceSize || 0} bytes | 
+                          Destination: {diff.targetSize || 0} bytes
+                        </div>
+                      )}
+                    </div>
+                  ))}
               </div>
             </div>
           )}
