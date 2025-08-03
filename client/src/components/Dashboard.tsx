@@ -23,6 +23,7 @@ interface SystemStats {
   running: number;
   failed: number;
   cancelled: number;
+  scheduled: number;
   pending?: number;
   recent_activity: number;
   total_data_transferred: number;
@@ -60,6 +61,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
         completed: systemStats.completed || 0,
         running: systemStats.running || 0,
         failed: systemStats.failed || 0,
+        scheduled: systemStats.scheduled || 0,
         pending: systemStats.pending || 0,
         recentActivity: systemStats.recent_activity || 0,
         totalDataTransferred: systemStats.total_data_transferred || 0,
@@ -74,6 +76,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
     const completed = migrations.filter(m => m.status === 'completed' || m.status === 'verified').length;
     const running = migrations.filter(m => m.status === 'running' || m.status === 'reconciling').length;
     const failed = migrations.filter(m => m.status === 'failed').length;
+    const scheduled = migrations.filter(m => m.status === 'scheduled').length;
     const pending = migrations.filter(m => m.status === 'starting').length;
 
     // Recent activity (last 24 hours)
@@ -93,6 +96,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
       completed,
       running,
       failed,
+      scheduled,
       pending,
       recentActivity,
       totalDataTransferred,
@@ -134,6 +138,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
   const statusDistribution = [
     { name: 'Completed', value: stats.completed, color: '#10B981' },
     { name: 'Running', value: stats.running, color: '#3B82F6' },
+    { name: 'Scheduled', value: stats.scheduled, color: '#8B5CF6' },
     { name: 'Failed', value: stats.failed, color: '#EF4444' },
     { name: 'Pending', value: stats.pending, color: '#F59E0B' }
   ].filter(item => item.value > 0);
@@ -216,12 +221,12 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <ClockIcon className="h-8 w-8 text-orange-600" />
+              <ClockIcon className="h-8 w-8 text-purple-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Recent Activity</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.recentActivity}</p>
-              <p className="text-sm text-orange-600">Last 24 hours</p>
+              <p className="text-sm font-medium text-gray-600">Scheduled</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.scheduled}</p>
+              <p className="text-sm text-purple-600">Awaiting execution</p>
             </div>
           </div>
         </div>
