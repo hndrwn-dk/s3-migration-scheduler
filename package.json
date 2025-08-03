@@ -1,5 +1,5 @@
 {
-  "name": "s3-management-ui",
+  "name": "s3-migration-scheduler",
   "version": "1.0.0",
   "description": "Fullstack S3 Management UI with migration capabilities and MinIO client",
   "main": "server/index.js",

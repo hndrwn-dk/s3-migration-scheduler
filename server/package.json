@@ -1,5 +1,5 @@
 {
-  "name": "s3-management-ui-server",
+  "name": "s3-migration-scheduler-server",
   "version": "1.0.0",
   "description": "Backend server for S3 Management UI",
   "main": "index.js",
