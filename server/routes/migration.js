@@ -97,21 +97,36 @@ router.get('/', async (req, res) => {
     const migrations = minioClient.getAllMigrations();
     console.log(`API getAllMigrations returning ${migrations.length} migrations`);
     
-    // Ensure all migrations have required fields
-    const sanitizedMigrations = migrations.map(migration => ({
-      id: migration.id || 'unknown',
-      config: migration.config || { source: 'Unknown', destination: 'Unknown', options: {} },
-      status: migration.status || 'unknown',
-      progress: migration.progress || 0,
-      startTime: migration.startTime || new Date().toISOString(),
-      endTime: migration.endTime || null,
-      stats: migration.stats || { totalObjects: 0, transferredObjects: 0, totalSize: 0, transferredSize: 0, speed: 0 },
-      errors: migration.errors || [],
-      reconciliation: migration.reconciliation || null,
-      duration: migration.endTime ? 
-        (new Date(migration.endTime).getTime() - new Date(migration.startTime).getTime()) / 1000 : 
-        migration.startTime ? (new Date().getTime() - new Date(migration.startTime).getTime()) / 1000 : 0
-    }));
+    // Ensure all migrations have required fields and extract bucket names
+    const sanitizedMigrations = migrations.map(migration => {
+      // Extract bucket names from source and destination paths
+      const extractBucketName = (path) => {
+        if (!path || typeof path !== 'string') return 'Unknown';
+        // Handle formats like "source-aws/bucket123" or "alias/bucket123/subfolder"
+        const parts = path.split('/');
+        return parts.length >= 2 ? parts[1] : parts[0] || 'Unknown';
+      };
+      
+      const sourceBucket = extractBucketName(migration.config?.source);
+      const destinationBucket = extractBucketName(migration.config?.destination);
+      
+      return {
+        id: migration.id || 'unknown',
+        config: migration.config || { source: 'Unknown', destination: 'Unknown', options: {} },
+        sourceBucket: sourceBucket,
+        destinationBucket: destinationBucket,
+        status: migration.status || 'unknown',
+        progress: migration.progress || 0,
+        startTime: migration.startTime || new Date().toISOString(),
+        endTime: migration.endTime || null,
+        stats: migration.stats || { totalObjects: 0, transferredObjects: 0, totalSize: 0, transferredSize: 0, speed: 0 },
+        errors: migration.errors || [],
+        reconciliation: migration.reconciliation || null,
+        duration: migration.endTime ? 
+          (new Date(migration.endTime).getTime() - new Date(migration.startTime).getTime()) / 1000 : 
+          migration.startTime ? (new Date().getTime() - new Date(migration.startTime).getTime()) / 1000 : 0
+      };
+    });
     
     console.log(`API returning ${sanitizedMigrations.length} sanitized migrations`);
     res.json({ success: true, data: sanitizedMigrations });
@@ -166,7 +181,23 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const status = minioClient.getMigrationStatus(id);
-    res.json({ success: true, data: status });
+    
+    // Extract bucket names from source and destination paths
+    const extractBucketName = (path) => {
+      if (!path || typeof path !== 'string') return 'Unknown';
+      // Handle formats like "source-aws/bucket123" or "alias/bucket123/subfolder"
+      const parts = path.split('/');
+      return parts.length >= 2 ? parts[1] : parts[0] || 'Unknown';
+    };
+    
+    // Enhance the response with bucket names
+    const enhancedStatus = {
+      ...status,
+      sourceBucket: extractBucketName(status.config?.source),
+      destinationBucket: extractBucketName(status.config?.destination)
+    };
+    
+    res.json({ success: true, data: enhancedStatus });
   } catch (error) {
     res.status(404).json({ success: false, error: error.message });
   }

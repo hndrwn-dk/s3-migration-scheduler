@@ -1562,15 +1562,88 @@ class MinioClientService {
       }
     }
 
-    // 5. Add reconciliation details if available (only if there are actual differences to show)
+    // 5. Add detailed reconciliation report if available
     if (migration.reconciliation && migration.reconciliation.differences && migration.reconciliation.differences.length > 0) {
-      logs += `RECONCILIATION DETAILS\n`;
-      logs += `${'─'.repeat(60)}\n`;
-      logs += `Migration completed with differences found during verification:\n`;
+      logs += `DETAILED RECONCILIATION REPORT\n`;
+      logs += `${'='.repeat(80)}\n`;
+      logs += `Migration completed with differences found during verification:\n\n`;
+      
+      // Summary
+      logs += `SUMMARY\n`;
+      logs += `${'─'.repeat(40)}\n`;
       logs += `• Missing files: ${migration.reconciliation.missingFiles?.length || 0}\n`;
       logs += `• Extra files: ${migration.reconciliation.extraFiles?.length || 0}\n`;
       logs += `• Size differences: ${migration.reconciliation.sizeDifferences?.length || 0}\n`;
       logs += `• Total differences: ${migration.reconciliation.differences?.length || 0}\n\n`;
+      
+      // Missing Files Details
+      if (migration.reconciliation.missingFiles && migration.reconciliation.missingFiles.length > 0) {
+        logs += `MISSING FILES (${migration.reconciliation.missingFiles.length})\n`;
+        logs += `${'─'.repeat(40)}\n`;
+        logs += `Files that exist in source but not in destination:\n\n`;
+        migration.reconciliation.missingFiles.forEach((file, index) => {
+          logs += `${index + 1}. ${file.path}\n`;
+          if (file.sourceUrl) logs += `   Source: ${file.sourceUrl}\n`;
+          if (file.sourceSize > 0) logs += `   Size: ${this.formatBytes(file.sourceSize)}\n`;
+          logs += `\n`;
+        });
+      }
+      
+      // Extra Files Details  
+      if (migration.reconciliation.extraFiles && migration.reconciliation.extraFiles.length > 0) {
+        logs += `EXTRA FILES (${migration.reconciliation.extraFiles.length})\n`;
+        logs += `${'─'.repeat(40)}\n`;
+        logs += `Files that exist in destination but not in source:\n\n`;
+        migration.reconciliation.extraFiles.forEach((file, index) => {
+          logs += `${index + 1}. ${file.path}\n`;
+          if (file.targetUrl) logs += `   Destination: ${file.targetUrl}\n`;
+          if (file.targetSize > 0) logs += `   Size: ${this.formatBytes(file.targetSize)}\n`;
+          logs += `\n`;
+        });
+      }
+      
+      // Size Differences Details
+      if (migration.reconciliation.sizeDifferences && migration.reconciliation.sizeDifferences.length > 0) {
+        logs += `SIZE DIFFERENCES (${migration.reconciliation.sizeDifferences.length})\n`;
+        logs += `${'─'.repeat(40)}\n`;
+        logs += `Files with different sizes between source and destination:\n\n`;
+        migration.reconciliation.sizeDifferences.forEach((file, index) => {
+          logs += `${index + 1}. ${file.path}\n`;
+          logs += `   Status: ${file.status}\n`;
+          if (file.sourceSize !== undefined && file.targetSize !== undefined) {
+            logs += `   Source: ${this.formatBytes(file.sourceSize)} → Destination: ${this.formatBytes(file.targetSize)}\n`;
+          }
+          if (file.sourceUrl) logs += `   Source URL: ${file.sourceUrl}\n`;
+          if (file.targetUrl) logs += `   Destination URL: ${file.targetUrl}\n`;
+          logs += `\n`;
+        });
+      }
+      
+      // Other Differences
+      const otherDifferences = migration.reconciliation.differences.filter(diff => 
+        !migration.reconciliation.missingFiles?.includes(diff) &&
+        !migration.reconciliation.extraFiles?.includes(diff) &&
+        !migration.reconciliation.sizeDifferences?.includes(diff) &&
+        diff.path && !diff.path.startsWith('unknown-')
+      );
+      
+      if (otherDifferences.length > 0) {
+        logs += `OTHER DIFFERENCES (${otherDifferences.length})\n`;
+        logs += `${'─'.repeat(40)}\n`;
+        logs += `Other types of differences found:\n\n`;
+        otherDifferences.forEach((file, index) => {
+          logs += `${index + 1}. ${file.path}\n`;
+          logs += `   Status: ${file.status}\n`;
+          if (file.sourceSize !== undefined && file.targetSize !== undefined && (file.sourceSize > 0 || file.targetSize > 0)) {
+            logs += `   Source: ${this.formatBytes(file.sourceSize)} | Destination: ${this.formatBytes(file.targetSize)}\n`;
+          }
+          if (file.sourceUrl) logs += `   Source URL: ${file.sourceUrl}\n`;
+          if (file.targetUrl) logs += `   Destination URL: ${file.targetUrl}\n`;
+          logs += `\n`;
+        });
+      }
+      
+      logs += `${'='.repeat(80)}\n`;
     }
 
     logs += `${'='.repeat(80)}\n`;
