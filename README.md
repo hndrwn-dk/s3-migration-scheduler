@@ -1,8 +1,8 @@
-# S3 Management UI
+# S3 Bucket Migration UI
 
-A comprehensive, enterprise-grade fullstack application for managing S3 bucket migrations with persistent SQLite database, real-time monitoring, and detailed reconciliation tracking. Features a modern React dashboard with TypeScript, dual real-time connections (WebSocket + SSE), and comprehensive migration difference analysis.
+A comprehensive, enterprise-grade fullstack application for S3 bucket migrations with persistent SQLite database, real-time monitoring, and detailed reconciliation tracking. Features a modern React dashboard with TypeScript, dual real-time connections (WebSocket + SSE), and comprehensive migration difference analysis.
 
-![S3 Management UI](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![S3 Bucket Migration UI](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 ![Database](https://img.shields.io/badge/Database-SQLite-blue)
 ![Node.js](https://img.shields.io/badge/Node.js-18.x-green)
 ![React](https://img.shields.io/badge/React-18.x-blue)
@@ -153,7 +153,7 @@ Once started, access the application at:
 
 ### 📋 How to Update While Preserving Migration Data
 
-When updating S3 Management UI with `git pull`, follow these steps to preserve your migration data:
+When updating S3 Bucket Migration UI with `git pull`, follow these steps to preserve your migration data:
 
 > **🔒 IMPORTANT**: Your SQLite database (`server/data/migrations.db`) contains all migration history and is **NOT** committed to git. However, it will be preserved during updates if you follow this guide.
 
