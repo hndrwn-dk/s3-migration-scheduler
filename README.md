@@ -137,8 +137,10 @@ The SQLite database is **automatically created** on first startup:
 ### Access the Application
 
 Once started, access the application at:
-- **Dashboard**: http://localhost:5000
-- **Server Port**: 5000 (configurable via PORT environment variable)
+- **Dashboard**: http://localhost:3000 (React development server)
+- **API Server**: http://localhost:5000 (Express backend)
+
+> **Note**: The setup scripts run in development mode with separate frontend (3000) and backend (5000) ports for optimal development experience.
 
 ### Initial Configuration
 
