@@ -286,16 +286,22 @@ class CronScheduler {
 
   getScheduledMigrations() {
     try {
+      console.log('📋 Getting scheduled migrations from database...');
       const migrations = database.getScheduledMigrations();
+      console.log(`📋 Found ${migrations.length} scheduled migrations in database`);
       
       // Add cron job status to each migration
-      return migrations.map(migration => ({
+      const enrichedMigrations = migrations.map(migration => ({
         ...migration,
         hasCronJob: this.scheduledJobs.has(migration.id),
         cronJobActive: this.scheduledJobs.has(migration.id) && this.scheduledJobs.get(migration.id).getStatus() === 'scheduled'
       }));
+      
+      console.log(`📋 Returning ${enrichedMigrations.length} enriched migrations`);
+      return enrichedMigrations;
     } catch (error) {
       console.error('❌ Error getting scheduled migrations:', error);
+      console.error('❌ Stack trace:', error.stack);
       return [];
     }
   }

@@ -159,7 +159,7 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
         source: `${formData.sourceAlias}/${formData.sourceBucket}`,
         destination: `${formData.destinationAlias}/${formData.destinationBucket}`,
         ...(formData.executionType === 'scheduled' && { 
-          scheduledTime: new Date(formData.scheduledTime).toISOString() 
+          scheduledTime: formData.scheduledTime // Keep as local datetime string, let backend handle conversion
         }),
         options: {
           overwrite: formData.overwrite,

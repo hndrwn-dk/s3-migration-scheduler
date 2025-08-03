@@ -316,7 +316,35 @@ class MinioClientService {
     console.log(`DEBUG: Migration config scheduledTime: ${migrationConfig.scheduledTime}`);
     console.log(`DEBUG: Current time: ${new Date().toISOString()}`);
     
-    const isScheduled = migrationConfig.scheduledTime && new Date(migrationConfig.scheduledTime) > new Date();
+    let isScheduled = false;
+    
+    if (migrationConfig.scheduledTime) {
+      // Handle different datetime formats
+      let scheduledDate;
+      
+      if (migrationConfig.scheduledTime.includes('T') && !migrationConfig.scheduledTime.includes('Z')) {
+        // datetime-local format: "2025-08-03T16:25" (local time)
+        // We need to treat this as local time, not UTC
+        console.log(`DEBUG: Parsing datetime-local format: ${migrationConfig.scheduledTime}`);
+        scheduledDate = new Date(migrationConfig.scheduledTime);
+      } else {
+        // ISO format or other: "2025-08-03T16:25:00.000Z"
+        console.log(`DEBUG: Parsing ISO format: ${migrationConfig.scheduledTime}`);
+        scheduledDate = new Date(migrationConfig.scheduledTime);
+      }
+      
+      console.log(`DEBUG: Scheduled date object: ${scheduledDate}`);
+      console.log(`DEBUG: Scheduled time ISO: ${scheduledDate.toISOString()}`);
+      console.log(`DEBUG: Scheduled time local: ${scheduledDate.toLocaleString()}`);
+      console.log(`DEBUG: Current time: ${new Date().toISOString()}`);
+      console.log(`DEBUG: Current time local: ${new Date().toLocaleString()}`);
+      
+      isScheduled = scheduledDate > new Date();
+      
+      // Always store as ISO string for consistency
+      migrationConfig.scheduledTime = scheduledDate.toISOString();
+    }
+    
     console.log(`DEBUG: isScheduled: ${isScheduled}`);
     
     const executionStatus = isScheduled ? 'scheduled' : 'immediate';
