@@ -43,8 +43,8 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
         // Ensure all required fields are present with defaults
         const enhancedStats = {
           ...stats,
-          scheduled: (stats as any).scheduled || 0,
-          cancelled: (stats as any).cancelled || 0
+          scheduled: stats.scheduled || 0,
+          cancelled: stats.cancelled || 0
         };
         setSystemStats(enhancedStats);
       } catch (error) {
