@@ -805,6 +805,18 @@ class MinioClientService {
       migration.reconciliation.destStats = reconciliationResult.destStats;
       migration.reconciliation.summary = reconciliationResult.summary;
       
+      console.log(`Reconciliation result summary:`, {
+        differencesCount: reconciliationResult.differences?.length || 0,
+        sourceStats: reconciliationResult.sourceStats,
+        destStats: reconciliationResult.destStats,
+        differences: reconciliationResult.differences?.map(d => ({
+          path: d.path,
+          status: d.status,
+          sourceSize: d.sourceSize,
+          targetSize: d.targetSize
+        }))
+      });
+      
       // Categorize differences for better display
       migration.reconciliation.missingFiles = [];
       migration.reconciliation.extraFiles = [];
@@ -841,8 +853,21 @@ class MinioClientService {
         }
       });
       
-      const totalDifferences = reconciliationResult.differences.length;
-      migration.status = totalDifferences === 0 ? 'verified' : 'completed_with_differences';
+      // Count meaningful differences (exclude unknown/invalid ones)
+      const meaningfulDifferences = reconciliationResult.differences.filter(diff => 
+        diff.path && 
+        !diff.path.startsWith('unknown-') && 
+        diff.path !== 'unknown' &&
+        (diff.status === 'missing' || diff.status === 'extra' || 
+         diff.status === 'newer' || diff.status === 'older' || 
+         diff.status === 'size-differs' || diff.status === 'differs' ||
+         (diff.status === 'success' && diff.sourceSize !== diff.targetSize))
+      );
+      
+      const totalMeaningfulDifferences = meaningfulDifferences.length;
+      console.log(`Total differences found: ${reconciliationResult.differences.length}, meaningful: ${totalMeaningfulDifferences}`);
+      
+      migration.status = totalMeaningfulDifferences === 0 ? 'verified' : 'completed_with_differences';
       
       // Update final statistics from reconciliation
       if (reconciliationResult.sourceStats && migration.stats.totalObjects === 0) {
@@ -1210,17 +1235,18 @@ class MinioClientService {
                 let filePath = '';
                 let diffType = data.status;
                 
+                // First, check URL presence to determine basic type
                 if (sourceUrl && !targetUrl) {
-                   // File exists in source but not in destination (missing)
+                   // File exists in source but not in destination (missing from dest)
                    diffType = 'missing';
                    filePath = sourceUrl.split('/').pop() || 'unknown';
                  } else if (!sourceUrl && targetUrl) {
-                   // File exists in destination but not in source (extra)
+                   // File exists in destination but not in source (extra in dest)
                    diffType = 'extra';
                    filePath = targetUrl.split('/').pop() || 'unknown';
                  } else if (sourceUrl && targetUrl) {
                    // File exists in both but has differences
-                   // diff codes: 0=same, 1=newer, 2=older, 4=size, 6=missing in dest
+                   // Use diff codes to determine exact type of difference
                    switch (data.diff) {
                      case 1:
                        diffType = 'newer';
@@ -1231,10 +1257,28 @@ class MinioClientService {
                      case 4:
                        diffType = 'size-differs';
                        break;
+                     case 6:
+                       // Special case: diff code 6 can mean various things
+                       diffType = 'differs';
+                       break;
                      default:
                        diffType = 'differs';
                    }
                    filePath = sourceUrl.split('/').pop() || targetUrl.split('/').pop() || 'unknown';
+                 } else {
+                   // Handle edge case where mc diff reports status but no clear URLs
+                   // Use diff code to determine type
+                   switch (data.diff) {
+                     case 6:
+                       // This often means file missing in source but exists in dest
+                       diffType = 'extra';
+                       // Try to extract filename from any available data
+                       filePath = 'unknown-diff-6';
+                       break;
+                     default:
+                       diffType = data.status || 'unknown';
+                       filePath = 'unknown-diff-' + (data.diff || 'none');
+                   }
                  }
                 
                 // Only add valid differences with proper paths
