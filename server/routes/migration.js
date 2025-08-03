@@ -353,4 +353,103 @@ router.post('/:id/update-reconciliation-sizes', async (req, res) => {
   }
 });
 
+// Scheduled migration endpoints
+router.get('/scheduled', async (req, res) => {
+  try {
+    const database = require('../services/database');
+    const scheduler = require('../services/scheduler');
+    
+    const scheduledMigrations = database.getScheduledMigrations();
+    const schedulerStats = scheduler.getStats();
+    
+    res.json({ 
+      success: true, 
+      data: {
+        migrations: scheduledMigrations,
+        stats: schedulerStats
+      }
+    });
+  } catch (error) {
+    console.error('Error getting scheduled migrations:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.delete('/scheduled/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const scheduler = require('../services/scheduler');
+    
+    const cancelled = scheduler.cancelScheduled(id);
+    
+    if (cancelled) {
+      res.json({ 
+        success: true, 
+        message: `Migration ${id} has been cancelled`
+      });
+    } else {
+      res.status(404).json({ 
+        success: false, 
+        error: 'Scheduled migration not found or already executed' 
+      });
+    }
+  } catch (error) {
+    console.error(`Error cancelling scheduled migration ${req.params.id}:`, error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.put('/scheduled/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { scheduledTime } = req.body;
+    
+    if (!scheduledTime) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'scheduledTime is required' 
+      });
+    }
+    
+    const newScheduledTime = new Date(scheduledTime);
+    if (newScheduledTime <= new Date()) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Scheduled time must be in the future' 
+      });
+    }
+    
+    const scheduler = require('../services/scheduler');
+    const rescheduled = scheduler.reschedule(id, scheduledTime);
+    
+    if (rescheduled) {
+      res.json({ 
+        success: true, 
+        message: `Migration ${id} rescheduled for ${scheduledTime}`,
+        scheduledTime 
+      });
+    } else {
+      res.status(404).json({ 
+        success: false, 
+        error: 'Scheduled migration not found' 
+      });
+    }
+  } catch (error) {
+    console.error(`Error rescheduling migration ${req.params.id}:`, error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/scheduler/stats', async (req, res) => {
+  try {
+    const scheduler = require('../services/scheduler');
+    const stats = scheduler.getStats();
+    
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    console.error('Error getting scheduler stats:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;
