@@ -468,9 +468,9 @@ class MinioClientService {
       logStream.write(`Finished at: ${new Date().toISOString()}\n`);
       logStream.write(`Exit code: ${code}\n`);
       logStream.write(`Status: ${code === 0 ? 'SUCCESS' : 'FAILED'}\n`);
-      logStream.write(`Final Statistics:\n`);
-      // Only show statistics if we have meaningful data
+      // Only show Final Statistics section if we have meaningful data
       if (migration.stats.transferredObjects > 0 || migration.stats.transferredSize > 0) {
+        logStream.write(`Final Statistics:\n`);
         if (migration.stats.totalObjects > 0) {
           logStream.write(`  - Objects transferred: ${migration.stats.transferredObjects}/${migration.stats.totalObjects}\n`);
         } else if (migration.stats.transferredObjects > 0) {
@@ -480,8 +480,6 @@ class MinioClientService {
         if (migration.progress > 0) {
           logStream.write(`  - Progress: ${migration.progress.toFixed(1)}%\n`);
         }
-      } else {
-        logStream.write(`  - See reconciliation results below for detailed transfer information\n`);
       }
       logStream.write(`==========================================\n`);
       logStream.end();
@@ -572,12 +570,22 @@ class MinioClientService {
           logStream.write(`${transferMsg}\n`);
           
         } else if (data.status === 'error') {
-          const errorMsg = `Transfer error: ${data.error || 'Unknown error'}`;
+          // Handle error message properly whether it's string or object
+          let errorMessage = 'Unknown error';
+          if (data.error) {
+            if (typeof data.error === 'string') {
+              errorMessage = data.error;
+            } else if (typeof data.error === 'object') {
+              errorMessage = data.error.message || data.error.cause?.message || JSON.stringify(data.error);
+            }
+          }
+          
+          const errorMsg = `Transfer error: ${errorMessage}`;
           migration.errors.push(errorMsg);
           
           // Enhanced logging: Log transfer errors
           const timestamp = new Date().toISOString();
-          const transferError = `[${timestamp}] ERROR: ${data.target || 'unknown file'} - ${data.error || 'Unknown error'}`;
+          const transferError = `[${timestamp}] ERROR: ${data.target || 'unknown file'} - ${errorMessage}`;
           logStream.write(`${transferError}\n`);
           hasUpdate = true;
         } else if (data.status === 'success' && (data.total !== undefined || data.transferred !== undefined)) {
@@ -803,6 +811,11 @@ class MinioClientService {
       migration.reconciliation.sizeDifferences = [];
       
       reconciliationResult.differences.forEach(diff => {
+        // Skip invalid differences with unknown paths
+        if (diff.path && diff.path.startsWith('unknown-')) {
+          return;
+        }
+        
         switch (diff.status) {
           case 'missing':
             migration.reconciliation.missingFiles.push(diff);
@@ -815,8 +828,15 @@ class MinioClientService {
           case 'older':
             migration.reconciliation.sizeDifferences.push(diff);
             break;
+          case 'success':
+            // Files that exist in both but might have differences - check sizes
+            if (diff.sourceSize !== diff.targetSize) {
+              migration.reconciliation.sizeDifferences.push(diff);
+            }
+            break;
           default:
-            // Keep in general differences
+            // Keep other differences for debugging
+            console.log(`Unknown difference status: ${diff.status}`, diff);
             break;
         }
       });
@@ -859,19 +879,25 @@ class MinioClientService {
             logStream.write(`  - Extra files (only in destination): ${migration.reconciliation.extraFiles.length}\n`);
             logStream.write(`  - Size differences: ${migration.reconciliation.sizeDifferences.length}\n\n`);
             
-            // Log detailed differences
+            // Log detailed differences with full path information
             if (migration.reconciliation.missingFiles.length > 0) {
-              logStream.write(`MISSING FILES:\n`);
+              logStream.write(`MISSING FILES (present in source but not in destination):\n`);
               migration.reconciliation.missingFiles.forEach((diff, index) => {
                 logStream.write(`  ${index + 1}. ${diff.path || diff.key || 'unknown'}\n`);
+                if (diff.sourceUrl) {
+                  logStream.write(`      Source: ${diff.sourceUrl}\n`);
+                }
               });
               logStream.write(`\n`);
             }
             
             if (migration.reconciliation.extraFiles.length > 0) {
-              logStream.write(`EXTRA FILES:\n`);
+              logStream.write(`EXTRA FILES (present in destination but not in source):\n`);
               migration.reconciliation.extraFiles.forEach((diff, index) => {
                 logStream.write(`  ${index + 1}. ${diff.path || diff.key || 'unknown'}\n`);
+                if (diff.targetUrl) {
+                  logStream.write(`      Destination: ${diff.targetUrl}\n`);
+                }
               });
               logStream.write(`\n`);
             }
@@ -879,7 +905,13 @@ class MinioClientService {
             if (migration.reconciliation.sizeDifferences.length > 0) {
               logStream.write(`SIZE DIFFERENCES:\n`);
               migration.reconciliation.sizeDifferences.forEach((diff, index) => {
-                logStream.write(`  ${index + 1}. ${diff.path || diff.key || 'unknown'} (${diff.type || 'size-differs'})\n`);
+                logStream.write(`  ${index + 1}. ${diff.path || diff.key || 'unknown'}\n`);
+                logStream.write(`      Source size: ${this.formatBytes(diff.sourceSize || 0)}\n`);
+                logStream.write(`      Destination size: ${this.formatBytes(diff.targetSize || 0)}\n`);
+                if (diff.sourceUrl && diff.targetUrl) {
+                  logStream.write(`      Source: ${diff.sourceUrl}\n`);
+                  logStream.write(`      Destination: ${diff.targetUrl}\n`);
+                }
               });
               logStream.write(`\n`);
             }
@@ -1027,14 +1059,31 @@ class MinioClientService {
               console.log(`Line ${index + 1}:`, data);
               
               if (data.status && data.status !== 'same') {
-                const diff = {
-                  path: data.source || data.target || `unknown-${index}`,
-                  status: data.status,
-                  sourceSize: data.sourceSize || 0,
-                  targetSize: data.targetSize || 0
-                };
-                differences.push(diff);
-                console.log(`Added difference:`, diff);
+                // Get the file path, preferring source over target
+                let filePath = data.source || data.target;
+                
+                // Clean up the path to remove bucket prefix
+                if (filePath) {
+                  // Remove the bucket URL prefix to get just the file path
+                  const pathMatch = filePath.match(/\/([^\/]+)$/);
+                  if (pathMatch) {
+                    filePath = pathMatch[1];
+                  }
+                }
+                
+                // Only add valid differences with proper paths
+                if (filePath && !filePath.startsWith('unknown-')) {
+                  const diff = {
+                    path: filePath,
+                    status: data.status,
+                    sourceSize: data.sourceSize || 0,
+                    targetSize: data.targetSize || 0,
+                    sourceUrl: data.source,
+                    targetUrl: data.target
+                  };
+                  differences.push(diff);
+                  console.log(`Added difference:`, diff);
+                }
               }
             } catch (e) {
               console.warn(`Skipping invalid JSON line ${index + 1}: ${line}`);
@@ -1263,33 +1312,7 @@ class MinioClientService {
             }
           });
 
-          // Add analysis section with correct data from summary or manual parsing
-          listing += `\nANALYSIS:\n`;
-          if (summaryFound) {
-            listing += `Files detected: ${fileCount}\n`;
-            listing += `Total size: ${this.formatBytes(totalSize)}\n`;
-          } else {
-            // Manual parsing for files and sizes if no summary
-            let manualFileCount = 0;
-            let manualTotalSize = 0;
-            
-            lines.forEach(line => {
-              const trimmedLine = line.trim();
-              // Look for file entries with timestamps and sizes
-              if (trimmedLine.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)) {
-                const fileSizeMatch = trimmedLine.match(/(\d+(?:\.\d+)?)\s*([KMGT]?B)/);
-                if (fileSizeMatch) {
-                  const size = parseFloat(fileSizeMatch[1]);
-                  const unit = fileSizeMatch[2];
-                  manualTotalSize += this.convertToBytes(size, unit);
-                  manualFileCount++;
-                }
-              }
-            });
-            
-            listing += `Files detected: ${manualFileCount}\n`;
-            listing += `Total size: ${this.formatBytes(manualTotalSize)} (estimated)\n`;
-          }
+          // Don't add ANALYSIS section as it's redundant with SUMMARY
 
           listing += `\n`;
           resolve(listing);
