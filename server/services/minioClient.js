@@ -1789,13 +1789,20 @@ class MinioClientService {
   }
 
   getMigrationStatus(migrationId) {
-    const migration = this.activeMigrations.get(migrationId);
+    // First check active migrations
+    let migration = this.activeMigrations.get(migrationId);
+    
+    // If not found in active migrations, check database
     if (!migration) {
-      throw new Error('Migration not found');
+      migration = database.getMigration(migrationId);
+      if (!migration) {
+        throw new Error('Migration not found');
+      }
     }
 
     return {
       id: migration.id,
+      config: migration.config, // Include config with source/destination paths
       status: migration.status,
       progress: migration.progress,
       stats: migration.stats,
@@ -1804,8 +1811,8 @@ class MinioClientService {
       startTime: migration.startTime,
       endTime: migration.endTime,
       duration: migration.endTime ? 
-        (migration.endTime - migration.startTime) / 1000 : 
-        (new Date() - migration.startTime) / 1000
+        (new Date(migration.endTime).getTime() - new Date(migration.startTime).getTime()) / 1000 : 
+        migration.startTime ? (new Date().getTime() - new Date(migration.startTime).getTime()) / 1000 : 0
     };
   }
 
