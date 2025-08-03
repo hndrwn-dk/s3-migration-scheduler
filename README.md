@@ -28,35 +28,41 @@ If you find this project helpful, you can support me here:
 
 ## 📸 Screenshots
 
-### Dashboard Overview
-*Real-time migration statistics and progress monitoring*
+### Enhanced Dashboard with SQLite Persistence
+*Real-time migration statistics with persistent data and accurate metrics*
 
 ![Dashboard Overview](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/dashboard-overview.svg?raw=true)
-> 📊 **Main Dashboard** - Shows migration statistics, recent activity, and visual charts for tracking migration trends and status distribution.
+> 📊 **Main Dashboard** - Shows persistent migration statistics with SQLite database, real-time updates via WebSocket+SSE, accurate completion rates, and recent migration activity. No more "0 Completed" issues!
 
-### Migration Configuration
-*Easy setup for S3 endpoints and connections*
+### S3 Endpoint Configuration
+*Simple S3 alias setup with connection validation*
 
 ![Configuration](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/configuration.svg?raw=true)
-> ⚙️ **Configuration Tab** - Simple interface to add and manage S3 endpoints with connection testing capabilities.
+> ⚙️ **Configuration Tab** - Clean interface for adding AWS S3, MinIO, and other S3-compatible endpoints with built-in connection testing and alias management.
 
-### Migration Wizard
-*Step-by-step migration setup with bucket analysis*
+### Advanced Migration Setup
+*Comprehensive migration wizard with bucket analysis and options*
 
 ![Migration Setup](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/migration-setup.svg?raw=true)
-> 🛠️ **Migration Tab** - Intuitive wizard for setting up migrations with source/destination bucket analysis and preview.
+> 🛠️ **Migration Tab** - Enhanced wizard with pre-migration bucket analysis, size estimation, advanced options (overwrite, preserve, exclude patterns), and dry-run capabilities.
 
-### Migration History & Tracking
-*Comprehensive migration history with detailed reconciliation reports*
+### Migration History with Reconciliation
+*Complete migration tracking with detailed difference analysis*
 
 ![Migration History](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/migration-history.svg?raw=true)
-> 📚 **History Tab** - Complete migration tracking with status filters, detailed reconciliation reports, and downloadable logs.
+> 📚 **History Tab** - Persistent migration history with status filtering, detailed reconciliation reports showing missing/extra/size differences, and actionable reconciliation modals with file-level details.
 
-### Real-time Migration Monitoring
-*Live progress tracking with detailed logs and reconciliation*
+### Real-time Logs with Enhanced Details
+*Live monitoring with comprehensive reconciliation and bucket analysis*
 
 ![Migration Logs](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/migration-logs.svg?raw=true)
-> 📊 **Logs Tab** - Real-time migration monitoring with live progress updates, detailed logs, and comprehensive reconciliation analysis.
+> 📊 **Logs Tab** - Real-time migration monitoring with enhanced logs including detailed reconciliation reports, bucket comparison analysis, file-by-file transfer tracking, and comprehensive error handling.
+
+### Detailed Reconciliation Reports
+*In-depth difference analysis with actionable insights*
+
+![Reconciliation Modal](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/reconciliation-modal.svg?raw=true)
+> 🔍 **Reconciliation Modal** - Advanced difference analysis showing missing files, extra files, size differences, and other discrepancies with full file paths, sizes, and URLs for manual verification or remediation.
 
 ## 🚀 Setup & Installation
 
