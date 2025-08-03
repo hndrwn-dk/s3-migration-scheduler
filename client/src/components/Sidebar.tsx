@@ -5,7 +5,8 @@ import {
   CogIcon,
   ArrowRightIcon,
   ClockIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  CalendarIcon
 } from '@heroicons/react/24/outline';
 import { TabType } from '../types';
 
@@ -45,6 +46,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
       label: 'Logs',
       icon: DocumentTextIcon,
       description: 'View migration logs'
+    },
+    {
+      id: 'scheduled' as TabType,
+      label: 'Scheduled',
+      icon: CalendarIcon,
+      description: 'Manage scheduled migrations'
     }
   ];
 

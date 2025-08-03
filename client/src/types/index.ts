@@ -159,7 +159,7 @@ export interface MigrationFormData {
   scheduledTime: string;
 }
 
-export type TabType = 'dashboard' | 'configure' | 'migrate' | 'history' | 'logs';
+export type TabType = 'dashboard' | 'configure' | 'migrate' | 'history' | 'logs' | 'scheduled';
 
 export interface LogEntry {
   id: string;
