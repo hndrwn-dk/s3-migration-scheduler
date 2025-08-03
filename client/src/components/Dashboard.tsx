@@ -40,11 +40,11 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
     const loadSystemStats = async () => {
       try {
         const stats = await migrationService.getSystemStatus();
-        // Ensure all required fields are present with defaults
+        // Ensure all required fields are present with defaults (force recompile)
         const enhancedStats = {
           ...stats,
-          scheduled: stats.scheduled || 0,
-          cancelled: stats.cancelled || 0
+          scheduled: (stats as any).scheduled || 0,
+          cancelled: (stats as any).cancelled || 0
         };
         setSystemStats(enhancedStats);
       } catch (error) {
