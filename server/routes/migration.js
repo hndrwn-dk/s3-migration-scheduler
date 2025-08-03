@@ -356,10 +356,10 @@ router.post('/:id/update-reconciliation-sizes', async (req, res) => {
 // Scheduled migration endpoints
 router.get('/scheduled', async (req, res) => {
   try {
-    const persistentScheduler = require('../services/persistentScheduler');
+    const cronScheduler = require('../services/cronScheduler');
     
-    const scheduledMigrations = persistentScheduler.getScheduledMigrations();
-    const schedulerStats = persistentScheduler.getStats();
+    const scheduledMigrations = cronScheduler.getScheduledMigrations();
+    const schedulerStats = cronScheduler.getStats();
     
     res.json({ 
       success: true, 
@@ -377,9 +377,9 @@ router.get('/scheduled', async (req, res) => {
 router.delete('/scheduled/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const persistentScheduler = require('../services/persistentScheduler');
+    const cronScheduler = require('../services/cronScheduler');
     
-    const cancelled = persistentScheduler.cancelScheduledMigration(id);
+    const cancelled = cronScheduler.cancelScheduledMigration(id);
     
     if (cancelled) {
       res.json({ 
@@ -418,8 +418,8 @@ router.put('/scheduled/:id', async (req, res) => {
       });
     }
     
-    const scheduler = require('../services/scheduler');
-    const rescheduled = scheduler.reschedule(id, scheduledTime);
+    const cronScheduler = require('../services/cronScheduler');
+    const rescheduled = cronScheduler.rescheduleMigration(id, scheduledTime);
     
     if (rescheduled) {
       res.json({ 
@@ -441,12 +441,33 @@ router.put('/scheduled/:id', async (req, res) => {
 
 router.get('/scheduler/stats', async (req, res) => {
   try {
-    const scheduler = require('../services/scheduler');
-    const stats = scheduler.getStats();
+    const cronScheduler = require('../services/cronScheduler');
+    const stats = cronScheduler.getStats();
     
     res.json({ success: true, data: stats });
   } catch (error) {
     console.error('Error getting scheduler stats:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get detailed scheduler system information
+router.get('/scheduler/info', async (req, res) => {
+  try {
+    const cronScheduler = require('../services/cronScheduler');
+    const systemInfo = cronScheduler.getSystemInfo();
+    const activeJobs = cronScheduler.getActiveJobs();
+    
+    res.json({ 
+      success: true, 
+      data: {
+        systemInfo,
+        activeJobs,
+        totalActiveJobs: activeJobs.length
+      }
+    });
+  } catch (error) {
+    console.error('Error getting scheduler info:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

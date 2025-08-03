@@ -73,9 +73,10 @@ app.use((req, res) => {
 // Initialize WebSocket server
 const wss = initializeWebSocket(server);
 
-// Initialize migration scheduler
-const scheduler = require('./services/scheduler');
-console.log('Migration scheduler initialized');
+// Initialize cron migration scheduler
+const cronScheduler = require('./services/cronScheduler');
+cronScheduler.start();
+console.log('Cron migration scheduler initialized');
 
 const PORT = process.env.PORT || 5000;
 
@@ -89,8 +90,8 @@ server.listen(PORT, () => {
 process.on('SIGTERM', () => {
   console.log('SIGTERM received. Shutting down gracefully...');
   
-  // Shutdown scheduler
-  scheduler.shutdown();
+  // Shutdown cron scheduler
+  cronScheduler.stop();
   
   server.close(() => {
     console.log('Process terminated');

@@ -375,9 +375,9 @@ class MinioClientService {
     }
 
     if (isScheduled) {
-      // For scheduled migrations, hand over to persistent scheduler
-      const persistentScheduler = require('./persistentScheduler');
-      const scheduled = persistentScheduler.scheduleMigration(migrationId, migrationConfig.scheduledTime);
+      // For scheduled migrations, hand over to cron scheduler
+      const cronScheduler = require('./cronScheduler');
+      const scheduled = cronScheduler.scheduleMigration(migrationId, migrationConfig.scheduledTime);
       
       if (scheduled) {
         return { migrationId, status: 'scheduled', scheduledTime: migrationConfig.scheduledTime };
