@@ -7,7 +7,9 @@ import {
   Migration,
   MigrationConfig,
   ValidationResult,
-  HealthCheck
+  HealthCheck,
+  ScheduledMigrationsResponse,
+  ScheduledMigrationStats
 } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -197,6 +199,37 @@ export const migrationService = {
     }>>('/migration/status');
     if (!response.data.success) {
       throw new Error(response.data.error || 'Failed to get system status');
+    }
+    return response.data.data!;
+  },
+
+  // Scheduled migrations
+  getScheduledMigrations: async (): Promise<ScheduledMigrationsResponse> => {
+    const response = await api.get<ApiResponse<ScheduledMigrationsResponse>>('/migration/scheduled');
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to get scheduled migrations');
+    }
+    return response.data.data!;
+  },
+
+  cancelScheduledMigration: async (migrationId: string): Promise<void> => {
+    const response = await api.delete<ApiResponse>(`/migration/scheduled/${migrationId}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to cancel scheduled migration');
+    }
+  },
+
+  rescheduleeMigration: async (migrationId: string, scheduledTime: string): Promise<void> => {
+    const response = await api.put<ApiResponse>(`/migration/scheduled/${migrationId}`, { scheduledTime });
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to reschedule migration');
+    }
+  },
+
+  getSchedulerStats: async (): Promise<ScheduledMigrationStats> => {
+    const response = await api.get<ApiResponse<ScheduledMigrationStats>>('/migration/scheduler/stats');
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to get scheduler stats');
     }
     return response.data.data!;
   },

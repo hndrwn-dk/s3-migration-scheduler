@@ -37,7 +37,10 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
     preserve: true,
     retry: true,
     dryRun: false,
-    watch: false
+    watch: false,
+    // Scheduling options
+    executionType: 'immediate',
+    scheduledTime: ''
   });
 
   const [excludePattern, setExcludePattern] = useState('');
@@ -130,6 +133,22 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
       return;
     }
 
+    // Validate scheduled time if scheduling is selected
+    if (formData.executionType === 'scheduled') {
+      if (!formData.scheduledTime) {
+        toast.error('Please select a scheduled time');
+        return;
+      }
+      
+      const scheduledDate = new Date(formData.scheduledTime);
+      const now = new Date();
+      
+      if (scheduledDate <= now) {
+        toast.error('Scheduled time must be in the future');
+        return;
+      }
+    }
+
     // Validate migration first
     const isValid = await validateMigration();
     if (!isValid) return;
@@ -139,6 +158,7 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
       const migrationConfig = {
         source: `${formData.sourceAlias}/${formData.sourceBucket}`,
         destination: `${formData.destinationAlias}/${formData.destinationBucket}`,
+        ...(formData.executionType === 'scheduled' && { scheduledTime: formData.scheduledTime }),
         options: {
           overwrite: formData.overwrite,
           remove: formData.remove,
@@ -157,7 +177,12 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
       // Real-time updates will handle adding the migration to the state
       // No need to manually call onMigrationStart as WebSocket/SSE will notify
       
-      toast.success(`Migration started successfully! ID: ${result.migrationId.slice(0, 8)}`);
+      if (formData.executionType === 'scheduled') {
+        const scheduledDate = new Date(formData.scheduledTime);
+        toast.success(`Migration scheduled successfully! ID: ${result.migrationId.slice(0, 8)}, scheduled for ${scheduledDate.toLocaleString()}`);
+      } else {
+        toast.success(`Migration started successfully! ID: ${result.migrationId.slice(0, 8)}`);
+      }
       
       // Reset form
       setFormData({
@@ -173,7 +198,10 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
         preserve: true,
         retry: true,
         dryRun: false,
-        watch: false
+        watch: false,
+        // Scheduling options
+        executionType: 'immediate',
+        scheduledTime: ''
       });
 
       
@@ -565,13 +593,91 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
           </div>
         )}
 
+        {/* Execution Timing */}
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <h4 className="text-lg font-medium text-gray-900 mb-4">Execution Timing</h4>
+          
+          <div className="space-y-4">
+            {/* Execution Type Selection */}
+            <div className="space-y-3">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="executionType"
+                  value="immediate"
+                  checked={formData.executionType === 'immediate'}
+                  onChange={(e) => setFormData(prev => ({ ...prev, executionType: 'immediate' }))}
+                  className="text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span className="ml-2 text-sm font-medium text-gray-700">
+                  Start Immediately
+                </span>
+              </label>
+              
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="executionType"
+                  value="scheduled"
+                  checked={formData.executionType === 'scheduled'}
+                  onChange={(e) => setFormData(prev => ({ ...prev, executionType: 'scheduled' }))}
+                  className="text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span className="ml-2 text-sm font-medium text-gray-700">
+                  Schedule for Later
+                </span>
+              </label>
+            </div>
+
+            {/* Scheduled Time Picker */}
+            {formData.executionType === 'scheduled' && (
+              <div className="ml-6 space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Scheduled Time
+                </label>
+                <input
+                  type="datetime-local"
+                  value={formData.scheduledTime}
+                  min={new Date(Date.now() + 60000).toISOString().slice(0, 16)} // At least 1 minute from now
+                  onChange={(e) => setFormData(prev => ({ ...prev, scheduledTime: e.target.value }))}
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-500">
+                  Timezone: {Intl.DateTimeFormat().resolvedOptions().timeZone}
+                  {formData.scheduledTime && (
+                    <span className="ml-2 text-blue-600">
+                      Starts in: {(() => {
+                        const scheduledDate = new Date(formData.scheduledTime);
+                        const now = new Date();
+                        const diffMs = scheduledDate.getTime() - now.getTime();
+                        if (diffMs <= 0) return 'Past time selected';
+                        
+                        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                        const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                        
+                        if (diffHours > 0) {
+                          return `${diffHours}h ${diffMinutes}m`;
+                        } else {
+                          return `${diffMinutes}m`;
+                        }
+                      })()}
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Submit */}
         <div className="flex items-center justify-between">
           <div className="flex items-center text-sm text-gray-500">
             <InformationCircleIcon className="w-4 h-4 mr-1" />
             {formData.dryRun 
               ? 'Dry run will simulate the migration without transferring files'
-              : 'Migration will start immediately after clicking "Start Migration"'
+              : formData.executionType === 'scheduled'
+                ? 'Migration will be scheduled and executed at the specified time'
+                : 'Migration will start immediately after clicking "Start Migration"'
             }
           </div>
           
@@ -603,12 +709,17 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
               {loading ? (
                 <>
                   <LoadingSpinner size="small" className="mr-2" />
-                  Starting Migration...
+                  {formData.executionType === 'scheduled' ? 'Scheduling Migration...' : 'Starting Migration...'}
                 </>
               ) : (
                 <>
                   <ArrowRightIcon className="w-4 h-4 mr-2" />
-                  {formData.dryRun ? 'Run Dry Migration Test' : 'Start Migration'}
+                  {formData.dryRun 
+                    ? 'Run Dry Migration Test' 
+                    : formData.executionType === 'scheduled'
+                      ? 'Schedule Migration'
+                      : 'Start Migration'
+                  }
                 </>
               )}
             </button>

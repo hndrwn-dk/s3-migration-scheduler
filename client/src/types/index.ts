@@ -25,6 +25,7 @@ export interface BucketInfo extends S3Bucket {
 export interface MigrationConfig {
   source: string;
   destination: string;
+  scheduledTime?: string;
   options: {
     overwrite: boolean;
     remove: boolean;
@@ -81,10 +82,12 @@ export interface Reconciliation {
 export interface Migration {
   id: string;
   config: MigrationConfig;
-  status: 'starting' | 'running' | 'completed' | 'failed' | 'cancelled' | 'reconciling' | 'verified' | 'completed_with_differences';
+  status: 'starting' | 'running' | 'completed' | 'failed' | 'cancelled' | 'reconciling' | 'verified' | 'completed_with_differences' | 'scheduled';
   progress: number;
-  startTime: string;
+  startTime: string | null;
   endTime?: string;
+  scheduledTime?: string;
+  executionStatus?: 'immediate' | 'scheduled' | 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
   stats: MigrationStats;
   errors: string[];
   reconciliation?: Reconciliation;
@@ -103,6 +106,18 @@ export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
   error?: string;
+}
+
+export interface ScheduledMigrationStats {
+  totalScheduled: number;
+  futureScheduled: number;
+  pendingExecution: number;
+  activeJobs: number;
+}
+
+export interface ScheduledMigrationsResponse {
+  migrations: Migration[];
+  stats: ScheduledMigrationStats;
 }
 
 export interface ValidationResult {
@@ -139,6 +154,9 @@ export interface MigrationFormData {
   retry: boolean;
   dryRun: boolean;
   watch: boolean;
+  // Scheduling options
+  executionType: 'immediate' | 'scheduled';
+  scheduledTime: string;
 }
 
 export type TabType = 'dashboard' | 'configure' | 'migrate' | 'history' | 'logs';
