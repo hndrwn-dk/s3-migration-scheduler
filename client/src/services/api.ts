@@ -9,7 +9,8 @@ import {
   ValidationResult,
   HealthCheck,
   ScheduledMigrationsResponse,
-  ScheduledMigrationStats
+  ScheduledMigrationStats,
+  SystemStatsResponse
 } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -173,32 +174,8 @@ export const migrationService = {
   },
 
   // Get migration system status
-  getSystemStatus: async (): Promise<{
-    total: number;
-    running: number;
-    completed: number;
-    failed: number;
-    cancelled: number;
-    scheduled?: number;
-    completed_with_differences: number;
-    recent_activity: number;
-    total_data_transferred: number;
-    average_speed: number;
-    success_rate: number;
-  }> => {
-    const response = await api.get<ApiResponse<{
-      total: number;
-      running: number;
-      completed: number;
-      failed: number;
-      cancelled: number;
-      scheduled?: number;
-      completed_with_differences: number;
-      recent_activity: number;
-      total_data_transferred: number;
-      average_speed: number;
-      success_rate: number;
-    }>>('/migration/status');
+  getSystemStatus: async (): Promise<SystemStatsResponse> => {
+    const response = await api.get<ApiResponse<SystemStatsResponse>>('/migration/status');
     if (!response.data.success) {
       throw new Error(response.data.error || 'Failed to get system status');
     }
