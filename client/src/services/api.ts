@@ -179,6 +179,7 @@ export const migrationService = {
     completed: number;
     failed: number;
     cancelled: number;
+    scheduled?: number;
     completed_with_differences: number;
     recent_activity: number;
     total_data_transferred: number;
@@ -191,6 +192,7 @@ export const migrationService = {
       completed: number;
       failed: number;
       cancelled: number;
+      scheduled?: number;
       completed_with_differences: number;
       recent_activity: number;
       total_data_transferred: number;
