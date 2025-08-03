@@ -181,13 +181,21 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const status = minioClient.getMigrationStatus(id);
+    console.log(`Migration status for ${id}:`, JSON.stringify(status, null, 2));
     
     // Extract bucket names from source and destination paths
     const extractBucketName = (path) => {
-      if (!path || typeof path !== 'string') return 'Unknown';
+      console.log(`Extracting bucket name from path: "${path}"`);
+      if (!path || typeof path !== 'string') {
+        console.log(`Invalid path: ${path}`);
+        return 'Unknown';
+      }
       // Handle formats like "source-aws/bucket123" or "alias/bucket123/subfolder"
       const parts = path.split('/');
-      return parts.length >= 2 ? parts[1] : parts[0] || 'Unknown';
+      console.log(`Path parts:`, parts);
+      const bucketName = parts.length >= 2 ? parts[1] : parts[0] || 'Unknown';
+      console.log(`Extracted bucket name: "${bucketName}"`);
+      return bucketName;
     };
     
     // Enhance the response with bucket names
