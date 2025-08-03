@@ -82,7 +82,9 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
     
     switch (sortBy) {
       case 'startTime':
-        comparison = new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
+        const aTime = a.startTime ? new Date(a.startTime).getTime() : 0;
+        const bTime = b.startTime ? new Date(b.startTime).getTime() : 0;
+        comparison = aTime - bTime;
         break;
       case 'status':
         comparison = a.status.localeCompare(b.status);
@@ -294,7 +296,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {format(new Date(migration.startTime), 'MMM dd, yyyy HH:mm')}
+                      {migration.startTime ? format(new Date(migration.startTime), 'MMM dd, yyyy HH:mm') : 'Scheduled'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {formatDuration(migration.duration)}
@@ -396,7 +398,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Started</h4>
                   <p className="mt-1 text-sm text-gray-900">
-                    {format(new Date(selectedMigration.startTime), 'PPpp')}
+                    {selectedMigration.startTime ? format(new Date(selectedMigration.startTime), 'PPpp') : 'Not started (Scheduled)'}
                   </p>
                 </div>
                 <div>

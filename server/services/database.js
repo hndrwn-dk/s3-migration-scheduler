@@ -65,7 +65,10 @@ class DatabaseService {
       )
     `);
 
-    // Create indexes for better performance
+    // Handle database schema migration for existing installations FIRST
+    this.migrateSchemaIfNeeded();
+
+    // Create indexes for better performance (after schema migration)
     this.db.exec(`
       CREATE INDEX IF NOT EXISTS idx_migrations_status ON migrations(status);
       CREATE INDEX IF NOT EXISTS idx_migrations_start_time ON migrations(start_time);
@@ -75,9 +78,6 @@ class DatabaseService {
       CREATE INDEX IF NOT EXISTS idx_migration_logs_migration_id ON migration_logs(migration_id);
       CREATE INDEX IF NOT EXISTS idx_migration_logs_timestamp ON migration_logs(timestamp);
     `);
-
-    // Handle database schema migration for existing installations
-    this.migrateSchemaIfNeeded();
 
     console.log('Database tables initialized successfully');
   }
@@ -282,6 +282,7 @@ class DatabaseService {
         SUM(CASE WHEN status IN ('running', 'reconciling', 'starting') THEN 1 ELSE 0 END) as running,
         SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed,
         SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled,
+        SUM(CASE WHEN status = 'scheduled' THEN 1 ELSE 0 END) as scheduled,
         SUM(CASE WHEN status = 'completed_with_differences' THEN 1 ELSE 0 END) as completed_with_differences,
         SUM(stats_transferred_size) as total_data_transferred,
         AVG(stats_speed) as average_speed

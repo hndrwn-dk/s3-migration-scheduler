@@ -81,7 +81,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
 
     // Recent activity (last 24 hours)
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const recentActivity = migrations.filter(m => new Date(m.startTime) > oneDayAgo).length;
+    const recentActivity = migrations.filter(m => m.startTime && new Date(m.startTime) > oneDayAgo).length;
 
     const totalDataTransferred = migrations
       .filter(m => m.stats?.transferredSize)
@@ -146,7 +146,12 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
   const recentMigrations = useMemo(() => {
     return migrations
       .filter(migration => migration.config && migration.id) // Filter out incomplete migrations
-      .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()) // Most recent first
+      .sort((a, b) => {
+        // Handle null startTime for scheduled migrations
+        const aTime = a.startTime ? new Date(a.startTime).getTime() : 0;
+        const bTime = b.startTime ? new Date(b.startTime).getTime() : 0;
+        return bTime - aTime;
+      }) // Most recent first
       .slice(0, 8); // Show up to 8 recent migrations
   }, [migrations]);
 
@@ -164,7 +169,8 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
     }
   };
 
-  const isRecentActivity = (startTime: string) => {
+  const isRecentActivity = (startTime: string | null) => {
+    if (!startTime) return false;
     const migrationTime = new Date(startTime);
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
     return migrationTime > tenMinutesAgo;
@@ -363,7 +369,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {format(new Date(migration.startTime), 'MMM dd, HH:mm')}
+                      {migration.startTime ? format(new Date(migration.startTime), 'MMM dd, HH:mm') : 'Scheduled'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {migration.duration ? `${Math.round(migration.duration)}s` : '-'}
