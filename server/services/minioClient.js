@@ -1050,6 +1050,89 @@ class MinioClientService {
     });
   }
 
+  async updateReconciliationSizes(migrationId) {
+    console.log(`Updating reconciliation sizes for migration: ${migrationId}`);
+    
+    try {
+      // Get migration from database
+      const migration = database.getMigration(migrationId);
+      if (!migration || !migration.reconciliation || !migration.reconciliation.differences) {
+        console.warn(`No reconciliation data found for migration ${migrationId}`);
+        return null;
+      }
+
+      // Update sizes for all differences
+      const updatedDifferences = await Promise.all(
+        migration.reconciliation.differences.map(async (diff) => {
+          try {
+            // Get source file size if URL exists
+            if (diff.sourceUrl && diff.sourceSize === 0) {
+              const sourceSize = await this.getFileSizeFromUrl(diff.sourceUrl);
+              diff.sourceSize = sourceSize;
+              console.log(`Updated source size for ${diff.path}: ${sourceSize} bytes`);
+            }
+            
+            // Get target file size if URL exists
+            if (diff.targetUrl && diff.targetSize === 0) {
+              const targetSize = await this.getFileSizeFromUrl(diff.targetUrl);
+              diff.targetSize = targetSize;
+              console.log(`Updated target size for ${diff.path}: ${targetSize} bytes`);
+            }
+          } catch (error) {
+            console.warn(`Failed to update sizes for ${diff.path}:`, error.message);
+          }
+          return diff;
+        })
+      );
+
+      // Update categorized differences as well
+      migration.reconciliation.differences = updatedDifferences;
+      
+      // Re-categorize with updated sizes
+      migration.reconciliation.missingFiles = [];
+      migration.reconciliation.extraFiles = [];
+      migration.reconciliation.sizeDifferences = [];
+      
+      updatedDifferences.forEach(diff => {
+        if (diff.path && diff.path.startsWith('unknown-')) {
+          return;
+        }
+        
+        switch (diff.status) {
+          case 'missing':
+            migration.reconciliation.missingFiles.push(diff);
+            break;
+          case 'extra':
+            migration.reconciliation.extraFiles.push(diff);
+            break;
+          case 'size-differs':
+          case 'newer':
+          case 'older':
+            migration.reconciliation.sizeDifferences.push(diff);
+            break;
+          case 'success':
+            if (diff.sourceSize !== diff.targetSize) {
+              migration.reconciliation.sizeDifferences.push(diff);
+            }
+            break;
+        }
+      });
+
+      // Save updated migration to database
+      database.updateMigration(migrationId, migration);
+      
+      // Broadcast the update
+      this.broadcastMigrationUpdate(migration);
+      
+      console.log(`Successfully updated reconciliation sizes for migration ${migrationId}`);
+      return migration;
+      
+    } catch (error) {
+      console.error(`Error updating reconciliation sizes for ${migrationId}:`, error);
+      return null;
+    }
+  }
+
   async compareDirectories(source, destination) {
     return new Promise((resolve, reject) => {
       const command = `${this.quoteMcPath()} diff ${source} ${destination} --json`;

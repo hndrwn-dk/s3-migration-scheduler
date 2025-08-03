@@ -1,20 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   XMarkIcon,
   ExclamationTriangleIcon,
   DocumentDuplicateIcon,
   TrashIcon,
-  ScaleIcon
+  ScaleIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { Migration } from '../types';
+import { migrationService } from '../services/api';
+import { toast } from 'react-toastify';
 
 interface ReconciliationModalProps {
   migration: Migration | null;
   isOpen: boolean;
   onClose: () => void;
+  onMigrationUpdate?: (migration: Migration) => void;
 }
 
-const ReconciliationModal: React.FC<ReconciliationModalProps> = ({ migration, isOpen, onClose }) => {
+const ReconciliationModal: React.FC<ReconciliationModalProps> = ({ migration, isOpen, onClose, onMigrationUpdate }) => {
+  const [isUpdating, setIsUpdating] = useState(false);
+
   if (!isOpen || !migration?.reconciliation) {
     return null;
   }
@@ -44,6 +50,35 @@ const ReconciliationModal: React.FC<ReconciliationModalProps> = ({ migration, is
         return <ScaleIcon className="w-5 h-5 text-orange-500" />;
       default:
         return <ExclamationTriangleIcon className="w-5 h-5 text-yellow-500" />;
+    }
+  };
+
+  const handleUpdateSizes = async () => {
+    if (!migration) return;
+    
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`/api/migration/${migration.id}/update-reconciliation-sizes`, {
+        method: 'POST',
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        toast.success('File sizes updated successfully');
+        
+        // Update the migration data
+        if (onMigrationUpdate && result.data) {
+          onMigrationUpdate(result.data);
+        }
+      } else {
+        const error = await response.json();
+        toast.error(`Failed to update sizes: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error updating reconciliation sizes:', error);
+      toast.error('Failed to update file sizes');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
