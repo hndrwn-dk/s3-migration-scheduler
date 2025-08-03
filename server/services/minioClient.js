@@ -1059,30 +1059,56 @@ class MinioClientService {
               console.log(`Line ${index + 1}:`, data);
               
               if (data.status && data.status !== 'same') {
-                // Get the file path, preferring source over target
-                let filePath = data.source || data.target;
+                // mc diff uses 'first' and 'second' fields for URLs
+                const sourceUrl = data.first || '';
+                const targetUrl = data.second || '';
                 
-                // Clean up the path to remove bucket prefix
-                if (filePath) {
-                  // Remove the bucket URL prefix to get just the file path
-                  const pathMatch = filePath.match(/\/([^\/]+)$/);
-                  if (pathMatch) {
-                    filePath = pathMatch[1];
-                  }
-                }
+                // Determine the type of difference and extract file path
+                let filePath = '';
+                let diffType = data.status;
+                
+                if (sourceUrl && !targetUrl) {
+                   // File exists in source but not in destination (missing)
+                   diffType = 'missing';
+                   filePath = sourceUrl.split('/').pop() || 'unknown';
+                 } else if (!sourceUrl && targetUrl) {
+                   // File exists in destination but not in source (extra)
+                   diffType = 'extra';
+                   filePath = targetUrl.split('/').pop() || 'unknown';
+                 } else if (sourceUrl && targetUrl) {
+                   // File exists in both but has differences
+                   // diff codes: 0=same, 1=newer, 2=older, 4=size, 6=missing in dest
+                   switch (data.diff) {
+                     case 1:
+                       diffType = 'newer';
+                       break;
+                     case 2:
+                       diffType = 'older';
+                       break;
+                     case 4:
+                       diffType = 'size-differs';
+                       break;
+                     default:
+                       diffType = 'differs';
+                   }
+                   filePath = sourceUrl.split('/').pop() || targetUrl.split('/').pop() || 'unknown';
+                 }
                 
                 // Only add valid differences with proper paths
-                if (filePath && !filePath.startsWith('unknown-')) {
+                if (filePath && filePath !== 'unknown' && !filePath.startsWith('unknown-')) {
                   const diff = {
                     path: filePath,
-                    status: data.status,
+                    status: diffType,
                     sourceSize: data.sourceSize || 0,
                     targetSize: data.targetSize || 0,
-                    sourceUrl: data.source,
-                    targetUrl: data.target
+                    sourceUrl: sourceUrl,
+                    targetUrl: targetUrl,
+                    diffCode: data.diff
                   };
                   differences.push(diff);
                   console.log(`Added difference:`, diff);
+                } else {
+                  console.log(`Skipped invalid difference with path: ${filePath}`, data);
                 }
               }
             } catch (e) {
