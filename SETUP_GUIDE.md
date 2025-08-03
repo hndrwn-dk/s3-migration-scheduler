@@ -13,8 +13,8 @@ Before starting, ensure you have:
 
 ```bash
 # Clone the repository
-git clone https://github.com/hndrwn-dk/s3-management-ui.git
-cd s3-management-ui
+git clone https://github.com/hndrwn-dk/s3-migration-scheduler.git
+cd s3-migration-scheduler
 
 # Method 1: Use automated setup scripts (RECOMMENDED)
 scripts/00-setup-linux.sh    # Linux/MacOS
@@ -245,7 +245,7 @@ ls -la server/data/migrations.db
 ## 📁 Directory Structure After Setup
 
 ```
-s3-management-ui/
+s3-migration-scheduler/
 ├── package.json                 # Root dependencies
 ├── server/
 │   ├── .env                    # ✅ Environment configuration
@@ -278,8 +278,8 @@ s3-management-ui/
 
 ```bash
 # Full setup from scratch (RECOMMENDED)
-git clone https://github.com/hndrwn-dk/s3-management-ui.git
-cd s3-management-ui
+git clone https://github.com/hndrwn-dk/s3-migration-scheduler.git
+cd s3-migration-scheduler
 scripts/00-setup-linux.sh     # Linux/MacOS (or scripts\00-setup-windows.bat for Windows)
 cp server/.env.example server/.env
 # Edit server/.env with your settings
@@ -356,8 +356,8 @@ The repository includes automated scripts for easy setup and maintenance:
 ### **Recommended Workflow:**
 ```bash
 # 1. Clone and setup
-git clone https://github.com/hndrwn-dk/s3-management-ui.git
-cd s3-management-ui
+git clone https://github.com/hndrwn-dk/s3-migration-scheduler.git
+cd s3-migration-scheduler
 
 # 2. Initial setup (run once)
 scripts/00-setup-linux.sh    # Linux/MacOS

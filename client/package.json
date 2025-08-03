@@ -1,5 +1,5 @@
 {
-  "name": "s3-management-ui-client",
+  "name": "s3-migration-scheduler-client",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

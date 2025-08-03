@@ -136,7 +136,7 @@ git pull origin main
 
 The scripts work with this project structure:
 ```
-s3-management-ui/
+s3-migration-scheduler/
 ├── package.json           # Root package (monorepo management)
 ├── server/
 │   ├── package.json      # Backend dependencies
