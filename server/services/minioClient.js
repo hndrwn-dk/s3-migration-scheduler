@@ -1051,10 +1051,51 @@ class MinioClientService {
     });
   }
 
+  // Convert HTTPS URL back to alias format for mc commands
+  convertUrlToAlias(url) {
+    if (!url || !url.startsWith('https://')) {
+      return url; // Already in alias format or empty
+    }
+    
+    // Extract the important parts from URL
+    // Example: https://s3.ap-southeast-1.amazonaws.com/awstargetbucket502/diff.txt
+    // Should become: target-aws/awstargetbucket502/diff.txt
+    
+    try {
+      const urlObj = new URL(url);
+      const pathParts = urlObj.pathname.substring(1).split('/'); // Remove leading slash and split
+      const bucketName = pathParts[0];
+      const filePath = pathParts.slice(1).join('/');
+      
+      // Try to match with known aliases based on bucket name
+      // This is a simple heuristic - you might need to adjust based on your alias naming
+      if (bucketName.includes('source') || bucketName.includes('Source')) {
+        return `source-aws/${bucketName}/${filePath}`;
+      } else if (bucketName.includes('target') || bucketName.includes('Target')) {
+        return `target-aws/${bucketName}/${filePath}`;
+      } else {
+        // Fallback: try to guess based on common patterns
+        // If URL contains amazonaws.com, likely AWS S3
+        if (urlObj.hostname.includes('amazonaws.com')) {
+          // Try both source-aws and target-aws, we'll handle errors gracefully
+          return `target-aws/${bucketName}/${filePath}`;
+        }
+      }
+    } catch (error) {
+      console.warn(`Failed to parse URL: ${url}`, error.message);
+    }
+    
+    return url; // Return original if conversion fails
+  }
+
   async getFileSizeFromUrl(fileUrl) {
     return new Promise((resolve, reject) => {
+      // Convert HTTPS URL to alias format
+      const aliasPath = this.convertUrlToAlias(fileUrl);
+      console.log(`Converting URL: ${fileUrl} -> ${aliasPath}`);
+      
       // Try mc ls first (more reliable), then fall back to mc stat
-      const lsCommand = `${this.quoteMcPath()} ls "${fileUrl}" --json`;
+      const lsCommand = `${this.quoteMcPath()} ls "${aliasPath}" --json`;
       console.log(`Getting file size with command: ${lsCommand}`);
       
       exec(lsCommand, { timeout: 10000 }, (error, stdout, stderr) => {
@@ -1065,44 +1106,68 @@ class MinioClientService {
               if (line.trim()) {
                 const fileInfo = JSON.parse(line);
                 if (fileInfo.size !== undefined) {
-                  console.log(`Extracted size via mc ls for ${fileUrl}: ${fileInfo.size} bytes`);
+                  console.log(`Extracted size via mc ls for ${aliasPath}: ${fileInfo.size} bytes`);
                   resolve(fileInfo.size);
                   return;
                 }
               }
             }
           } catch (parseError) {
-            console.warn(`Failed to parse mc ls output for ${fileUrl}:`, parseError.message);
+            console.warn(`Failed to parse mc ls output for ${aliasPath}:`, parseError.message);
           }
         }
         
         // Fallback to mc stat
-        const statCommand = `${this.quoteMcPath()} stat "${fileUrl}" --json`;
+        const statCommand = `${this.quoteMcPath()} stat "${aliasPath}" --json`;
         console.log(`Fallback to mc stat: ${statCommand}`);
         
         exec(statCommand, { timeout: 10000 }, (statError, statStdout, statStderr) => {
           if (statError) {
-            console.warn(`Both mc ls and mc stat failed for ${fileUrl}:`, statError.message);
+            console.warn(`Both mc ls and mc stat failed for ${aliasPath}:`, statError.message);
             if (statStderr) console.warn(`Stderr: ${statStderr}`);
-            resolve(0);
+            
+            // Try the source-aws alias as fallback if target-aws failed
+            if (aliasPath.startsWith('target-aws/')) {
+              const sourceAlias = aliasPath.replace('target-aws/', 'source-aws/');
+              console.log(`Trying source alias fallback: ${sourceAlias}`);
+              
+              const fallbackCommand = `${this.quoteMcPath()} stat "${sourceAlias}" --json`;
+              exec(fallbackCommand, { timeout: 10000 }, (fbError, fbStdout, fbStderr) => {
+                if (!fbError && fbStdout) {
+                  try {
+                    const statInfo = JSON.parse(fbStdout.trim());
+                    const size = statInfo.size || 0;
+                    console.log(`Extracted size via source fallback for ${sourceAlias}: ${size} bytes`);
+                    resolve(size);
+                    return;
+                  } catch (parseError) {
+                    console.warn(`Fallback parse failed:`, parseError.message);
+                  }
+                }
+                console.warn(`All attempts failed for ${fileUrl}`);
+                resolve(0);
+              });
+            } else {
+              resolve(0);
+            }
             return;
           }
           
-          console.log(`mc stat output for ${fileUrl}:`, statStdout);
+          console.log(`mc stat output for ${aliasPath}:`, statStdout);
           
           try {
             if (!statStdout || statStdout.trim() === '') {
-              console.warn(`Empty output from mc stat for ${fileUrl}`);
+              console.warn(`Empty output from mc stat for ${aliasPath}`);
               resolve(0);
               return;
             }
             
             const statInfo = JSON.parse(statStdout.trim());
             const size = statInfo.size || 0;
-            console.log(`Extracted size via mc stat for ${fileUrl}: ${size} bytes`);
+            console.log(`Extracted size via mc stat for ${aliasPath}: ${size} bytes`);
             resolve(size);
           } catch (parseError) {
-            console.warn(`Failed to parse stat output for ${fileUrl}:`, parseError.message);
+            console.warn(`Failed to parse stat output for ${aliasPath}:`, parseError.message);
             console.warn(`Raw output was:`, statStdout);
             resolve(0);
           }
