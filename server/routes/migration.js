@@ -310,6 +310,24 @@ router.get('/scheduler/info', async (req, res) => {
   }
 });
 
+// Fix stuck migrations manually
+router.post('/fix-stuck', async (req, res) => {
+  try {
+    console.log('Manual request to fix stuck migrations');
+    const database = require('../services/database');
+    const fixedCount = database.fixStuckMigrations();
+    
+    res.json({ 
+      success: true, 
+      message: `Fixed ${fixedCount} stuck migration(s)`,
+      fixedCount 
+    });
+  } catch (error) {
+    console.error('Error fixing stuck migrations:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Get migration status
 router.get('/:id', async (req, res) => {
   try {

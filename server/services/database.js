@@ -470,6 +470,52 @@ class DatabaseService {
     return stmt.run(status, migrationId);
   }
 
+  // Fix stuck migrations on server startup
+  fixStuckMigrations() {
+    try {
+      console.log('Checking for stuck migrations...');
+      
+      // Find migrations that are stuck in running/starting state
+      const stuckMigrations = this.db.prepare(`
+        SELECT id, status, execution_status, source, destination 
+        FROM migrations 
+        WHERE status IN ('running', 'starting') 
+           OR execution_status IN ('running', 'pending')
+      `).all();
+
+      if (stuckMigrations.length > 0) {
+        console.log(`Found ${stuckMigrations.length} stuck migration(s). Fixing...`);
+        
+        const updateStmt = this.db.prepare(`
+          UPDATE migrations 
+          SET status = 'failed', 
+              execution_status = 'failed',
+              end_time = ?,
+              errors = ?,
+              updated_at = datetime('now')
+          WHERE id = ?
+        `);
+
+        const errorMessage = JSON.stringify(['Migration was interrupted by server restart']);
+        const endTime = new Date().toISOString();
+
+        stuckMigrations.forEach(migration => {
+          updateStmt.run(endTime, errorMessage, migration.id);
+          console.log(`Fixed stuck migration: ${migration.id} (${migration.source} → ${migration.destination})`);
+        });
+
+        console.log(`Successfully fixed ${stuckMigrations.length} stuck migration(s)`);
+        return stuckMigrations.length;
+      } else {
+        console.log('No stuck migrations found');
+        return 0;
+      }
+    } catch (error) {
+      console.error('Error fixing stuck migrations:', error);
+      return 0;
+    }
+  }
+
   getScheduledMigrationStats() {
     const stmt = this.db.prepare(`
       SELECT 
