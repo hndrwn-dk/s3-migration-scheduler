@@ -141,7 +141,7 @@ router.get('/', async (req, res) => {
 // Start a new migration
 router.post('/start', async (req, res) => {
   try {
-    const { source, destination, options = {} } = req.body;
+    const { source, destination, scheduledTime, options = {} } = req.body;
 
     // Validate required fields
     if (!source || !destination) {
@@ -162,6 +162,7 @@ router.post('/start', async (req, res) => {
     const migrationConfig = {
       source,
       destination,
+      ...(scheduledTime && { scheduledTime }), // Include scheduledTime if present
       options: {
         overwrite: options.overwrite || false,
         remove: options.remove || false,
