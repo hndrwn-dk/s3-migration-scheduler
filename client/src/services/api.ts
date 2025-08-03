@@ -219,7 +219,7 @@ export const migrationService = {
     }
   },
 
-  rescheduleeMigration: async (migrationId: string, scheduledTime: string): Promise<void> => {
+  rescheduleMigration: async (migrationId: string, scheduledTime: string): Promise<void> => {
     const response = await api.put<ApiResponse>(`/migration/scheduled/${migrationId}`, { scheduledTime });
     if (!response.data.success) {
       throw new Error(response.data.error || 'Failed to reschedule migration');
