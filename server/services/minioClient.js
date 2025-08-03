@@ -1026,6 +1026,30 @@ class MinioClientService {
     });
   }
 
+  async getFileSizeFromUrl(fileUrl) {
+    return new Promise((resolve, reject) => {
+      // Use mc stat to get file information
+      const command = `${this.quoteMcPath()} stat "${fileUrl}" --json`;
+      
+      exec(command, (error, stdout, stderr) => {
+        if (error) {
+          console.warn(`Failed to get file size for ${fileUrl}:`, error.message);
+          resolve(0); // Return 0 if we can't get the size
+          return;
+        }
+        
+        try {
+          const statInfo = JSON.parse(stdout.trim());
+          const size = statInfo.size || 0;
+          resolve(size);
+        } catch (parseError) {
+          console.warn(`Failed to parse stat output for ${fileUrl}:`, parseError.message);
+          resolve(0);
+        }
+      });
+    });
+  }
+
   async compareDirectories(source, destination) {
     return new Promise((resolve, reject) => {
       const command = `${this.quoteMcPath()} diff ${source} ${destination} --json`;
@@ -1117,7 +1141,33 @@ class MinioClientService {
           });
 
           console.log(`Found ${differences.length} valid differences`);
-          resolve(differences);
+          
+          // Fetch actual file sizes for the differences
+          Promise.all(differences.map(async (diff) => {
+            try {
+              // Get source file size if URL exists
+              if (diff.sourceUrl) {
+                const sourceSize = await this.getFileSizeFromUrl(diff.sourceUrl);
+                diff.sourceSize = sourceSize;
+              }
+              
+              // Get target file size if URL exists
+              if (diff.targetUrl) {
+                const targetSize = await this.getFileSizeFromUrl(diff.targetUrl);
+                diff.targetSize = targetSize;
+              }
+              
+              console.log(`Updated sizes for ${diff.path}: source=${diff.sourceSize}, target=${diff.targetSize}`);
+            } catch (error) {
+              console.warn(`Failed to get file sizes for ${diff.path}:`, error.message);
+            }
+            return diff;
+          })).then(updatedDifferences => {
+            resolve(updatedDifferences);
+          }).catch(error => {
+            console.warn('Error fetching file sizes, returning differences without sizes:', error.message);
+            resolve(differences);
+          });
         } catch (parseError) {
           console.error(`Parse error in compareDirectories:`, parseError);
           resolve([]); // Return empty array if parsing fails
