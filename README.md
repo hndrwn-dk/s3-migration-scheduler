@@ -32,7 +32,7 @@ If you find this project helpful, you can support me here:
 ### Enhanced Dashboard with SQLite Persistence
 *Real-time migration statistics with persistent data and accurate metrics*
 
-![Dashboard Overview](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/dashboard-overwiew.png?raw=true)
+![Dashboard Overview](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/dashboard-overview.png?raw=true)
 > 📊 **Main Dashboard** - Shows persistent migration statistics with SQLite database, real-time updates via WebSocket+SSE, accurate completion rates, and recent migration activity. 
 
 ### S3 Endpoint Configuration
@@ -50,7 +50,7 @@ If you find this project helpful, you can support me here:
 ### Scheduled Migration Management
 *Schedule and manage future migrations*
 
-![Scheduled Migrations](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/scheduled-migrations.png?raw=true)
+![Scheduled Migrations](https://github.com/hndrwn-dk/s3-management-ui/blob/main/docs/images/migration-advance-options-with_scheduled.png?raw=true)
 > ⏰ **Scheduled Tab** - Complete scheduling system with `node-cron` backend, showing pending migrations with countdown timers, reschedule/cancel options, and automatic execution at specified times.
 
 ### Migration History with Reconciliation
@@ -343,7 +343,7 @@ For detailed update instructions and troubleshooting, see: **[📖 UPDATE_GUIDE.
 ### Real-time Monitoring
 - 🔌 **Dual connection system** (WebSocket + Server-Sent Events)
 - 📺 **Live progress updates** during migration
-- 📊 **Real-time statistics** (objects transferred, speed, ETA)
+- 📊 **Real-time statistics**
 - 🔔 **Instant status notifications**
 
 ### Comprehensive Reconciliation
