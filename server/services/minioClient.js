@@ -938,7 +938,7 @@ class MinioClientService {
         console.log(`Updated transferred stats from reconciliation: ${migration.stats.transferredObjects} objects, ${migration.stats.transferredSize} bytes`);
       }
       
-      console.log(`Reconciliation completed: ${totalDifferences} differences found`);
+      console.log(`Reconciliation completed: ${reconciliationResult.differences.length} differences found, ${totalMeaningfulDifferences} meaningful`);
       console.log(`Missing: ${migration.reconciliation.missingFiles.length}, Extra: ${migration.reconciliation.extraFiles.length}, Size: ${migration.reconciliation.sizeDifferences.length}`);
       
       // Log reconciliation completion
@@ -952,9 +952,9 @@ class MinioClientService {
           logStream.write(`Migration ID: ${migration.id}\n`);
           logStream.write(`Completed at: ${timestamp}\n`);
           logStream.write(`Status: ${migration.status}\n`);
-          logStream.write(`Total differences found: ${totalDifferences}\n\n`);
+          logStream.write(`Total differences found: ${reconciliationResult.differences.length}, meaningful: ${totalMeaningfulDifferences}\n\n`);
           
-          if (totalDifferences > 0) {
+          if (totalMeaningfulDifferences > 0) {
             logStream.write(`DIFFERENCE BREAKDOWN:\n`);
             logStream.write(`  - Missing files (in destination): ${migration.reconciliation.missingFiles.length}\n`);
             logStream.write(`  - Extra files (only in destination): ${migration.reconciliation.extraFiles.length}\n`);
