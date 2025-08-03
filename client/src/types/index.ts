@@ -1,3 +1,17 @@
+export interface SystemStatsResponse {
+  total: number;
+  running: number;
+  completed: number;
+  failed: number;
+  cancelled: number;
+  scheduled?: number; // Optional for backward compatibility
+  completed_with_differences: number;
+  recent_activity: number;
+  total_data_transferred: number;
+  average_speed: number;
+  success_rate: number;
+}
+
 export interface S3Alias {
   name: string;
   endpoint: string;

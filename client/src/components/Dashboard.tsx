@@ -9,7 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { format } from 'date-fns';
-import { Migration, TabType } from '../types';
+import { Migration, TabType, SystemStatsResponse } from '../types';
 import { migrationService } from '../services/api';
 
 interface DashboardProps {
@@ -23,7 +23,7 @@ interface SystemStats {
   running: number;
   failed: number;
   cancelled: number;
-  scheduled?: number; // Optional for backward compatibility
+  scheduled: number;
   pending?: number;
   recent_activity: number;
   total_data_transferred: number;
@@ -33,18 +33,18 @@ interface SystemStats {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
-  const [systemStats, setSystemStats] = useState<SystemStats | null>(null);
+  const [systemStats, setSystemStats] = useState<SystemStatsResponse | null>(null);
 
   // Load system stats from the database
   useEffect(() => {
     const loadSystemStats = async () => {
       try {
         const stats = await migrationService.getSystemStatus();
-        // Ensure all required fields are present with defaults (force recompile)
+        // Ensure all required fields are present with defaults
         const enhancedStats = {
           ...stats,
-          scheduled: (stats as any).scheduled || 0,
-          cancelled: (stats as any).cancelled || 0
+          scheduled: stats.scheduled || 0,
+          cancelled: stats.cancelled || 0
         };
         setSystemStats(enhancedStats);
       } catch (error) {
