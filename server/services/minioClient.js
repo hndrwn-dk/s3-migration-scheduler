@@ -359,7 +359,7 @@ class MinioClientService {
       config: migrationConfig,
       status: status,
       progress: 0,
-      startTime: isScheduled ? null : new Date().toISOString(),
+      startTime: new Date().toISOString(), // For scheduled migrations, this is creation time; will be updated when execution starts
       scheduledTime: migrationConfig.scheduledTime || null,
       executionStatus: executionStatus,
       logFile,
