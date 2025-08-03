@@ -14,7 +14,7 @@ class CronScheduler {
       return;
     }
 
-    console.log('🚀 Starting Cron Migration Scheduler');
+    console.log('Starting Cron Migration Scheduler');
     this.isRunning = true;
     
     // Load existing scheduled migrations from database
@@ -28,7 +28,7 @@ class CronScheduler {
     });
     
     this.checkInterval.start();
-    console.log('✅ Cron scheduler started with periodic checks every minute');
+    console.log('Cron scheduler started with periodic checks every minute');
   }
 
   stop() {
@@ -36,7 +36,7 @@ class CronScheduler {
       return;
     }
 
-    console.log('🛑 Stopping Cron Migration Scheduler');
+    console.log('Stopping Cron Migration Scheduler');
     this.isRunning = false;
     
     // Stop periodic check
@@ -52,25 +52,25 @@ class CronScheduler {
     });
     
     this.scheduledJobs.clear();
-    console.log('✅ Cron scheduler stopped');
+    console.log('Cron scheduler stopped');
   }
 
   loadScheduledMigrations() {
     try {
       const scheduledMigrations = database.getScheduledMigrations();
-      console.log(`📋 Loading ${scheduledMigrations.length} scheduled migrations`);
+      console.log(`Loading ${scheduledMigrations.length} scheduled migrations`);
       
       scheduledMigrations.forEach(migration => {
         this.scheduleExecution(migration);
       });
     } catch (error) {
-      console.error('❌ Error loading scheduled migrations:', error);
+      console.error('Error loading scheduled migrations:', error);
     }
   }
 
   scheduleExecution(migration) {
     if (!migration.scheduledTime) {
-      console.warn(`⚠️  Migration ${migration.id} has no scheduled time`);
+      console.warn(`Migration ${migration.id} has no scheduled time`);
       return;
     }
 
@@ -80,7 +80,7 @@ class CronScheduler {
 
     // If migration is due for immediate execution
     if (delayMs <= 60000) { // Within 1 minute
-      console.log(`⚡ Migration ${migration.id} is ready for immediate execution`);
+      console.log(`Migration ${migration.id} is ready for immediate execution`);
       setImmediate(() => {
         this.executeMigration(migration.id);
       });
@@ -91,17 +91,17 @@ class CronScheduler {
     const cronExpression = this.createCronExpression(scheduledTime);
     
     if (!cronExpression) {
-      console.error(`❌ Could not create cron expression for migration ${migration.id}`);
+      console.error(`Could not create cron expression for migration ${migration.id}`);
       return;
     }
 
-    console.log(`⏰ Scheduling migration ${migration.id} with cron: ${cronExpression}`);
-    console.log(`🎯 Execution time: ${scheduledTime.toISOString()}`);
+    console.log(`Scheduling migration ${migration.id} with cron: ${cronExpression}`);
+    console.log(`Execution time: ${scheduledTime.toISOString()}`);
 
     try {
       // Create cron job
       const cronJob = cron.schedule(cronExpression, () => {
-        console.log(`🚀 Executing scheduled migration: ${migration.id}`);
+        console.log(`Executing scheduled migration: ${migration.id}`);
         this.executeMigration(migration.id);
         
         // Remove from scheduled jobs after execution
@@ -114,9 +114,9 @@ class CronScheduler {
       // Store the job
       this.scheduledJobs.set(migration.id, cronJob);
       
-      console.log(`✅ Migration ${migration.id} scheduled successfully`);
+      console.log(`Migration ${migration.id} scheduled successfully`);
     } catch (error) {
-      console.error(`❌ Error scheduling migration ${migration.id}:`, error);
+              console.error(`Error scheduling migration ${migration.id}:`, error);
     }
   }
 
@@ -134,17 +134,17 @@ class CronScheduler {
       if (cron.validate(cronExpression)) {
         return cronExpression;
       } else {
-        console.error(`❌ Invalid cron expression: ${cronExpression}`);
+        console.error(` Invalid cron expression: ${cronExpression}`);
         return null;
       }
     } catch (error) {
-      console.error('❌ Error creating cron expression:', error);
+      console.error(' Error creating cron expression:', error);
       return null;
     }
   }
 
   async executeMigration(migrationId) {
-    console.log(`🚀 Executing scheduled migration: ${migrationId}`);
+    console.log(` Executing scheduled migration: ${migrationId}`);
     
     try {
       // Update status to indicate execution has started
@@ -162,9 +162,9 @@ class CronScheduler {
       // Call the scheduled migration execution method
       await minioClient.startScheduledMigration(migration);
       
-      console.log(`✅ Successfully started execution of scheduled migration: ${migrationId}`);
+      console.log(` Successfully started execution of scheduled migration: ${migrationId}`);
     } catch (error) {
-      console.error(`❌ Failed to execute migration ${migrationId}:`, error);
+      console.error(` Failed to execute migration ${migrationId}:`, error);
       database.updateMigrationExecutionStatus(migrationId, 'failed');
     }
   }
@@ -175,24 +175,24 @@ class CronScheduler {
       const pendingMigrations = database.getPendingScheduledMigrations();
       
       if (pendingMigrations.length > 0) {
-        console.log(`📋 Found ${pendingMigrations.length} pending scheduled migrations`);
+        console.log(` Found ${pendingMigrations.length} pending scheduled migrations`);
         
         for (const migration of pendingMigrations) {
           if (!this.scheduledJobs.has(migration.id)) {
-            console.log(`⚡ Executing overdue migration: ${migration.id}`);
+            console.log(` Executing overdue migration: ${migration.id}`);
             await this.executeMigration(migration.id);
           }
         }
       }
     } catch (error) {
-      console.error('❌ Error checking pending migrations:', error);
+      console.error(' Error checking pending migrations:', error);
     }
   }
 
   // Public API methods
 
   scheduleMigration(migrationId, scheduledTime) {
-    console.log(`📅 Scheduling migration ${migrationId} for ${scheduledTime}`);
+    console.log(` Scheduling migration ${migrationId} for ${scheduledTime}`);
     
     try {
       // Update database with scheduled status
@@ -207,13 +207,13 @@ class CronScheduler {
       
       return false;
     } catch (error) {
-      console.error(`❌ Error scheduling migration ${migrationId}:`, error);
+      console.error(` Error scheduling migration ${migrationId}:`, error);
       return false;
     }
   }
 
   cancelScheduledMigration(migrationId) {
-    console.log(`❌ Cancelling scheduled migration ${migrationId}`);
+    console.log(` Cancelling scheduled migration ${migrationId}`);
     
     try {
       // Cancel cron job if exists
@@ -221,20 +221,20 @@ class CronScheduler {
       if (cronJob) {
         cronJob.destroy();
         this.scheduledJobs.delete(migrationId);
-        console.log(`✅ Cron job cancelled for migration ${migrationId}`);
+        console.log(` Cron job cancelled for migration ${migrationId}`);
       }
       
       // Update database status
       database.updateMigrationExecutionStatus(migrationId, 'cancelled');
       return true;
     } catch (error) {
-      console.error(`❌ Error cancelling migration ${migrationId}:`, error);
+      console.error(` Error cancelling migration ${migrationId}:`, error);
       return false;
     }
   }
 
   rescheduleMigration(migrationId, newScheduledTime) {
-    console.log(`🔄 Rescheduling migration ${migrationId} to ${newScheduledTime}`);
+    console.log(` Rescheduling migration ${migrationId} to ${newScheduledTime}`);
     
     try {
       // Cancel existing cron job
@@ -252,7 +252,7 @@ class CronScheduler {
       // Schedule with new time
       return this.scheduleMigration(migrationId, newScheduledTime);
     } catch (error) {
-      console.error(`❌ Error rescheduling migration ${migrationId}:`, error);
+      console.error(` Error rescheduling migration ${migrationId}:`, error);
       return false;
     }
   }
@@ -271,7 +271,7 @@ class CronScheduler {
         version: require('../../package.json').version
       };
     } catch (error) {
-      console.error('❌ Error getting scheduler stats:', error);
+      console.error(' Error getting scheduler stats:', error);
       return {
         totalScheduled: 0,
         futureScheduled: 0,
@@ -286,9 +286,9 @@ class CronScheduler {
 
   getScheduledMigrations() {
     try {
-      console.log('📋 Getting scheduled migrations from database...');
+      console.log(' Getting scheduled migrations from database...');
       const migrations = database.getScheduledMigrations();
-      console.log(`📋 Found ${migrations.length} scheduled migrations in database`);
+      console.log(` Found ${migrations.length} scheduled migrations in database`);
       
       // Add cron job status to each migration
       const enrichedMigrations = migrations.map(migration => ({
@@ -297,11 +297,11 @@ class CronScheduler {
         cronJobActive: this.scheduledJobs.has(migration.id) && this.scheduledJobs.get(migration.id).getStatus() === 'scheduled'
       }));
       
-      console.log(`📋 Returning ${enrichedMigrations.length} enriched migrations`);
+      console.log(` Returning ${enrichedMigrations.length} enriched migrations`);
       return enrichedMigrations;
     } catch (error) {
-      console.error('❌ Error getting scheduled migrations:', error);
-      console.error('❌ Stack trace:', error.stack);
+      console.error(' Error getting scheduled migrations:', error);
+      console.error(' Stack trace:', error.stack);
       return [];
     }
   }
