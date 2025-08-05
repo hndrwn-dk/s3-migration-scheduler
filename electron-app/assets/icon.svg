@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle with gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cloudGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E5E7EB;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10B981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#bgGradient)" filter="url(#shadow)"/>
+  
+  <!-- S3 Bucket Icon (Left) -->
+  <g transform="translate(120, 160)">
+    <!-- Bucket body -->
+    <path d="M20 40 L80 40 L85 120 L15 120 Z" fill="url(#cloudGradient)" stroke="#94A3B8" stroke-width="2"/>
+    <!-- Bucket top ellipse -->
+    <ellipse cx="50" cy="40" rx="30" ry="8" fill="#F8FAFC" stroke="#94A3B8" stroke-width="2"/>
+    <!-- Bucket handle -->
+    <path d="M20 50 Q10 55 10 65 Q10 75 20 80" fill="none" stroke="#94A3B8" stroke-width="3"/>
+    <path d="M80 50 Q90 55 90 65 Q90 75 80 80" fill="none" stroke="#94A3B8" stroke-width="3"/>
+    <!-- S3 label -->
+    <text x="50" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#475569">S3</text>
+  </g>
+  
+  <!-- Migration Arrow -->
+  <g transform="translate(256, 210)">
+    <!-- Arrow shaft -->
+    <rect x="-60" y="-6" width="120" height="12" fill="url(#arrowGradient)"/>
+    <!-- Arrow head -->
+    <path d="M60 0 L80 -15 L80 -5 L120 -5 L120 5 L80 5 L80 15 Z" fill="url(#arrowGradient)"/>
+    <!-- Animation circles -->
+    <circle cx="-40" cy="0" r="3" fill="#FBBF24" opacity="0.8">
+      <animate attributeName="cx" values="-40;40;-40" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="-20" cy="0" r="3" fill="#FBBF24" opacity="0.6">
+      <animate attributeName="cx" values="-20;60;-20" dur="2s" repeatCount="indefinite" begin="0.3s"/>
+      <animate attributeName="opacity" values="0.6;0.1;0.6" dur="2s" repeatCount="indefinite" begin="0.3s"/>
+    </circle>
+    <circle cx="0" cy="0" r="3" fill="#FBBF24" opacity="0.4">
+      <animate attributeName="cx" values="0;80;0" dur="2s" repeatCount="indefinite" begin="0.6s"/>
+      <animate attributeName="opacity" values="0.4;0.05;0.4" dur="2s" repeatCount="indefinite" begin="0.6s"/>
+    </circle>
+  </g>
+  
+  <!-- Target S3 Bucket Icon (Right) -->
+  <g transform="translate(320, 160)">
+    <!-- Bucket body -->
+    <path d="M20 40 L80 40 L85 120 L15 120 Z" fill="url(#cloudGradient)" stroke="#059669" stroke-width="2"/>
+    <!-- Bucket top ellipse -->
+    <ellipse cx="50" cy="40" rx="30" ry="8" fill="#F0FDF4" stroke="#059669" stroke-width="2"/>
+    <!-- Bucket handle -->
+    <path d="M20 50 Q10 55 10 65 Q10 75 20 80" fill="none" stroke="#059669" stroke-width="3"/>
+    <path d="M80 50 Q90 55 90 65 Q90 75 80 80" fill="none" stroke="#059669" stroke-width="3"/>
+    <!-- S3 label -->
+    <text x="50" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#065F46">S3</text>
+    <!-- Checkmark -->
+    <g transform="translate(35, 95)">
+      <circle cx="15" cy="10" r="12" fill="#10B981"/>
+      <path d="M8 10 L12 14 L22 6" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    </g>
+  </g>
+  
+  <!-- Clock/Schedule icon (Bottom) -->
+  <g transform="translate(256, 350)">
+    <circle cx="0" cy="0" r="25" fill="#F59E0B" stroke="#D97706" stroke-width="2"/>
+    <!-- Clock hands -->
+    <line x1="0" y1="0" x2="0" y2="-15" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    <line x1="0" y1="0" x2="10" y2="-8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    <!-- Clock center -->
+    <circle cx="0" cy="0" r="2" fill="white"/>
+    <!-- Clock numbers -->
+    <text x="0" y="-18" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white">12</text>
+    <text x="15" y="3" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white">3</text>
+    <text x="0" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white">6</text>
+    <text x="-15" y="3" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white">9</text>
+  </g>
+  
+  <!-- Title text -->
+  <text x="256" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white">S3 Migration</text>
+  <text x="256" y="475" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="normal" fill="#E5E7EB">Scheduler</text>
+</svg>
