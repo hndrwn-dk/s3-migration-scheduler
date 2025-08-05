@@ -2030,6 +2030,301 @@ class MinioClientService {
     }
     return 0;
   }
+
+  /**
+   * Estimate migration size using smart multi-method detection
+   * @param {string} bucketPath - Source bucket path
+   * @param {number} maxSampleObjects - Maximum objects to sample for estimation
+   * @returns {Object} Estimation results with object count, size, and method used
+   */
+  async estimateMigrationSize(bucketPath, maxSampleObjects = 10000) {
+    console.log(`🔍 Estimating migration size for: ${bucketPath}`);
+    
+    // Initialize cache if not exists
+    if (!this.estimationCache) {
+      this.estimationCache = new Map();
+      this.cacheExpiryMs = 5 * 60 * 1000; // 5 minutes cache
+    }
+    
+    // Check cache first
+    const cacheKey = `estimate_${bucketPath}`;
+    const cached = this.estimationCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp) < this.cacheExpiryMs) {
+      console.log(`📋 Using cached estimation for ${bucketPath}: ${cached.data.estimatedObjects} objects`);
+      return cached.data;
+    }
+    
+    try {
+      // Method 1: Try quick bucket statistics (fastest)
+      const quickStats = await this.getQuickBucketStats(bucketPath);
+      if (quickStats.reliable) {
+        this.cacheEstimation(cacheKey, quickStats);
+        return quickStats;
+      }
+      
+      // Method 2: Sampling-based estimation (fast)
+      const sampledStats = await this.performSamplingEstimation(bucketPath, maxSampleObjects);
+      this.cacheEstimation(cacheKey, sampledStats);
+      return sampledStats;
+      
+    } catch (error) {
+      console.warn(`⚠️ Size estimation failed for ${bucketPath}, defaulting to traditional mode:`, error.message);
+      const fallback = { 
+        estimatedObjects: 0, 
+        estimatedSize: 0, 
+        method: 'fallback', 
+        reliable: false,
+        error: error.message 
+      };
+      this.cacheEstimation(cacheKey, fallback);
+      return fallback;
+    }
+  }
+
+  /**
+   * Get quick bucket statistics using mc ls --summarize
+   */
+  async getQuickBucketStats(bucketPath) {
+    return new Promise((resolve, reject) => {
+      const timeout = 10000; // 10 second timeout
+      const command = `${this.quoteMcPath()} ls ${bucketPath} --recursive --summarize`;
+      
+      console.log(`⚡ Quick stats command: ${command}`);
+      
+      exec(command, { timeout }, (error, stdout, stderr) => {
+        if (error) {
+          console.log(`⚠️ Quick stats failed for ${bucketPath}: ${error.message}`);
+          resolve({ estimatedObjects: 0, estimatedSize: 0, method: 'quick-failed', reliable: false });
+          return;
+        }
+        
+        try {
+          // Parse summarize output
+          const lines = stdout.trim().split('\n');
+          const summaryLine = lines.find(line => line.includes('Total:'));
+          
+          if (summaryLine) {
+            // Example: "Total: 2500000 objects, 500.5 GiB"
+            const objectMatch = summaryLine.match(/(\d+)\s+objects?/i);
+            const sizeMatch = summaryLine.match(/(\d+(?:\.\d+)?)\s*([KMGT]?iB?)/i);
+            
+            if (objectMatch) {
+              const objectCount = parseInt(objectMatch[1]);
+              const sizeBytes = sizeMatch ? this.parseSizeWithUnit(sizeMatch[1], sizeMatch[2]) : 0;
+              
+              console.log(`✅ Quick stats success: ${objectCount} objects, ${this.formatBytes(sizeBytes)}`);
+              
+              resolve({
+                estimatedObjects: objectCount,
+                estimatedSize: sizeBytes,
+                method: 'quick-summarize',
+                reliable: true,
+                duration: '1-3 seconds'
+              });
+              return;
+            }
+          }
+          
+          // Fallback to line counting if summarize format is unexpected
+          const lineCount = lines.filter(line => line.trim() && !line.includes('Total:')).length;
+          console.log(`📊 Quick stats fallback: ${lineCount} lines counted`);
+          
+          resolve({
+            estimatedObjects: lineCount,
+            estimatedSize: lineCount * 1024, // Rough estimate
+            method: 'quick-linecount',
+            reliable: lineCount > 0,
+            duration: '1-3 seconds'
+          });
+          
+        } catch (parseError) {
+          console.warn(`⚠️ Quick stats parse error:`, parseError.message);
+          resolve({ estimatedObjects: 0, estimatedSize: 0, method: 'quick-parse-failed', reliable: false });
+        }
+      });
+    });
+  }
+
+  /**
+   * Perform sampling-based estimation for large buckets
+   */
+  async performSamplingEstimation(bucketPath, maxSampleObjects) {
+    return new Promise((resolve, reject) => {
+      console.log(`🎯 Starting sampling estimation for ${bucketPath} (max ${maxSampleObjects} objects)`);
+      
+      const command = `${this.quoteMcPath()} ls ${bucketPath} --recursive --json`;
+      const process = spawn('sh', ['-c', command], { stdio: ['ignore', 'pipe', 'pipe'] });
+      
+      let objectCount = 0;
+      let totalSize = 0;
+      let buffer = '';
+      let sampleStartTime = Date.now();
+      let estimationComplete = false;
+      
+      const timeout = setTimeout(() => {
+        if (!estimationComplete) {
+          estimationComplete = true;
+          process.kill();
+          
+          // Extrapolate based on time-based sampling
+          const samplingDuration = Date.now() - sampleStartTime;
+          const objectsPerSecond = objectCount / (samplingDuration / 1000);
+          const estimatedTotal = Math.round(objectsPerSecond * 60); // Estimate objects processable in 1 minute
+          
+          console.log(`⏱️ Time-based estimation: ${objectCount} objects in ${samplingDuration}ms, estimated ${estimatedTotal} total`);
+          
+          resolve({
+            estimatedObjects: Math.max(estimatedTotal, objectCount),
+            estimatedSize: totalSize * Math.max(estimatedTotal / objectCount, 1),
+            method: 'time-based-sampling',
+            reliable: objectCount > 100,
+            sampleSize: objectCount,
+            duration: `${Math.round(samplingDuration / 1000)} seconds`
+          });
+        }
+      }, 15000); // 15 second timeout
+      
+      process.stdout.on('data', (data) => {
+        if (estimationComplete) return;
+        
+        buffer += data.toString();
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line
+        
+        for (const line of lines) {
+          if (line.trim()) {
+            try {
+              const objectInfo = JSON.parse(line);
+              if (objectInfo.type === 'file' || objectInfo.size > 0) {
+                objectCount++;
+                totalSize += objectInfo.size || 0;
+                
+                // Early detection of large-scale migration
+                if (objectCount > 100000) {
+                  estimationComplete = true;
+                  clearTimeout(timeout);
+                  process.kill();
+                  
+                  console.log(`🚀 Large-scale detected early: ${objectCount}+ objects confirmed`);
+                  
+                  resolve({
+                    estimatedObjects: objectCount,
+                    estimatedSize: totalSize,
+                    method: 'early-large-scale-detection',
+                    reliable: true,
+                    isDefinitelyLargeScale: true,
+                    sampleSize: objectCount,
+                    duration: `${Math.round((Date.now() - sampleStartTime) / 1000)} seconds`
+                  });
+                  return;
+                }
+                
+                // Check if we've reached our sample limit
+                if (objectCount >= maxSampleObjects) {
+                  estimationComplete = true;
+                  clearTimeout(timeout);
+                  process.kill();
+                  
+                  // Extrapolate based on sample
+                  const projectionFactor = this.calculateProjectionFactor(objectCount, maxSampleObjects);
+                  const estimatedTotal = Math.round(objectCount * projectionFactor);
+                  
+                  console.log(`📊 Sample-based estimation: ${objectCount} sampled, projected ${estimatedTotal} total (factor: ${projectionFactor})`);
+                  
+                  resolve({
+                    estimatedObjects: estimatedTotal,
+                    estimatedSize: totalSize * projectionFactor,
+                    method: 'sample-based-projection',
+                    reliable: true,
+                    sampleSize: objectCount,
+                    projectionFactor,
+                    duration: `${Math.round((Date.now() - sampleStartTime) / 1000)} seconds`
+                  });
+                  return;
+                }
+              }
+            } catch (parseError) {
+              // Skip invalid JSON lines
+            }
+          }
+        }
+      });
+      
+      process.on('close', (code) => {
+        if (!estimationComplete) {
+          estimationComplete = true;
+          clearTimeout(timeout);
+          
+          console.log(`✅ Sampling complete: ${objectCount} objects found (exact count)`);
+          
+          resolve({
+            estimatedObjects: objectCount,
+            estimatedSize: totalSize,
+            method: 'complete-enumeration',
+            reliable: true,
+            isExactCount: true,
+            sampleSize: objectCount,
+            duration: `${Math.round((Date.now() - sampleStartTime) / 1000)} seconds`
+          });
+        }
+      });
+      
+      process.on('error', (error) => {
+        if (!estimationComplete) {
+          estimationComplete = true;
+          clearTimeout(timeout);
+          console.error(`❌ Sampling estimation failed:`, error);
+          reject(error);
+        }
+      });
+    });
+  }
+
+  /**
+   * Calculate projection factor for sample-based estimation
+   */
+  calculateProjectionFactor(sampleSize, maxSampleSize) {
+    if (sampleSize < maxSampleSize) {
+      return 1; // We got complete enumeration
+    }
+    
+    // Conservative projection factors based on sample size
+    if (sampleSize >= 10000) return 5;   // Large sample: conservative 5x projection
+    if (sampleSize >= 5000) return 10;   // Medium sample: 10x projection  
+    if (sampleSize >= 1000) return 20;   // Small sample: 20x projection
+    return 50; // Very small sample: aggressive projection
+  }
+
+  /**
+   * Parse size string with unit to bytes
+   */
+  parseSizeWithUnit(value, unit) {
+    const numValue = parseFloat(value);
+    const normalizedUnit = unit.toLowerCase().replace('i', ''); // Handle GiB vs GB
+    
+    switch (normalizedUnit) {
+      case 'b': return numValue;
+      case 'kb': case 'k': return numValue * 1024;
+      case 'mb': case 'm': return numValue * 1024 * 1024;
+      case 'gb': case 'g': return numValue * 1024 * 1024 * 1024;
+      case 'tb': case 't': return numValue * 1024 * 1024 * 1024 * 1024;
+      default: return numValue;
+    }
+  }
+
+  /**
+   * Cache estimation results
+   */
+  cacheEstimation(key, data) {
+    if (!this.estimationCache) {
+      this.estimationCache = new Map();
+    }
+    this.estimationCache.set(key, {
+      data,
+      timestamp: Date.now()
+    });
+    console.log(`💾 Cached estimation for ${key}: ${data.estimatedObjects} objects`);
+  }
 }
 
 module.exports = new MinioClientService();
