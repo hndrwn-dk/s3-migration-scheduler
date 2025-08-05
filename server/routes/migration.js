@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const minioClient = require('../services/minioClient');
+const streamingReconciliation = require('../services/streamingReconciliation');
 
 console.log('Migration routes file loaded - scheduled routes should be available');
 
@@ -505,5 +506,199 @@ router.post('/:id/update-reconciliation-sizes', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+// Get reconciliation progress for large migrations
+router.get('/reconciliation/:id/progress', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const progress = streamingReconciliation.getReconciliationProgress(id);
+    
+    if (!progress) {
+      return res.status(404).json({ 
+        error: 'Reconciliation not found or not using streaming reconciliation' 
+      });
+    }
+
+    res.json({
+      success: true,
+      data: progress
+    });
+  } catch (error) {
+    console.error('Error getting reconciliation progress:', error);
+    res.status(500).json({ 
+      error: 'Failed to get reconciliation progress',
+      details: error.message 
+    });
+  }
+});
+
+// Download reconciliation report
+router.get('/reconciliation/:id/report', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const migration = minioClient.getMigrationStatus(id);
+    
+    if (!migration || !migration.reconciliation?.reportPath) {
+      return res.status(404).json({ 
+        error: 'Reconciliation report not found' 
+      });
+    }
+
+    const reportPath = migration.reconciliation.reportPath;
+    const reportName = `reconciliation_report_${id}.json`;
+    
+    res.download(reportPath, reportName, (err) => {
+      if (err) {
+        console.error('Error downloading report:', err);
+        res.status(500).json({ 
+          error: 'Failed to download report',
+          details: err.message 
+        });
+      }
+    });
+  } catch (error) {
+    console.error('Error accessing reconciliation report:', error);
+    res.status(500).json({ 
+      error: 'Failed to access reconciliation report',
+      details: error.message 
+    });
+  }
+});
+
+// Get reconciliation statistics summary
+router.get('/reconciliation/:id/stats', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const migration = minioClient.getMigrationStatus(id);
+    
+    if (!migration || !migration.reconciliation) {
+      return res.status(404).json({ 
+        error: 'Migration or reconciliation not found' 
+      });
+    }
+
+    const reconciliation = migration.reconciliation;
+    const isStreaming = !!reconciliation.progress;
+
+    const stats = {
+      migrationId: id,
+      reconciliationType: isStreaming ? 'large-scale-streaming' : 'traditional',
+      status: reconciliation.status,
+      startTime: reconciliation.startTime,
+      endTime: reconciliation.endTime,
+      duration: reconciliation.endTime ? 
+        calculateDuration(reconciliation.startTime, reconciliation.endTime) : null,
+      
+      // Progress information (streaming only)
+      progress: isStreaming ? {
+        currentPhase: reconciliation.progress.currentPhase,
+        sourceObjectsProcessed: reconciliation.progress.sourceObjectsProcessed,
+        destinationObjectsProcessed: reconciliation.progress.destinationObjectsProcessed,
+        totalSourceObjects: reconciliation.progress.totalSourceObjects,
+        totalDestinationObjects: reconciliation.progress.totalDestinationObjects,
+        chunksCompleted: reconciliation.progress.chunksCompleted
+      } : null,
+
+      // Results summary
+      results: reconciliation.stats ? {
+        perfectMatches: reconciliation.stats.perfectMatches,
+        missingInDestination: reconciliation.stats.missingInDestination,
+        missingInSource: reconciliation.stats.missingInSource,
+        sizeMismatches: reconciliation.stats.sizeMismatches,
+        contentMismatches: reconciliation.stats.contentMismatches,
+        totalDifferences: (reconciliation.stats.missingInDestination || 0) + 
+                         (reconciliation.stats.missingInSource || 0) + 
+                         (reconciliation.stats.sizeMismatches || 0) + 
+                         (reconciliation.stats.contentMismatches || 0)
+      } : null,
+
+      // Legacy compatibility
+      differences: reconciliation.differences?.length || 0,
+      hasReport: !!reconciliation.reportPath
+    };
+
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Error getting reconciliation stats:', error);
+    res.status(500).json({ 
+      error: 'Failed to get reconciliation stats',
+      details: error.message 
+    });
+  }
+});
+
+// Cleanup reconciliation resources (for completed migrations)
+router.delete('/reconciliation/:id/cleanup', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await streamingReconciliation.cleanupReconciliation(id);
+    
+    res.json({
+      success: true,
+      message: `Reconciliation resources cleaned up for migration ${id}`
+    });
+  } catch (error) {
+    console.error('Error cleaning up reconciliation:', error);
+    res.status(500).json({ 
+      error: 'Failed to cleanup reconciliation resources',
+      details: error.message 
+    });
+  }
+});
+
+// Get all active reconciliations
+router.get('/reconciliations/active', async (req, res) => {
+  try {
+    const activeReconciliations = [];
+    
+    // Get all active migrations and check for reconciliation status
+    const migrations = minioClient.getAllMigrations();
+    
+    for (const migration of migrations) {
+      if (migration.status === 'reconciling' || 
+          (migration.reconciliation && 
+           ['running', 'initializing', 'collecting_inventory', 'comparing'].includes(migration.reconciliation.status))) {
+        
+        const progress = streamingReconciliation.getReconciliationProgress(migration.id);
+        activeReconciliations.push({
+          migrationId: migration.id,
+          status: migration.reconciliation.status,
+          startTime: migration.reconciliation.startTime,
+          reconciliationType: progress ? 'large-scale-streaming' : 'traditional',
+          progress: progress || null
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        activeCount: activeReconciliations.length,
+        reconciliations: activeReconciliations
+      }
+    });
+  } catch (error) {
+    console.error('Error getting active reconciliations:', error);
+    res.status(500).json({ 
+      error: 'Failed to get active reconciliations',
+      details: error.message 
+    });
+  }
+});
+
+function calculateDuration(startTime, endTime) {
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  const diffMs = end - start;
+  
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+  
+  return `${hours}h ${minutes}m ${seconds}s`;
+}
 
 module.exports = router;

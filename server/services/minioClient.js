@@ -4,6 +4,7 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { broadcast } = require('./websocket');
 const database = require('./database');
+const streamingReconciliation = require('./streamingReconciliation');
 
 class MinioClientService {
   constructor() {
@@ -887,7 +888,66 @@ class MinioClientService {
     }
 
     try {
-      const reconciliationResult = await this.performReconciliation(migration.config.source, migration.config.destination);
+      // Estimate migration size to determine reconciliation strategy
+      const estimatedSize = await this.estimateMigrationSize(migration.config.source);
+      const isLargeScale = estimatedSize.estimatedObjects > 100000; // 100K+ objects = large scale
+
+      console.log(`🔍 Migration size estimate: ${estimatedSize.estimatedObjects} objects, ${this.formatBytes(estimatedSize.estimatedSize)}`);
+      console.log(`📊 Using ${isLargeScale ? 'LARGE-SCALE' : 'TRADITIONAL'} reconciliation strategy`);
+
+      let reconciliationResult;
+      
+      if (isLargeScale) {
+        // Use new streaming reconciliation for large migrations
+        console.log(`🚀 Starting large-scale streaming reconciliation for ${estimatedSize.estimatedObjects} objects`);
+        
+        // Setup progress monitoring
+        streamingReconciliation.on('reconciliation:progress', (progressData) => {
+          if (progressData.migrationId === migration.id) {
+            migration.reconciliation.progress = progressData;
+            this.broadcastMigrationUpdate(migration);
+          }
+        });
+
+        streamingReconciliation.on('reconciliation:complete', (completedMigration) => {
+          if (completedMigration.id === migration.id) {
+            console.log(`✅ Large-scale reconciliation completed for migration ${migration.id}`);
+          }
+        });
+
+        // Start streaming reconciliation
+        reconciliationResult = await streamingReconciliation.startLargeScaleReconciliation(migration, {
+          chunkSize: Math.min(10000, Math.max(1000, Math.floor(estimatedSize.estimatedObjects / 100))),
+          maxConcurrentChunks: 4,
+          enableCheckpoints: true,
+          skipContentVerification: estimatedSize.estimatedObjects > 1000000 // Skip for 1M+ objects
+        });
+
+        // Convert streaming results to legacy format for compatibility
+        if (reconciliationResult && reconciliationResult.report) {
+          const report = reconciliationResult.report;
+          reconciliationResult = {
+            differences: migration.reconciliation.differences || [],
+            sourceStats: {
+              objectCount: reconciliationResult.progress.totalSourceObjects,
+              totalSize: estimatedSize.estimatedSize
+            },
+            destStats: {
+              objectCount: reconciliationResult.progress.totalDestinationObjects,
+              totalSize: estimatedSize.estimatedSize
+            },
+            summary: {
+              objectCountMatch: report.summary.perfectMatches === report.summary.totalObjectsCompared,
+              totalSizeMatch: report.breakdown.sizeMismatches === 0,
+              differencesFound: report.summary.totalDifferences > 0
+            }
+          };
+        }
+      } else {
+        // Use traditional reconciliation for smaller migrations
+        console.log(`🔄 Using traditional reconciliation for ${estimatedSize.estimatedObjects} objects`);
+        reconciliationResult = await this.performReconciliation(migration.config.source, migration.config.destination);
+      }
       
       migration.reconciliation.status = 'completed';
       migration.reconciliation.endTime = new Date().toISOString();
