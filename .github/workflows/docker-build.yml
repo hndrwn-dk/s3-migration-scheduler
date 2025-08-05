@@ -1,0 +1,432 @@
+name: 🐳 Docker Build and Push
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+      - 'client/**'
+      - 'Dockerfile*'
+      - 'docker-compose*'
+  schedule:
+    # Weekly rebuild to get latest base image updates
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'Platforms to build for'
+        required: false
+        default: 'linux/amd64,linux/arm64'
+        type: string
+      push:
+        description: 'Push images to registry'
+        type: boolean
+        default: true
+
+env:
+  REGISTRY_DOCKERHUB: docker.io
+  REGISTRY_GHCR: ghcr.io
+  NODE_VERSION: '18.x'
+
+jobs:
+  prepare:
+    name: 🚀 Prepare Build
+    runs-on: ubuntu-latest
+    outputs:
+      platforms: ${{ steps.config.outputs.platforms }}
+      push: ${{ steps.config.outputs.push }}
+      tags-backend: ${{ steps.meta-backend.outputs.tags }}
+      tags-frontend: ${{ steps.meta-frontend.outputs.tags }}
+      tags-allinone: ${{ steps.meta-allinone.outputs.tags }}
+      labels: ${{ steps.meta-backend.outputs.labels }}
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Configure build parameters
+        id: config
+        run: |
+          # Determine platforms
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            PLATFORMS="${{ github.event.inputs.platforms }}"
+            PUSH="${{ github.event.inputs.push }}"
+          else
+            PLATFORMS="linux/amd64,linux/arm64"
+            PUSH="true"
+          fi
+          
+          echo "platforms=${PLATFORMS}" >> $GITHUB_OUTPUT
+          echo "push=${PUSH}" >> $GITHUB_OUTPUT
+          
+          echo "🏗️ Building for platforms: ${PLATFORMS}"
+          echo "📤 Push to registry: ${PUSH}"
+
+      - name: 🏷️ Extract metadata for backend
+        id: meta-backend
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/s3-migration-scheduler-backend
+            ${{ env.REGISTRY_GHCR }}/${{ github.repository }}-backend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=nightly,enable={{is_default_branch}}
+            type=schedule,pattern=weekly
+          labels: |
+            org.opencontainers.image.title=S3 Migration Scheduler Backend
+            org.opencontainers.image.description=Backend API server for S3 bucket migrations
+            org.opencontainers.image.vendor=S3 Migration Scheduler Team
+
+      - name: 🏷️ Extract metadata for frontend
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/s3-migration-scheduler-frontend
+            ${{ env.REGISTRY_GHCR }}/${{ github.repository }}-frontend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=nightly,enable={{is_default_branch}}
+            type=schedule,pattern=weekly
+          labels: |
+            org.opencontainers.image.title=S3 Migration Scheduler Frontend
+            org.opencontainers.image.description=React frontend with nginx for S3 migration UI
+            org.opencontainers.image.vendor=S3 Migration Scheduler Team
+
+      - name: 🏷️ Extract metadata for all-in-one
+        id: meta-allinone
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/s3-migration-scheduler
+            ${{ env.REGISTRY_GHCR }}/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=nightly,enable={{is_default_branch}}
+            type=schedule,pattern=weekly
+          labels: |
+            org.opencontainers.image.title=S3 Migration Scheduler
+            org.opencontainers.image.description=Complete S3 migration solution with web UI
+            org.opencontainers.image.vendor=S3 Migration Scheduler Team
+
+  build-frontend:
+    name: 🎨 Build Frontend Assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            client/package-lock.json
+
+      - name: 📥 Install dependencies
+        run: |
+          npm ci
+          cd client && npm ci
+
+      - name: 🏗️ Build production frontend
+        run: cd client && npm run build
+        env:
+          CI: false
+          GENERATE_SOURCEMAP: false
+
+      - name: 📤 Upload frontend build
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-build
+          path: client/build/
+          retention-days: 1
+
+  docker-backend:
+    name: 🐳 Build Backend Image
+    runs-on: ubuntu-latest
+    needs: [prepare, build-frontend]
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Login to Docker Hub
+        if: needs.prepare.outputs.push == 'true' && secrets.DOCKER_HUB_USERNAME
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_DOCKERHUB }}
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: 🔐 Login to GitHub Container Registry
+        if: needs.prepare.outputs.push == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_GHCR }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏗️ Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.backend
+          platforms: ${{ needs.prepare.outputs.platforms }}
+          push: ${{ needs.prepare.outputs.push == 'true' }}
+          tags: ${{ needs.prepare.outputs.tags-backend }}
+          labels: ${{ needs.prepare.outputs.labels }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+          provenance: false
+
+  docker-frontend:
+    name: 🎨 Build Frontend Image
+    runs-on: ubuntu-latest
+    needs: [prepare, build-frontend]
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📥 Download frontend build
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-build
+          path: client/build/
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Login to Docker Hub
+        if: needs.prepare.outputs.push == 'true' && secrets.DOCKER_HUB_USERNAME
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_DOCKERHUB }}
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: 🔐 Login to GitHub Container Registry
+        if: needs.prepare.outputs.push == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_GHCR }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏗️ Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.frontend
+          platforms: ${{ needs.prepare.outputs.platforms }}
+          push: ${{ needs.prepare.outputs.push == 'true' }}
+          tags: ${{ needs.prepare.outputs.tags-frontend }}
+          labels: ${{ needs.prepare.outputs.labels }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+          provenance: false
+
+  docker-allinone:
+    name: 🚀 Build All-in-One Image
+    runs-on: ubuntu-latest
+    needs: [prepare, build-frontend]
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📥 Download frontend build
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-build
+          path: client/build/
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Login to Docker Hub
+        if: needs.prepare.outputs.push == 'true' && secrets.DOCKER_HUB_USERNAME
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_DOCKERHUB }}
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: 🔐 Login to GitHub Container Registry
+        if: needs.prepare.outputs.push == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_GHCR }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏗️ Create all-in-one Dockerfile
+        run: |
+          cat > Dockerfile.allinone << 'EOF'
+          FROM node:18-alpine AS build-frontend
+          WORKDIR /app
+          COPY client/package*.json ./
+          RUN npm ci
+          COPY client/ .
+          RUN npm run build
+          
+          FROM node:18-alpine AS production
+          RUN apk add --no-cache python3 make g++ sqlite nginx
+          WORKDIR /app
+          
+          # Copy server files and install dependencies
+          COPY server/package*.json ./
+          RUN npm ci --only=production
+          COPY server/ .
+          
+          # Copy built frontend
+          COPY --from=build-frontend /app/build /app/public
+          
+          # Setup nginx configuration
+          RUN mkdir -p /etc/nginx/conf.d
+          COPY <<'NGINXEOF' /etc/nginx/conf.d/default.conf
+          server {
+              listen 80;
+              root /app/public;
+              index index.html;
+              
+              # Frontend routing
+              location / {
+                  try_files \$uri \$uri/ /index.html;
+              }
+              
+              # API proxy
+              location /api/ {
+                  proxy_pass http://localhost:5000;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+              }
+              
+              # WebSocket proxy
+              location /ws {
+                  proxy_pass http://localhost:5000;
+                  proxy_http_version 1.1;
+                  proxy_set_header Upgrade \$http_upgrade;
+                  proxy_set_header Connection "Upgrade";
+                  proxy_set_header Host \$host;
+                  proxy_cache_bypass \$http_upgrade;
+              }
+          }
+          NGINXEOF
+          
+          # Create startup script
+          COPY <<'STARTEOF' /app/start.sh
+          #!/bin/sh
+          echo "Starting S3 Migration Scheduler..."
+          
+          # Start nginx in background
+          nginx &
+          
+          # Start the Node.js backend
+          exec node index.js
+          STARTEOF
+          
+          RUN chmod +x /app/start.sh
+          
+          # Health check
+          HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+              CMD curl -f http://localhost/ || exit 1
+          
+          EXPOSE 80 5000
+          CMD ["/app/start.sh"]
+          EOF
+
+      - name: 🏗️ Build and push all-in-one image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.allinone
+          platforms: ${{ needs.prepare.outputs.platforms }}
+          push: ${{ needs.prepare.outputs.push == 'true' }}
+          tags: ${{ needs.prepare.outputs.tags-allinone }}
+          labels: ${{ needs.prepare.outputs.labels }}
+          cache-from: type=gha,scope=allinone
+          cache-to: type=gha,mode=max,scope=allinone
+          provenance: false
+
+  security-scan:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: [docker-backend, docker-frontend, docker-allinone]
+    if: needs.prepare.outputs.push == 'true'
+    strategy:
+      matrix:
+        image: [backend, frontend, allinone]
+    steps:
+      - name: 🔐 Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_GHCR }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔍 Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY_GHCR }}/${{ github.repository }}-${{ matrix.image }}:${{ github.ref_name }}
+          format: 'sarif'
+          output: 'trivy-results-${{ matrix.image }}.sarif'
+
+      - name: 📤 Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results-${{ matrix.image }}.sarif'
+
+  docker-summary:
+    name: 📊 Docker Build Summary
+    runs-on: ubuntu-latest
+    needs: [prepare, docker-backend, docker-frontend, docker-allinone, security-scan]
+    if: always()
+    steps:
+      - name: 📊 Generate summary
+        run: |
+          echo "## 🐳 Docker Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Platforms**: ${{ needs.prepare.outputs.platforms }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Push**: ${{ needs.prepare.outputs.push }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Image | Status | Security Scan |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|---------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend | ${{ needs.docker-backend.result == 'success' && '✅ Success' || '❌ Failed' }} | ${{ needs.security-scan.result == 'success' && '✅ Passed' || (needs.security-scan.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend | ${{ needs.docker-frontend.result == 'success' && '✅ Success' || '❌ Failed' }} | ${{ needs.security-scan.result == 'success' && '✅ Passed' || (needs.security-scan.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| All-in-One | ${{ needs.docker-allinone.result == 'success' && '✅ Success' || '❌ Failed' }} | ${{ needs.security-scan.result == 'success' && '✅ Passed' || (needs.security-scan.result == 'skipped' && '⏭️ Skipped' || '❌ Failed') }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.prepare.outputs.push }}" = "true" ]; then
+            echo "## 📦 Published Images" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Docker Hub" >> $GITHUB_STEP_SUMMARY
+            echo "- \`${{ secrets.DOCKER_HUB_USERNAME }}/s3-migration-scheduler:${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- \`${{ secrets.DOCKER_HUB_USERNAME }}/s3-migration-scheduler-backend:${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- \`${{ secrets.DOCKER_HUB_USERNAME }}/s3-migration-scheduler-frontend:${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### GitHub Container Registry" >> $GITHUB_STEP_SUMMARY
+            echo "- \`${{ env.REGISTRY_GHCR }}/${{ github.repository }}:${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- \`${{ env.REGISTRY_GHCR }}/${{ github.repository }}-backend:${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- \`${{ env.REGISTRY_GHCR }}/${{ github.repository }}-frontend:${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## 📋 Images Built (Not Pushed)" >> $GITHUB_STEP_SUMMARY
+            echo "Images were built successfully but not pushed to registries." >> $GITHUB_STEP_SUMMARY
+          fi
