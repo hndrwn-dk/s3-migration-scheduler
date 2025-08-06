@@ -1,6 +1,6 @@
-# S3 Migration Scheduler - Docker Deployment Guide
+# S3 Migration Scheduler - Docker Deployment
 
-## 🐳 Quick Start with Docker
+## 🚀 Quick Start
 
 ### Option 1: Docker Hub (Recommended)
 ```bash
@@ -8,23 +8,31 @@
 docker run -d \
   --name s3-migration-scheduler \
   -p 5000:5000 \
-  -v $(pwd)/data:/app/data \
+  -e NODE_ENV=production \
+  -v s3-migration-data:/app/data \
   hndrwn/s3-migration-scheduler:latest
 
 # Access web interface
 open http://localhost:5000
 ```
 
-### Option 2: Docker Compose (Production)
+### Option 2: Docker Compose
 ```bash
-# Download docker-compose.yml
-wget https://raw.githubusercontent.com/hndrwn-dk/s3-migration-scheduler/main/docs/docker/docker-compose.yml
+# Clone repository
+git clone https://github.com/hndrwn-dk/s3-migration-scheduler.git
+cd s3-migration-scheduler/docs/docker
 
-# Start services
+# Start with Docker Compose
 docker-compose up -d
 
 # Check status
 docker-compose ps
+
+# View logs
+docker-compose logs -f
+
+# Stop when done
+docker-compose down
 ```
 
 ### Option 3: Build from Source
@@ -33,11 +41,19 @@ docker-compose ps
 git clone https://github.com/hndrwn-dk/s3-migration-scheduler.git
 cd s3-migration-scheduler
 
-# Build and run
-docker-compose -f docs/docker/docker-compose.yml up --build -d
+# Build the image
+docker build -t s3-migration-scheduler .
+
+# Run the container
+docker run -d \
+  --name s3-migration-scheduler \
+  -p 5000:5000 \
+  -e NODE_ENV=production \
+  -v s3-migration-data:/app/data \
+  s3-migration-scheduler
 ```
 
-## 📋 Configuration Files
+## 📋 Configuration
 
 ### Basic Docker Compose
 ```yaml
@@ -50,8 +66,8 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
+      - s3-migration-data:/app/data
+      - s3-migration-logs:/app/logs
     environment:
       - NODE_ENV=production
       - PORT=5000
@@ -62,108 +78,25 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-```
-
-### Production Docker Compose
-```yaml
-version: '3.8'
-
-services:
-  s3-migration-scheduler:
-    image: hndrwn/s3-migration-scheduler:latest
-    container_name: s3-migration-scheduler
-    ports:
-      - "5000:5000"
-    volumes:
-      - s3_migration_data:/app/data
-      - s3_migration_logs:/app/logs
-      - ./config:/app/config:ro
-    environment:
-      - NODE_ENV=production
-      - PORT=5000
-      - MAX_CONCURRENT_MIGRATIONS=5
-      - LOG_LEVEL=info
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-          cpus: '2.0'
-        reservations:
-          memory: 1G
-          cpus: '1.0'
-
-  # Optional: Reverse proxy with SSL
-  nginx:
-    image: nginx:alpine
-    container_name: s3-migration-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/ssl:ro
-    depends_on:
-      - s3-migration-scheduler
-    restart: unless-stopped
 
 volumes:
-  s3_migration_data:
-    driver: local
-  s3_migration_logs:
-    driver: local
+  s3-migration-data:
+  s3-migration-logs:
 ```
 
-## 🔧 Environment Variables
-
-### Core Configuration
+### Environment Variables
 ```bash
-# Application settings
-NODE_ENV=production              # Environment mode
+# Core Configuration
+NODE_ENV=production              # Required for frontend serving
 PORT=5000                       # Application port
-LOG_LEVEL=info                  # Logging level (debug, info, warn, error)
+LOG_LEVEL=info                  # Logging level
 
-# Migration settings
+# Migration Settings
 MAX_CONCURRENT_MIGRATIONS=5      # Maximum concurrent migrations
-MAX_CONCURRENT_RECONCILIATIONS=3 # Maximum concurrent reconciliations
 DEFAULT_CHUNK_SIZE=1000         # Default object chunk size
 
-# Database settings
+# Database Settings
 DB_PATH=/app/data/migrations.db  # SQLite database path
-DB_BACKUP_INTERVAL=3600         # Database backup interval (seconds)
-
-# Security settings
-ENABLE_CORS=true                # Enable CORS
-ALLOWED_ORIGINS=*               # Allowed CORS origins
-API_RATE_LIMIT=1000             # API rate limit per hour
-
-# MinIO client settings
-MC_PATH=/usr/local/bin/mc       # MinIO client path
-MC_CONFIG_DIR=/app/.mc          # MinIO client config directory
-```
-
-### Advanced Configuration
-```bash
-# Performance tuning
-WORKER_THREADS=4                # Number of worker threads
-MEMORY_LIMIT=2048               # Memory limit in MB
-CACHE_SIZE=100                  # Cache size in MB
-
-# Monitoring
-ENABLE_METRICS=true             # Enable Prometheus metrics
-METRICS_PORT=9090               # Metrics server port
-HEALTH_CHECK_INTERVAL=30        # Health check interval (seconds)
-
-# Backup and recovery
-AUTO_BACKUP=true                # Enable automatic backups
-BACKUP_RETENTION_DAYS=30        # Backup retention period
-BACKUP_LOCATION=/app/backups    # Backup storage location
 ```
 
 ## 📁 Volume Mounts
@@ -171,266 +104,124 @@ BACKUP_LOCATION=/app/backups    # Backup storage location
 ### Essential Volumes
 ```bash
 # Data persistence
--v $(pwd)/data:/app/data         # Migration database and user data
--v $(pwd)/logs:/app/logs         # Application and migration logs
-
-# Configuration
--v $(pwd)/config:/app/config:ro  # Custom configuration files
-
-# MinIO client config
--v $(pwd)/.mc:/app/.mc           # MinIO client profiles and settings
+-v s3-migration-data:/app/data   # Migration database and user data
+-v s3-migration-logs:/app/logs   # Application and migration logs
 ```
 
-### Optional Volumes
+### Host Directory Mounts (Alternative)
 ```bash
-# Backup storage
--v $(pwd)/backups:/app/backups   # Database backups
-
-# SSL certificates
--v $(pwd)/ssl:/app/ssl:ro        # SSL certificates for HTTPS
-
-# Custom themes/assets
--v $(pwd)/assets:/app/assets     # Custom UI assets
+# Mount to host directories
+-v $(pwd)/data:/app/data         # Local data directory
+-v $(pwd)/logs:/app/logs         # Local logs directory
 ```
 
-## 🚀 Deployment Scenarios
+## 🔧 Management Commands
 
-### Development Environment
-```bash
-# Quick development setup
-docker run -it --rm \
-  --name s3-migration-dev \
-  -p 5000:5000 \
-  -v $(pwd):/app/workspace \
-  -e NODE_ENV=development \
-  -e LOG_LEVEL=debug \
-  hndrwn/s3-migration-scheduler:latest
-```
-
-### Single Server Production
-```bash
-# Production deployment with data persistence
-docker run -d \
-  --name s3-migration-prod \
-  -p 5000:5000 \
-  --restart=unless-stopped \
-  -v s3_migration_data:/app/data \
-  -v s3_migration_logs:/app/logs \
-  -e NODE_ENV=production \
-  -e MAX_CONCURRENT_MIGRATIONS=10 \
-  --memory=2g \
-  --cpus=2 \
-  hndrwn/s3-migration-scheduler:latest
-```
-
-### High Availability Setup
-```yaml
-# docker-compose.ha.yml
-version: '3.8'
-
-services:
-  s3-migration-1:
-    image: hndrwn/s3-migration-scheduler:latest
-    environment:
-      - INSTANCE_ID=node-1
-      - CLUSTER_MODE=true
-    volumes:
-      - shared_data:/app/data
-    
-  s3-migration-2:
-    image: hndrwn/s3-migration-scheduler:latest
-    environment:
-      - INSTANCE_ID=node-2
-      - CLUSTER_MODE=true
-    volumes:
-      - shared_data:/app/data
-
-  load-balancer:
-    image: haproxy:alpine
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
-
-volumes:
-  shared_data:
-    driver: nfs  # Or other shared storage
-```
-
-## 🔒 Security Considerations
-
-### Network Security
-```bash
-# Create custom network
-docker network create s3-migration-net
-
-# Run with custom network
-docker run -d \
-  --name s3-migration-scheduler \
-  --network s3-migration-net \
-  -p 127.0.0.1:5000:5000 \  # Bind to localhost only
-  hndrwn/s3-migration-scheduler:latest
-```
-
-### User and Permissions
-```dockerfile
-# Custom Dockerfile with security hardening
-FROM hndrwn/s3-migration-scheduler:latest
-
-# Create non-root user
-RUN addgroup -g 1001 s3user && \
-    adduser -D -u 1001 -G s3user s3user
-
-# Change ownership
-RUN chown -R s3user:s3user /app
-
-# Switch to non-root user
-USER s3user
-
-# Run application
-CMD ["npm", "start"]
-```
-
-### Secrets Management
-```bash
-# Using Docker secrets
-echo "my-secret-key" | docker secret create s3_access_key -
-
-# Mount secrets
-docker service create \
-  --name s3-migration-scheduler \
-  --secret s3_access_key \
-  --publish 5000:5000 \
-  hndrwn/s3-migration-scheduler:latest
-```
-
-## 📊 Monitoring and Logging
-
-### Health Checks
-```bash
-# Check container health
-docker health check s3-migration-scheduler
-
-# View health check logs
-docker inspect s3-migration-scheduler | grep -A 10 Health
-```
-
-### Log Management
+### Container Management
 ```bash
 # View logs
 docker logs s3-migration-scheduler -f
 
-# Log rotation
-docker run -d \
-  --log-driver=json-file \
-  --log-opt max-size=10m \
-  --log-opt max-file=3 \
-  hndrwn/s3-migration-scheduler:latest
-```
+# Check health
+docker exec s3-migration-scheduler curl -f http://localhost:5000/api/health
 
-### Metrics Collection
-```yaml
-# Prometheus monitoring
-version: '3.8'
+# Access container shell
+docker exec -it s3-migration-scheduler /bin/bash
 
-services:
-  s3-migration-scheduler:
-    image: hndrwn/s3-migration-scheduler:latest
-    environment:
-      - ENABLE_METRICS=true
-      - METRICS_PORT=9090
-    ports:
-      - "5000:5000"
-      - "9090:9090"
-
-  prometheus:
-    image: prom/prometheus
-    ports:
-      - "9091:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-
-  grafana:
-    image: grafana/grafana
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana-storage:/var/lib/grafana
-```
-
-## 🔄 Updates and Maintenance
-
-### Container Updates
-```bash
-# Pull latest version
-docker pull hndrwn/s3-migration-scheduler:latest
-
-# Stop current container
+# Stop and remove
 docker stop s3-migration-scheduler
-
-# Remove old container
 docker rm s3-migration-scheduler
 
-# Start new container with same configuration
-docker run -d \
-  --name s3-migration-scheduler \
-  -p 5000:5000 \
-  -v s3_migration_data:/app/data \
-  hndrwn/s3-migration-scheduler:latest
+# Update to latest version
+docker pull hndrwn/s3-migration-scheduler:latest
+docker stop s3-migration-scheduler
+docker rm s3-migration-scheduler
+# Run with new image (same command as above)
 ```
 
-### Database Backup
+### Data Backup
 ```bash
 # Backup database
-docker exec s3-migration-scheduler \
-  cp /app/data/migrations.db /app/backups/migrations-$(date +%Y%m%d).db
+docker cp s3-migration-scheduler:/app/data ./backup-data
 
 # Restore database
-docker exec s3-migration-scheduler \
-  cp /app/backups/migrations-20241206.db /app/data/migrations.db
+docker cp ./backup-data s3-migration-scheduler:/app/data
 ```
 
-### Rolling Updates with Compose
-```bash
-# Update with zero downtime
-docker-compose pull
-docker-compose up -d --no-deps s3-migration-scheduler
-```
+## 🌐 Access Points
 
-## 🛠️ Troubleshooting
+After starting the container:
+
+- **Web Interface**: http://localhost:5000
+- **API Health**: http://localhost:5000/api/health
+- **API Endpoints**: http://localhost:5000/api/migration
+
+## 🎯 System Requirements
+
+### Minimum Requirements
+- **Docker**: 20.10+
+- **RAM**: 2GB available
+- **Disk**: 1GB free space
+- **Network**: Internet access for S3 operations
+
+### Recommended
+- **RAM**: 4GB+ for large migrations
+- **SSD**: For better database performance
+- **Stable Network**: For reliable S3 transfers
+
+## 🔍 Troubleshooting
 
 ### Common Issues
+
+**Container won't start:**
 ```bash
-# Container won't start
+# Check logs
 docker logs s3-migration-scheduler
 
-# Port conflicts
-docker ps -a | grep 5000
+# Check if port 5000 is available
 netstat -tlnp | grep 5000
-
-# Permission issues
-docker exec -it s3-migration-scheduler ls -la /app/data
-
-# Database corruption
-docker exec s3-migration-scheduler sqlite3 /app/data/migrations.db ".schema"
 ```
 
-### Debug Mode
+**Frontend not loading:**
 ```bash
-# Run in debug mode
-docker run -it --rm \
-  -p 5000:5000 \
-  -e LOG_LEVEL=debug \
-  -e NODE_ENV=development \
-  hndrwn/s3-migration-scheduler:latest
+# Ensure NODE_ENV is set
+docker exec s3-migration-scheduler printenv | grep NODE_ENV
+
+# Should show: NODE_ENV=production
+```
+
+**Database issues:**
+```bash
+# Check database directory
+docker exec s3-migration-scheduler ls -la /app/data
+
+# Check database permissions
+docker exec s3-migration-scheduler sqlite3 /app/data/migrations.db ".tables"
+```
+
+**API not responding:**
+```bash
+# Test health endpoint
+curl http://localhost:5000/api/health
+
+# Test migration endpoint
+curl http://localhost:5000/api/migration
 ```
 
 ## 📚 Additional Resources
 
-- **[Docker Deployment Guide](DOCKER_DEPLOYMENT.md)** - Detailed deployment instructions
-- **[Production Configuration](docker-compose.prod.yml)** - Production-ready compose file
-- **[Development Setup](docker-compose.yml)** - Development environment
+- **[Main Documentation](../../README.md)** - Complete project overview
+- **[Windows Installation](../windows/README.md)** - Desktop application
+- **[Linux Installation](../linux/README.md)** - Native Linux packages
+
+## 🆘 Support
+
+If you encounter issues:
+
+1. **Check container logs**: `docker logs s3-migration-scheduler`
+2. **Verify health endpoint**: `curl http://localhost:5000/api/health`
+3. **Report issues**: [GitHub Issues](https://github.com/hndrwn-dk/s3-migration-scheduler/issues)
 
 ---
 
-**Need help?** Check our [troubleshooting guide](../development/) or open an issue on [GitHub](https://github.com/hndrwn-dk/s3-migration-scheduler/issues)!
+**Need help?** Open an issue on [GitHub](https://github.com/hndrwn-dk/s3-migration-scheduler/issues) with your Docker logs and error details!
