@@ -1,116 +1,82 @@
-# S3 Migration Scheduler - Windows Installation Guide
+# S3 Migration Scheduler - Windows
 
-## 📦 Quick Installation
+## 📦 Download & Install
 
-### Option 1: ZIP Package (Recommended)
-1. **Download** `S3 Migration Scheduler-1.0.0-win-x64.zip` from [GitHub Releases](https://github.com/hndrwn-dk/s3-migration-scheduler/releases)
-2. **Extract** the ZIP file to your desired location (e.g., `C:\Programs\S3MigrationScheduler\`)
-3. **Run** `S3 Migration Scheduler.exe`
-4. **Done!** No additional installation required
+### Quick Installation (Recommended)
 
-### Option 2: Professional Installer
-1. **Download** `S3 Migration Scheduler-1.0.0-win-x64.exe` from [GitHub Releases](https://github.com/hndrwn-dk/s3-migration-scheduler/releases)
-2. **Run** the installer as Administrator
-3. **Follow** the installation wizard
-4. **Launch** from Start Menu or Desktop shortcut
+1. **[📥 Download from GitHub Releases](https://github.com/hndrwn-dk/s3-migration-scheduler/releases/latest)**
+2. **Choose your option:**
+   - **`S3 Migration Scheduler-1.0.0-win-x64.zip`** ← **Recommended**
+   - **`S3 Migration Scheduler-1.0.0-win-x64.exe`** (Installer)
+3. **Extract and run** - No installation required!
 
-### Option 3: Portable App
-1. **Download** `S3 Migration Scheduler-1.0.0-portable-x64.exe` from [GitHub Releases](https://github.com/hndrwn-dk/s3-migration-scheduler/releases)
-2. **Run** directly from any location
-3. **No installation** required - perfect for USB drives
+### Installation Options
+
+#### Option 1: ZIP Package (Recommended)
+- **Download**: `S3 Migration Scheduler-1.0.0-win-x64.zip`
+- **Extract** to your desired location (e.g., `C:\Programs\S3MigrationScheduler\`)
+- **Run**: `S3 Migration Scheduler.exe`
+- **Done!** No installation required
+
+#### Option 2: Professional Installer
+- **Download**: `S3 Migration Scheduler-1.0.0-win-x64.exe`
+- **Run** the installer as Administrator
+- **Follow** the installation wizard
+- **Launch** from Start Menu or Desktop shortcut
 
 ## 🎯 System Requirements
 
-### Minimum Requirements
-- **OS**: Windows 7/8/10/11
-- **Architecture**: 64-bit (recommended) or 32-bit
-- **RAM**: 4GB minimum, 8GB recommended
+- **OS**: Windows 7/8/10/11 (64-bit recommended)
+- **RAM**: 4GB minimum, 8GB recommended for large migrations
 - **Disk Space**: 1GB free space
 - **Network**: Internet connection for S3 access
 
-### Recommended Setup
-- **OS**: Windows 10/11 64-bit
-- **RAM**: 8GB+ for large migrations
-- **SSD**: For better database performance
-- **Stable Network**: For reliable S3 transfers
+## 🚀 Quick Start
 
-## 🚀 First-Time Setup
+1. **Launch** the application
+2. **Add S3 Endpoints**:
+   - Click "Add New Migration"
+   - Enter source S3 credentials (endpoint, access key, secret key, bucket)
+   - Enter destination S3 credentials
+   - Test connections
+3. **Create Migration**:
+   - Set migration name
+   - Configure options (filters, scheduling)
+   - Start immediately or schedule for later
+4. **Monitor Progress** in real-time
 
-### 1. Launch the Application
-- **ZIP/Installer**: Run `S3 Migration Scheduler.exe`
-- **Portable**: Run `S3 Migration Scheduler-1.0.0-portable-x64.exe`
+## 🌟 Features
 
-### 2. Configure S3 Endpoints
-1. **Click** "Add New Migration"
-2. **Enter Source S3 Details**:
-   - Endpoint URL (e.g., `s3.amazonaws.com`)
-   - Access Key ID
-   - Secret Access Key
-   - Bucket Name
-3. **Enter Destination S3 Details**:
-   - Endpoint URL
-   - Access Key ID  
-   - Secret Access Key
-   - Bucket Name
-4. **Test Connection** to verify credentials
+- **📅 Advanced Scheduling** - Cron-based automation with recurring migrations
+- **📊 Real-time Monitoring** - Live progress tracking with WebSocket updates
+- **🗃️ Large-scale Reconciliation** - Efficiently handles millions of objects
+- **💾 Persistent History** - SQLite database stores all migration data
+- **🔧 Built-in MinIO Client** - No external dependencies required
+- **🖥️ Professional UI** - Modern React interface in Electron
 
-### 3. Create Your First Migration
-1. **Set Migration Name** (e.g., "Production to Backup")
-2. **Configure Options**:
-   - Object filters (optional)
-   - Scheduling (immediate or cron)
-   - Reconciliation settings
-3. **Start Migration** or **Schedule** for later
+## 📁 Application Structure
 
-## 🛠️ Features Overview
-
-### Real-time Monitoring
-- **Live Progress** tracking with WebSocket updates
-- **Transfer Statistics** (speed, objects, size)
-- **Error Reporting** with detailed logs
-- **Estimated Time** remaining
-
-### Advanced Scheduling
-- **Cron-based** scheduling (e.g., daily, weekly)
-- **One-time** migrations
-- **Recurring** migrations with customizable intervals
-- **Timezone** support
-
-### Large-Scale Reconciliation
-- **Handles millions** of objects efficiently
-- **Streaming inventory** collection (low memory usage)
-- **Database-driven** comparison for speed
-- **Detailed reports** on differences
-
-### Data Management
-- **SQLite Database** stores all migration history
-- **User Data Location**: `%APPDATA%\S3MigrationScheduler\`
-- **Logs Directory**: `%APPDATA%\S3MigrationScheduler\logs\`
-- **Export/Import** migration configurations
-
-## 📁 File Locations
-
-### Application Files (ZIP/Portable)
+### Installed Files
 ```
 S3MigrationScheduler\
-├── S3 Migration Scheduler.exe    (Main application)
-├── resources\                    (Application resources)
-│   ├── server\                  (Backend server)
-│   ├── client\                  (Frontend UI)
-│   └── mc.exe                   (MinIO client)
-└── other electron files...
+├── S3 Migration Scheduler.exe    # Main application
+├── resources\                    # Application resources
+│   ├── server\                  # Backend server
+│   ├── client\                  # Frontend UI
+│   └── mc.exe                   # MinIO client
+└── Other Electron files...
 ```
 
-### User Data Directory
+### User Data (Persistent)
 ```
 %APPDATA%\S3MigrationScheduler\
 ├── data\
-│   └── migrations.db           (Migration database)
+│   └── migrations.db           # Migration database
 ├── logs\
-│   ├── app.log                (Application logs)
-│   └── migration-{id}.log     (Migration-specific logs)
+│   ├── app.log                # Application logs
+│   └── migration-{id}.log     # Migration-specific logs
 └── config\
-    └── settings.json          (User preferences)
+    └── settings.json          # User preferences
 ```
 
 ## 🔧 Troubleshooting
@@ -119,7 +85,7 @@ S3MigrationScheduler\
 1. **Check Windows version** (Windows 7+ required)
 2. **Run as Administrator** if permission issues
 3. **Check antivirus** - whitelist the application
-4. **Verify extraction** - re-extract ZIP if corrupted
+4. **Re-extract ZIP** if files seem corrupted
 
 ### Backend Server Issues
 1. **Port conflict** - ensure port 5000 is available
@@ -127,69 +93,103 @@ S3MigrationScheduler\
 3. **Check logs** in `%APPDATA%\S3MigrationScheduler\logs\`
 
 ### S3 Connection Problems
-1. **Verify credentials** - test with AWS CLI or MinIO client
-2. **Check endpoint URL** format (https://s3.amazonaws.com)
+1. **Verify credentials** - test with AWS CLI or another S3 client
+2. **Check endpoint URL** format (e.g., `https://s3.amazonaws.com`)
 3. **Network connectivity** - test internet connection
 4. **Proxy settings** - configure if behind corporate proxy
 
 ### Performance Issues
-1. **Large migrations** - use reconciliation for 100K+ objects
+1. **Large migrations** - use reconciliation feature for 100K+ objects
 2. **Memory usage** - close other applications during migration
 3. **Disk space** - ensure adequate free space for logs/database
 
 ## 🔄 Updates
 
+### Automatic Updates (Future)
+- Built-in update checker (planned for future versions)
+
 ### Manual Updates
-1. **Download** new version from GitHub Releases
+1. **Download** new version from [GitHub Releases](https://github.com/hndrwn-dk/s3-migration-scheduler/releases)
 2. **Close** current application
 3. **Replace** files with new version
-4. **User data** is preserved automatically
+4. **User data** is preserved automatically in `%APPDATA%`
 
-### Automatic Updates (Future)
-- Built-in update checker (planned)
-- Seamless updates with data preservation
+## 🛠️ Build from Source
+
+### Prerequisites
+- **Node.js** 18+
+- **npm** 8+
+- **Visual Studio Build Tools** (for native modules)
+- **Git**
+
+### Build Steps
+```powershell
+# Clone repository
+git clone https://github.com/hndrwn-dk/s3-migration-scheduler.git
+cd s3-migration-scheduler
+
+# Install dependencies
+npm install
+cd client && npm install && npm run build && cd ..
+cd server && npm install && cd ..
+cd electron-app && npm install && cd ..
+
+# Build Windows application
+cd electron-app
+npm run build:win
+
+# Find packages in dist/ directory
+ls dist/
+```
+
+**Detailed Build Guide**: [Windows Packaging Guide](WINDOWS_PACKAGING_GUIDE.md)
 
 ## 📋 Advanced Usage
 
 ### Command Line Options
-```bash
-# Open application in development mode
-"S3 Migration Scheduler.exe" --dev
-
+```cmd
 # Custom data directory
 "S3 Migration Scheduler.exe" --user-data-dir="C:\CustomPath"
 
-# Debug mode with verbose logging
+# Debug mode
 "S3 Migration Scheduler.exe" --debug
+
+# Development mode  
+"S3 Migration Scheduler.exe" --dev
 ```
 
-### Batch Operations
-- **Import** multiple migration configurations
-- **Export** settings for backup/sharing
-- **Bulk schedule** multiple migrations
-- **API access** for automation (advanced users)
+### Portable Usage
+- Run from USB drive or network location
+- Data stored in local `%APPDATA%` by default
+- Use `--user-data-dir` to specify portable data location
+
+### Enterprise Deployment
+- Use MSI installer for group policy deployment
+- Centralized configuration via shared config files
+- Network storage for shared migration databases
 
 ## 🆘 Support
 
 ### Getting Help
-1. **Check logs** in `%APPDATA%\S3MigrationScheduler\logs\`
+1. **Check logs**: `%APPDATA%\S3MigrationScheduler\logs\`
 2. **GitHub Issues**: [Report problems](https://github.com/hndrwn-dk/s3-migration-scheduler/issues)
-3. **Documentation**: Additional guides in `/docs/windows/`
+3. **Documentation**: Additional guides in this directory
 
 ### Reporting Issues
 Include this information:
 - Windows version and architecture
 - Application version
-- Error message or description
-- Log files (if applicable)
+- Error message or logs
 - Steps to reproduce
 
 ## 📚 Additional Resources
 
-- **[Windows Packaging Guide](WINDOWS_PACKAGING_GUIDE.md)** - For developers
-- **[Build Troubleshooting](WINDOWS_BUILD_TROUBLESHOOTING.md)** - Build issues
-- **[Desktop Installation](DESKTOP_INSTALLATION.md)** - Detailed setup guide
+- **[Packaging Guide](WINDOWS_PACKAGING_GUIDE.md)** - For developers building from source
+- **[Troubleshooting Guide](WINDOWS_BUILD_TROUBLESHOOTING.md)** - Common build issues
+- **[Main Documentation](../../README.md)** - Complete project overview
 
 ---
 
-**Need help?** Open an issue on [GitHub](https://github.com/hndrwn-dk/s3-migration-scheduler/issues) or check our documentation!
+**🎉 Ready to start migrating S3 buckets efficiently on Windows!**
+
+**Download**: [GitHub Releases](https://github.com/hndrwn-dk/s3-migration-scheduler/releases/latest) | **Issues**: [GitHub Issues](https://github.com/hndrwn-dk/s3-migration-scheduler/issues)
