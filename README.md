@@ -2,6 +2,80 @@
 
 **🎉 Production-Ready Desktop & Web Application** - Successfully migrate S3 buckets with enterprise-grade scheduling, monitoring, and reconciliation capabilities.
 
+![S3 Bucket Migration UI](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![Database](https://img.shields.io/badge/Database-SQLite-blue)
+![Scheduling](https://img.shields.io/badge/Scheduling-node--cron-purple)
+![Node.js](https://img.shields.io/badge/Node.js-18.x-green)
+![React](https://img.shields.io/badge/React-18.x-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)
+![Real-time](https://img.shields.io/badge/Real--time-WebSocket%2BSSE-orange)
+
+## ☕ Support Me
+
+If you find this project helpful, you can support me here:
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-yellow?style=for-the-badge&logo=buymeacoffee&logoColor=white)](https://buymeacoffee.com/hendrawan)
+
+## 📑 Table of Contents
+- [☕ Support Me](#-support-me)
+- [📸 Screenshots](#-screenshots)
+- [🌟 Major Accomplishments](#-major-accomplishments)
+- [🚀 Quick Start](#-quick-start)
+- [📦 Installation Guides](#-installation-guides)
+- [🏗️ Architecture](#️-architecture)
+- [🛠️ Development](#️-development)
+- [📚 Documentation](#-documentation)
+- [🌟 Features in Detail](#-features-in-detail)
+- [🏷️ API Reference](#️-api-reference)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+
+## 📸 Screenshots
+
+### Enhanced Dashboard with SQLite Persistence
+*Real-time migration statistics with persistent data and accurate metrics*
+
+![Dashboard Overview](https://github.com/hndrwn-dk/s3-migration-scheduler/blob/main/docs/images/dashboard-overview.png?raw=true)
+> 📊 **Main Dashboard** - Shows persistent migration statistics with SQLite database, real-time updates via WebSocket+SSE, accurate completion rates, and recent migration activity. 
+
+### S3 Endpoint Configuration
+*Simple S3 alias setup with connection validation*
+
+![Configuration](https://github.com/hndrwn-dk/s3-migration-scheduler/blob/main/docs/images/configuration.png?raw=true)
+> ⚙️ **Configuration Tab** - Clean interface for adding AWS S3, GCP Cloud Storage, Azure Blob Storage, MinIO, wasabi, and other S3-compatible endpoints (Cloudian S3 Hyperstore, IBM Cloud Object Storage, Huawei S3, Pure Storage flashblade, etc.) with built-in connection testing and alias management.
+
+### Advanced Migration Setup with Scheduling
+*Comprehensive migration wizard with scheduling capabilities*
+
+![Migration Setup](https://github.com/hndrwn-dk/s3-migration-scheduler/blob/main/docs/images/migration-advance-options-with_preview.png?raw=true)
+> 🛠️ **Migration Tab** - Enhanced wizard with advanced options (overwrite, preserve, exclude patterns), scheduling capabilities, and dry-run capabilities.
+
+### Scheduled Migration Management
+*Schedule and manage future migrations*
+
+![Scheduled Migrations](https://github.com/hndrwn-dk/s3-migration-scheduler/blob/main/docs/images/migration-advance-options-with_scheduled.png?raw=true)
+> ⏰ **Scheduled Tab** - Complete scheduling system with `node-cron` backend, showing pending migrations with countdown timers, reschedule/cancel options, and automatic execution at specified times.
+
+### Migration History with Reconciliation
+*Complete migration tracking with detailed difference analysis*
+
+![Migration History](https://github.com/hndrwn-dk/s3-migration-scheduler/blob/main/docs/images/migration-history.png?raw=true)
+
+> 📚 **History Tab** - Persistent migration history with status filtering, detailed reconciliation reports showing missing/extra/size differences, and actionable reconciliation modals with file-level details.
+
+### Detailed Reconciliation Reports
+*In-depth difference analysis with actionable insights*
+
+![Migration History](https://github.com/hndrwn-dk/s3-migration-scheduler/blob/main/docs/images/migration-reconcilation.png?raw=true)
+![Migration History](https://github.com/hndrwn-dk/s3-migration-scheduler/blob/main/docs/images/migration-reconcilation_with_diff.png?raw=true)
+> 🔍 **Reconciliation Modal** - Advanced difference analysis showing missing files, extra files, size differences, and other discrepancies with full file paths, sizes, and URLs for manual verification or remediation.
+
+### Real-time Logs with Enhanced Details
+*Live monitoring with comprehensive reconciliation and bucket analysis*
+
+![Migration Logs](https://github.com/hndrwn-dk/s3-migration-scheduler/blob/main/docs/images/log-viewer.png?raw=true)
+> 📊 **Logs Tab** - Real-time migration monitoring with enhanced logs including detailed reconciliation reports, bucket comparison analysis, file-by-file transfer tracking, and comprehensive error handling.
+
 ## 🌟 **Major Accomplishments**
 
 ### ✅ **Desktop Application Ready**
