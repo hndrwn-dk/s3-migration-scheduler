@@ -50,19 +50,19 @@ Choose your preferred option:
 - **Professional desktop UI** with modern interface
 
 ## 📁 File Locations
-
+```
 **Application Files:**
 S3MigrationScheduler
 ├── S3 Migration Scheduler.exe # Main application 
 └── resources\ # App resources & MinIO client
-
-
+```
+```
 **User Data (Persistent):**
 %APPDATA%\S3MigrationScheduler
 ├── data\migrations.db # Migration database 
 ├── logs\ # Application & migration logs 
 └── config\settings.json # User preferences
-
+```
 
 ## 🔧 Troubleshooting
 
@@ -103,11 +103,4 @@ cd server && npm install && cd ..
 cd electron-app && npm install && npm run build:win
 
 # Find packages in electron-app/dist/
-For detailed build instructions: Windows Packaging Guide
-
-🆘 Support
-Having issues?
-
-Check logs: %APPDATA%\S3MigrationScheduler\logs\
-Report: GitHub Issues
-Build problems: Troubleshooting Guide
+```
