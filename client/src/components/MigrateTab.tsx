@@ -18,7 +18,7 @@ interface MigrateTabProps {
   onMigrationStart: (migration: Migration) => void;
 }
 
-// Enhanced Bucket Selector Component
+// Enhanced Bucket Selector Component for Large Scale (1000+ buckets)
 interface BucketSelectorProps {
   label: string;
   value: string;
@@ -27,6 +27,7 @@ interface BucketSelectorProps {
   disabled?: boolean;
   placeholder: string;
   allowFreeText?: boolean;
+  alias?: string; // For server-side search
 }
 
 const BucketSelector: React.FC<BucketSelectorProps> = ({
@@ -36,21 +37,87 @@ const BucketSelector: React.FC<BucketSelectorProps> = ({
   buckets,
   disabled = false,
   placeholder,
-  allowFreeText = true
+  allowFreeText = true,
+  alias
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [filteredBuckets, setFilteredBuckets] = useState<S3Bucket[]>([]);
+  const [displayedBuckets, setDisplayedBuckets] = useState<S3Bucket[]>([]);
+  const [loadedCount, setLoadedCount] = useState(50); // Initial load count
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const INITIAL_LOAD = 50;
+  const LOAD_MORE_THRESHOLD = 10;
+  const LOAD_INCREMENT = 50;
+  const MAX_VISIBLE_HEIGHT = 300; // Max dropdown height in pixels
 
   useEffect(() => {
     setInputValue(value);
   }, [value]);
+
+  // Debounced search effect
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    const performSearchLocal = async (term: string) => {
+      if (!term.trim()) {
+        setFilteredBuckets([]);
+        setSearchTerm(term);
+        return;
+      }
+
+      setIsSearching(true);
+      setSearchTerm(term);
+
+      try {
+        // Client-side filtering for now (can be enhanced with server-side search)
+        const filtered = buckets.filter(bucket =>
+          bucket.name.toLowerCase().includes(term.toLowerCase())
+        );
+        
+        setFilteredBuckets(filtered);
+        setLoadedCount(INITIAL_LOAD); // Reset pagination
+      } catch (error) {
+        console.error('Search error:', error);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    searchTimeoutRef.current = setTimeout(() => {
+      performSearchLocal(searchTerm);
+    }, 300); // 300ms debounce
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchTerm, buckets, INITIAL_LOAD]);
+
+  // Initial filtering and pagination
+  useEffect(() => {
+    const filtered = searchTerm 
+      ? filteredBuckets 
+      : buckets;
+    
+    setDisplayedBuckets(filtered.slice(0, loadedCount));
+  }, [filteredBuckets, buckets, loadedCount, searchTerm]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
+        setSearchTerm('');
+        setLoadedCount(INITIAL_LOAD);
       }
     };
 
@@ -60,17 +127,27 @@ const BucketSelector: React.FC<BucketSelectorProps> = ({
     };
   }, []);
 
+
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
     onChange(newValue);
+    
+    // Auto-search as user types
+    setSearchTerm(newValue);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       setIsDropdownOpen(false);
+      setSearchTerm('');
     } else if (e.key === 'Escape') {
       setIsDropdownOpen(false);
+      setSearchTerm('');
+      setInputValue(value); // Reset to original value
+    } else if (e.key === 'ArrowDown' && !isDropdownOpen) {
+      setIsDropdownOpen(true);
     }
   };
 
@@ -78,11 +155,40 @@ const BucketSelector: React.FC<BucketSelectorProps> = ({
     setInputValue(bucketName);
     onChange(bucketName);
     setIsDropdownOpen(false);
+    setSearchTerm('');
+    setLoadedCount(INITIAL_LOAD);
   };
 
-  const filteredBuckets = buckets.filter(bucket =>
-    bucket.name.toLowerCase().includes(inputValue.toLowerCase())
-  );
+  const handleDropdownFocus = () => {
+    setIsDropdownOpen(true);
+    if (!searchTerm && inputValue) {
+      setSearchTerm(inputValue);
+    }
+  };
+
+  const loadMoreBuckets = () => {
+    const newCount = loadedCount + LOAD_INCREMENT;
+    setLoadedCount(newCount);
+  };
+
+  // Virtual scroll handler
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const { scrollTop, scrollHeight, clientHeight } = target;
+    
+    // Load more when near bottom
+    if (scrollHeight - scrollTop - clientHeight < LOAD_MORE_THRESHOLD) {
+      const totalAvailable = searchTerm ? filteredBuckets.length : buckets.length;
+      if (displayedBuckets.length < totalAvailable) {
+        loadMoreBuckets();
+      }
+    }
+  };
+
+  const currentBuckets = searchTerm ? filteredBuckets : buckets;
+  const hasMore = displayedBuckets.length < currentBuckets.length;
+  const showCustomBucketOption = allowFreeText && inputValue && 
+    !buckets.find(b => b.name.toLowerCase() === inputValue.toLowerCase());
 
   return (
     <div ref={containerRef}>
@@ -93,65 +199,144 @@ const BucketSelector: React.FC<BucketSelectorProps> = ({
           value={inputValue}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => setIsDropdownOpen(true)}
+          onFocus={handleDropdownFocus}
           placeholder={allowFreeText ? `${placeholder} or type bucket name...` : placeholder}
           disabled={disabled}
           className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 pr-10"
         />
         
-        {/* Dropdown Toggle Button */}
-        {buckets.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            disabled={disabled}
-            className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-400 hover:text-gray-600"
-          >
-            <ChevronDownIcon className={`w-4 h-4 transform transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-          </button>
+        {/* Loading indicator inside input */}
+        {isSearching && (
+          <div className="absolute inset-y-0 right-8 flex items-center">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+          </div>
         )}
+        
+        {/* Dropdown Toggle Button */}
+        <button
+          type="button"
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          disabled={disabled}
+          className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-400 hover:text-gray-600"
+        >
+          <ChevronDownIcon className={`w-4 h-4 transform transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+        </button>
 
-        {/* Dropdown Menu */}
-        {isDropdownOpen && buckets.length > 0 && (
-          <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-            {filteredBuckets.length > 0 ? (
-              <>
-                {allowFreeText && inputValue && !buckets.find(b => b.name === inputValue) && (
-                  <div className="px-3 py-2 text-sm text-gray-500 border-b border-gray-200">
-                    <div className="flex items-center">
-                      <PlusIcon className="w-4 h-4 mr-2" />
-                      Use custom bucket: <span className="font-mono font-medium ml-1">"{inputValue}"</span>
-                    </div>
-                  </div>
+        {/* Enhanced Dropdown Menu */}
+        {isDropdownOpen && (
+          <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg">
+            {/* Search stats */}
+            <div className="px-3 py-2 border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center justify-between text-xs text-gray-600">
+                <span>
+                  {searchTerm ? (
+                    <>Showing {displayedBuckets.length} of {currentBuckets.length} filtered</>
+                  ) : (
+                    <>Showing {displayedBuckets.length} of {buckets.length} buckets</>
+                  )}
+                </span>
+                {buckets.length > 1000 && (
+                  <span className="text-orange-600 font-medium">
+                    {buckets.length.toLocaleString()} total
+                  </span>
                 )}
-                {filteredBuckets.map((bucket) => (
-                  <button
-                    key={bucket.name}
-                    type="button"
-                    onClick={() => handleBucketSelect(bucket.name)}
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none ${
-                      value === bucket.name ? 'bg-blue-100 text-blue-900' : 'text-gray-900'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono">{bucket.name}</span>
-                      {bucket.lastModified && (
-                        <span className="text-xs text-gray-500">
-                          {new Date(bucket.lastModified).toLocaleDateString()}
-                        </span>
+              </div>
+            </div>
+
+            {/* Scrollable content */}
+            <div 
+              ref={dropdownRef}
+              className="max-h-80 overflow-auto"
+              style={{ maxHeight: `${MAX_VISIBLE_HEIGHT}px` }}
+              onScroll={handleScroll}
+            >
+              {/* Custom bucket option */}
+              {showCustomBucketOption && (
+                <button
+                  type="button"
+                  onClick={() => handleBucketSelect(inputValue)}
+                  className="w-full text-left px-3 py-2 text-sm bg-blue-50 border-b border-blue-200 hover:bg-blue-100 focus:bg-blue-100 focus:outline-none"
+                >
+                  <div className="flex items-center">
+                    <PlusIcon className="w-4 h-4 mr-2 text-blue-600" />
+                    <span className="text-blue-900">
+                      Use custom bucket: <span className="font-mono font-medium">"{inputValue}"</span>
+                    </span>
+                  </div>
+                </button>
+              )}
+
+              {/* Bucket list */}
+              {displayedBuckets.length > 0 ? (
+                <>
+                  {displayedBuckets.map((bucket, index) => (
+                    <button
+                      key={`${bucket.name}-${index}`}
+                      type="button"
+                      onClick={() => handleBucketSelect(bucket.name)}
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none transition-colors ${
+                        value === bucket.name ? 'bg-blue-100 text-blue-900' : 'text-gray-900'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-mono text-sm truncate">{bucket.name}</div>
+                          {bucket.formattedSize && (
+                            <div className="text-xs text-gray-500">
+                              {bucket.formattedSize}
+                              {bucket.totalObjects && (
+                                <span className="ml-2">• {bucket.totalObjects.toLocaleString()} objects</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        {bucket.lastModified && (
+                          <span className="text-xs text-gray-400 ml-2 flex-shrink-0">
+                            {new Date(bucket.lastModified).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                  
+                  {/* Load more indicator */}
+                  {hasMore && (
+                    <div className="px-3 py-2 text-center border-t border-gray-200">
+                      <button
+                        type="button"
+                        onClick={loadMoreBuckets}
+                        className="text-sm text-blue-600 hover:text-blue-800"
+                      >
+                        Load {Math.min(LOAD_INCREMENT, currentBuckets.length - displayedBuckets.length)} more...
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                  {searchTerm ? (
+                    <div>
+                      <div>No buckets found matching "{searchTerm}"</div>
+                      {allowFreeText && (
+                        <div className="mt-1 text-blue-600">
+                          Press Enter to use "{searchTerm}" as custom bucket name
+                        </div>
                       )}
                     </div>
-                  </button>
-                ))}
-              </>
-            ) : (
-              <div className="px-3 py-2 text-sm text-gray-500">
-                {inputValue ? `No buckets found matching "${inputValue}"` : 'No buckets available'}
-                {allowFreeText && inputValue && (
-                  <div className="mt-1 text-blue-600">
-                    Press Enter to use "{inputValue}" as custom bucket name
-                  </div>
-                )}
+                  ) : (
+                    'No buckets available'
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Performance indicator for large datasets */}
+            {buckets.length > 1000 && (
+              <div className="px-3 py-1 bg-yellow-50 border-t border-yellow-200">
+                <div className="text-xs text-yellow-700 flex items-center">
+                  <InformationCircleIcon className="w-3 h-3 mr-1" />
+                  Large dataset detected - using optimized loading
+                </div>
               </div>
             )}
           </div>
@@ -164,7 +349,8 @@ const BucketSelector: React.FC<BucketSelectorProps> = ({
       
       {allowFreeText && (
         <p className="mt-1 text-xs text-gray-500">
-          💡 You can select from dropdown or type a custom bucket name
+          💡 Select from {buckets.length.toLocaleString()} buckets or type a custom name
+          {buckets.length > 100 && <span className="text-blue-600 ml-1">(Type to search)</span>}
         </p>
       )}
     </div>
@@ -452,6 +638,7 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
                   buckets={sourceBuckets}
                   placeholder="Select source bucket..."
                   disabled={!formData.sourceAlias}
+                  alias={formData.sourceAlias}
                 />
               </div>
             </div>
@@ -490,6 +677,7 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
                   buckets={destinationBuckets}
                   placeholder="Select destination bucket..."
                   disabled={!formData.destinationAlias}
+                  alias={formData.destinationAlias}
                 />
               </div>
             </div>

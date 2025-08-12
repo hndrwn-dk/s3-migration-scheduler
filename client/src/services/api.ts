@@ -81,6 +81,20 @@ export const bucketService = {
     return response.data.data!;
   },
 
+  // Search buckets for an alias (for large datasets - server-side filtering)
+  searchBuckets: async (aliasName: string, searchTerm: string, limit: number = 50, offset: number = 0): Promise<{ buckets: S3Bucket[]; total: number; hasMore: boolean }> => {
+    const params = new URLSearchParams({
+      search: searchTerm,
+      limit: limit.toString(),
+      offset: offset.toString()
+    });
+    const response = await api.get<ApiResponse<{ buckets: S3Bucket[]; total: number; hasMore: boolean }>>(`/buckets/search/${aliasName}?${params}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to search buckets');
+    }
+    return response.data.data!;
+  },
+
   // Get bucket information
   getBucketInfo: async (aliasName: string, bucketName: string): Promise<BucketInfo> => {
     const response = await api.get<ApiResponse<BucketInfo>>(`/buckets/info/${aliasName}/${bucketName}`);
