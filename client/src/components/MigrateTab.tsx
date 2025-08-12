@@ -7,7 +7,8 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
   PlusIcon,
-  TrashIcon
+  TrashIcon,
+  ChevronDownIcon
 } from '@heroicons/react/24/outline';
 import LoadingSpinner from './LoadingSpinner';
 import { Migration, S3Alias, S3Bucket, MigrationFormData } from '../types';
@@ -16,6 +17,159 @@ import { bucketService, migrationService } from '../services/api';
 interface MigrateTabProps {
   onMigrationStart: (migration: Migration) => void;
 }
+
+// Enhanced Bucket Selector Component
+interface BucketSelectorProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  buckets: S3Bucket[];
+  disabled?: boolean;
+  placeholder: string;
+  allowFreeText?: boolean;
+}
+
+const BucketSelector: React.FC<BucketSelectorProps> = ({
+  label,
+  value,
+  onChange,
+  buckets,
+  disabled = false,
+  placeholder,
+  allowFreeText = true
+}) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [inputValue, setInputValue] = useState(value);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setInputValue(value);
+  }, [value]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    onChange(newValue);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      setIsDropdownOpen(false);
+    } else if (e.key === 'Escape') {
+      setIsDropdownOpen(false);
+    }
+  };
+
+  const handleBucketSelect = (bucketName: string) => {
+    setInputValue(bucketName);
+    onChange(bucketName);
+    setIsDropdownOpen(false);
+  };
+
+  const filteredBuckets = buckets.filter(bucket =>
+    bucket.name.toLowerCase().includes(inputValue.toLowerCase())
+  );
+
+  return (
+    <div ref={containerRef}>
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <div className="relative mt-1">
+        <input
+          type="text"
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setIsDropdownOpen(true)}
+          placeholder={allowFreeText ? `${placeholder} or type bucket name...` : placeholder}
+          disabled={disabled}
+          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 pr-10"
+        />
+        
+        {/* Dropdown Toggle Button */}
+        {buckets.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            disabled={disabled}
+            className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-400 hover:text-gray-600"
+          >
+            <ChevronDownIcon className={`w-4 h-4 transform transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+        )}
+
+        {/* Dropdown Menu */}
+        {isDropdownOpen && buckets.length > 0 && (
+          <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+            {filteredBuckets.length > 0 ? (
+              <>
+                {allowFreeText && inputValue && !buckets.find(b => b.name === inputValue) && (
+                  <div className="px-3 py-2 text-sm text-gray-500 border-b border-gray-200">
+                    <div className="flex items-center">
+                      <PlusIcon className="w-4 h-4 mr-2" />
+                      Use custom bucket: <span className="font-mono font-medium ml-1">"{inputValue}"</span>
+                    </div>
+                  </div>
+                )}
+                {filteredBuckets.map((bucket) => (
+                  <button
+                    key={bucket.name}
+                    type="button"
+                    onClick={() => handleBucketSelect(bucket.name)}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none ${
+                      value === bucket.name ? 'bg-blue-100 text-blue-900' : 'text-gray-900'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono">{bucket.name}</span>
+                      {bucket.lastModified && (
+                        <span className="text-xs text-gray-500">
+                          {new Date(bucket.lastModified).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </>
+            ) : (
+              <div className="px-3 py-2 text-sm text-gray-500">
+                {inputValue ? `No buckets found matching "${inputValue}"` : 'No buckets available'}
+                {allowFreeText && inputValue && (
+                  <div className="mt-1 text-blue-600">
+                    Press Enter to use "{inputValue}" as custom bucket name
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      
+      {disabled && buckets.length === 0 && (
+        <p className="mt-1 text-sm text-gray-500">No buckets found</p>
+      )}
+      
+      {allowFreeText && (
+        <p className="mt-1 text-xs text-gray-500">
+          💡 You can select from dropdown or type a custom bucket name
+        </p>
+      )}
+    </div>
+  );
+};
 
 const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
   const [aliases, setAliases] = useState<S3Alias[]>([]);
@@ -291,21 +445,14 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Bucket</label>
-                <select
+                <BucketSelector
+                  label="Bucket"
                   value={formData.sourceBucket}
-                  onChange={(e) => setFormData(prev => ({ ...prev, sourceBucket: e.target.value }))}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  disabled={!formData.sourceAlias || sourceBuckets.length === 0}
-                >
-                  <option value="">Select source bucket...</option>
-                  {sourceBuckets.map(bucket => (
-                    <option key={bucket.name} value={bucket.name}>{bucket.name}</option>
-                  ))}
-                </select>
-                {formData.sourceAlias && sourceBuckets.length === 0 && (
-                  <p className="mt-1 text-sm text-gray-500">No buckets found</p>
-                )}
+                  onChange={(value) => setFormData(prev => ({ ...prev, sourceBucket: value }))}
+                  buckets={sourceBuckets}
+                  placeholder="Select source bucket..."
+                  disabled={!formData.sourceAlias}
+                />
               </div>
             </div>
 
@@ -336,21 +483,14 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Bucket</label>
-                <select
+                <BucketSelector
+                  label="Bucket"
                   value={formData.destinationBucket}
-                  onChange={(e) => setFormData(prev => ({ ...prev, destinationBucket: e.target.value }))}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  disabled={!formData.destinationAlias || destinationBuckets.length === 0}
-                >
-                  <option value="">Select destination bucket...</option>
-                  {destinationBuckets.map(bucket => (
-                    <option key={bucket.name} value={bucket.name}>{bucket.name}</option>
-                  ))}
-                </select>
-                {formData.destinationAlias && destinationBuckets.length === 0 && (
-                  <p className="mt-1 text-sm text-gray-500">No buckets found</p>
-                )}
+                  onChange={(value) => setFormData(prev => ({ ...prev, destinationBucket: value }))}
+                  buckets={destinationBuckets}
+                  placeholder="Select destination bucket..."
+                  disabled={!formData.destinationAlias}
+                />
               </div>
             </div>
           </div>
