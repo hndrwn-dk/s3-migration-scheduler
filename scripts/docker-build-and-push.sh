@@ -6,7 +6,7 @@
 set -e  # Exit on any error
 
 # Configuration
-DOCKER_USERNAME="hendrawandaryono"
+DOCKER_USERNAME="hndrwn"
 IMAGE_NAME="s3-migration-scheduler"
 VERSION="1.1.0"
 LATEST_TAG="latest"
@@ -27,93 +27,67 @@ check_docker() {
     fi
 }
 
-# Function to check if user is logged in to Docker Hub
+# Function to check if user is logged into Docker Hub
 check_docker_login() {
-    if ! docker info | grep -q "Username"; then
-        echo "⚠️  You are not logged in to Docker Hub."
-        echo "Please run: docker login"
-        echo "Then try again."
+    if ! docker info | grep -q "Username:"; then
+        echo "❌ Error: Not logged into Docker Hub. Please run 'docker login' first."
         exit 1
     fi
 }
 
-# Function to build the image
+# Function to build the client
+build_client() {
+    echo "Step 2: Building React client..."
+    cd client
+    if [ ! -d "node_modules" ]; then
+        echo "Installing client dependencies..."
+        npm install
+    fi
+    npm run build
+    cd ..
+}
+
+# Function to build Docker image
 build_image() {
-    echo "🔨 Building Docker image..."
-    echo "Image: ${VERSION_TAG}"
-    echo ""
-    
-    # Build the image with version tag
+    echo "Step 3: Building Docker image..."
     docker build -t "${VERSION_TAG}" -t "${LATEST_TAG_FULL}" .
-    
-    if [ $? -eq 0 ]; then
-        echo "✅ Docker image built successfully!"
-    else
-        echo "❌ Failed to build Docker image"
-        exit 1
-    fi
+    echo "✅ Docker image built successfully!"
 }
 
-# Function to push the image
+# Function to push to Docker Hub
 push_image() {
-    echo ""
-    echo "📤 Pushing image to Docker Hub..."
-    
-    # Push version tag
+    echo "Step 4: Pushing to Docker Hub..."
     echo "Pushing ${VERSION_TAG}..."
     docker push "${VERSION_TAG}"
-    
-    # Push latest tag
     echo "Pushing ${LATEST_TAG_FULL}..."
     docker push "${LATEST_TAG_FULL}"
-    
-    if [ $? -eq 0 ]; then
-        echo "✅ Images pushed successfully!"
-    else
-        echo "❌ Failed to push images"
-        exit 1
-    fi
+    echo "✅ Images pushed successfully to Docker Hub!"
 }
 
-# Function to show usage information
+# Function to display final information
 show_usage() {
     echo ""
-    echo "📋 Usage Information:"
-    echo "───────────────────────────────────────────────────────────────"
+    echo "🎉 SUCCESS! Docker images published to Docker Hub"
+    echo "═══════════════════════════════════════════════════════════════════════"
+    echo "📦 Image: ${FULL_IMAGE_NAME}"
+    echo "🏷️  Tags: ${VERSION}, ${LATEST_TAG}"
     echo ""
-    echo "🐳 Docker Image Published:"
-    echo "   • Repository: ${FULL_IMAGE_NAME}"
-    echo "   • Version Tag: ${VERSION}"
-    echo "   • Latest Tag: ${LATEST_TAG}"
-    echo ""
-    echo "🚀 To run the container:"
+    echo "🚀 Quick deployment commands:"
     echo "   docker run -d -p 5000:5000 ${VERSION_TAG}"
-    echo ""
-    echo "🔧 To use with docker-compose:"
     echo "   docker-compose up -d"
     echo ""
-    echo "🌐 Docker Hub URL:"
-    echo "   https://hub.docker.com/r/${FULL_IMAGE_NAME}"
+    echo "🌐 Docker Hub: https://hub.docker.com/r/${DOCKER_USERNAME}/${IMAGE_NAME}"
 }
 
 # Main execution
 main() {
-    echo "Step 1: Checking Docker..."
     check_docker
-    
-    echo "Step 2: Checking Docker Hub login..."
     check_docker_login
-    
-    echo "Step 3: Building image..."
+    build_client
     build_image
-    
-    echo "Step 4: Pushing to Docker Hub..."
     push_image
-    
-    echo ""
-    echo "🎉 SUCCESS! Docker image published to Docker Hub"
     show_usage
 }
 
-# Run the main function
+# Run the script
 main "$@"
