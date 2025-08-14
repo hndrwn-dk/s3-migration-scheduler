@@ -1,13 +1,13 @@
 {
   "name": "s3-migration-scheduler-desktop",
   "productName": "S3 Migration Scheduler",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Desktop application for S3 bucket migrations",
   "main": "main.js",
   "homepage": "./",
   "author": {
-    "name": "S3 Migration Scheduler Team",
-    "email": "support@s3migration.com"
+    "name": "S3 Migration Scheduler Developer",
+    "email": "hendrawandaryono.karso@gmail.com"
   },
   "license": "MIT",
   "scripts": {
