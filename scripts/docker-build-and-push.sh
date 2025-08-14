@@ -16,22 +16,25 @@ FULL_IMAGE_NAME="${DOCKER_USERNAME}/${IMAGE_NAME}"
 VERSION_TAG="${FULL_IMAGE_NAME}:${VERSION}"
 LATEST_TAG_FULL="${FULL_IMAGE_NAME}:${LATEST_TAG}"
 
-echo "🚀 Building and pushing S3 Migration Scheduler v${VERSION} to Docker Hub"
-echo "═══════════════════════════════════════════════════════════════════════"
+echo "Building and pushing S3 Migration Scheduler v${VERSION} to Docker Hub"
+echo "======================================================================="
 
 # Function to check if docker is running
 check_docker() {
     if ! docker info >/dev/null 2>&1; then
-        echo "❌ Error: Docker is not running. Please start Docker and try again."
+        echo "ERROR: Docker is not running. Please start Docker and try again."
         exit 1
     fi
+    echo "Docker is running - OK"
 }
 
 # Function to check if user is logged into Docker Hub
 check_docker_login() {
     if ! docker info | grep -q "Username:"; then
-        echo "❌ Error: Not logged into Docker Hub. Please run 'docker login' first."
-        exit 1
+        echo "WARNING: Cannot verify Docker Hub login status."
+        echo "If build fails, please run 'docker login' first."
+    else
+        echo "Docker Hub login detected - OK"
     fi
 }
 
@@ -43,15 +46,18 @@ build_client() {
         echo "Installing client dependencies..."
         npm install
     fi
+    echo "Building React application..."
     npm run build
+    echo "React client built successfully"
     cd ..
 }
 
 # Function to build Docker image
 build_image() {
     echo "Step 3: Building Docker image..."
+    echo "Building image: ${VERSION_TAG}"
     docker build -t "${VERSION_TAG}" -t "${LATEST_TAG_FULL}" .
-    echo "✅ Docker image built successfully!"
+    echo "Docker image built successfully"
 }
 
 # Function to push to Docker Hub
@@ -61,26 +67,29 @@ push_image() {
     docker push "${VERSION_TAG}"
     echo "Pushing ${LATEST_TAG_FULL}..."
     docker push "${LATEST_TAG_FULL}"
-    echo "✅ Images pushed successfully to Docker Hub!"
+    echo "Images pushed successfully to Docker Hub!"
 }
 
 # Function to display final information
 show_usage() {
     echo ""
-    echo "🎉 SUCCESS! Docker images published to Docker Hub"
-    echo "═══════════════════════════════════════════════════════════════════════"
-    echo "📦 Image: ${FULL_IMAGE_NAME}"
-    echo "🏷️  Tags: ${VERSION}, ${LATEST_TAG}"
+    echo "SUCCESS! Docker images published to Docker Hub"
+    echo "======================================================================="
+    echo "Image: ${FULL_IMAGE_NAME}"
+    echo "Tags: ${VERSION}, ${LATEST_TAG}"
     echo ""
-    echo "🚀 Quick deployment commands:"
+    echo "Quick deployment commands:"
     echo "   docker run -d -p 5000:5000 ${VERSION_TAG}"
     echo "   docker-compose up -d"
     echo ""
-    echo "🌐 Docker Hub: https://hub.docker.com/r/${DOCKER_USERNAME}/${IMAGE_NAME}"
+    echo "Docker Hub: https://hub.docker.com/r/${DOCKER_USERNAME}/${IMAGE_NAME}"
+    echo ""
+    echo "Build completed successfully!"
 }
 
 # Main execution
 main() {
+    echo "Step 1: Checking Docker and login status..."
     check_docker
     check_docker_login
     build_client
