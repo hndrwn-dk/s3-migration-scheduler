@@ -19,6 +19,15 @@ LATEST_TAG_FULL="${FULL_IMAGE_NAME}:${LATEST_TAG}"
 echo "Building and pushing S3 Migration Scheduler v${VERSION} to Docker Hub"
 echo "======================================================================="
 
+# Get script directory and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "${SCRIPT_DIR}")"
+CLIENT_DIR="${PROJECT_ROOT}/client"
+
+echo "Script directory: ${SCRIPT_DIR}"
+echo "Project root: ${PROJECT_ROOT}"
+echo "Client directory: ${CLIENT_DIR}"
+
 # Function to check if docker is running
 check_docker() {
     if ! docker info >/dev/null 2>&1; then
@@ -38,10 +47,27 @@ check_docker_login() {
     fi
 }
 
+# Function to validate project structure
+validate_project() {
+    if [[ ! -f "${PROJECT_ROOT}/package.json" ]]; then
+        echo "ERROR: Cannot find package.json in project root: ${PROJECT_ROOT}"
+        echo "Please ensure you're running this script from the scripts directory of the s3-migration-scheduler project"
+        exit 1
+    fi
+
+    if [[ ! -f "${CLIENT_DIR}/package.json" ]]; then
+        echo "ERROR: Cannot find client package.json in: ${CLIENT_DIR}"
+        echo "Please ensure the client directory exists in your project"
+        exit 1
+    fi
+}
+
 # Function to build the client
 build_client() {
     echo "Step 2: Building React client..."
-    cd client
+    echo "Navigating to client directory: ${CLIENT_DIR}"
+    cd "${CLIENT_DIR}"
+    
     if [ ! -d "node_modules" ]; then
         echo "Installing client dependencies..."
         npm install
@@ -49,12 +75,15 @@ build_client() {
     echo "Building React application..."
     npm run build
     echo "React client built successfully"
-    cd ..
+    
+    echo "Navigating back to project root: ${PROJECT_ROOT}"
+    cd "${PROJECT_ROOT}"
 }
 
 # Function to build Docker image
 build_image() {
     echo "Step 3: Building Docker image..."
+    echo "Current directory: $(pwd)"
     echo "Building image: ${VERSION_TAG}"
     docker build -t "${VERSION_TAG}" -t "${LATEST_TAG_FULL}" .
     echo "Docker image built successfully"
@@ -92,6 +121,7 @@ main() {
     echo "Step 1: Checking Docker and login status..."
     check_docker
     check_docker_login
+    validate_project
     build_client
     build_image
     push_image
