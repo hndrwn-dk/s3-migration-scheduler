@@ -61,7 +61,7 @@ if not exist "%CLIENT_DIR%\package.json" (
 REM Build React client
 echo Step 3: Building React client...
 echo Navigating to client directory: %CLIENT_DIR%
-cd /d "%CLIENT_DIR%"
+pushd "%CLIENT_DIR%"
 if !errorlevel! neq 0 (
     echo ERROR: Failed to navigate to client directory
     pause
@@ -70,26 +70,31 @@ if !errorlevel! neq 0 (
 
 if not exist "node_modules" (
     echo Installing client dependencies...
-    npm install
+    call npm install
     if !errorlevel! neq 0 (
         echo ERROR: Failed to install client dependencies
+        popd
         pause
         exit /b 1
     )
 )
 
 echo Building React application...
-npm run build
+call npm run build
 if !errorlevel! neq 0 (
     echo ERROR: Failed to build React client
+    popd
     pause
     exit /b 1
 )
+
 echo React client built successfully
+echo.
 
 REM Navigate back to project root for Docker build
+popd
 echo Navigating back to project root: %PROJECT_ROOT%
-cd /d "%PROJECT_ROOT%"
+pushd "%PROJECT_ROOT%"
 if !errorlevel! neq 0 (
     echo ERROR: Failed to navigate to project root
     pause
@@ -103,10 +108,12 @@ echo Building image: %VERSION_TAG%
 docker build -t "%VERSION_TAG%" -t "%LATEST_TAG_FULL%" .
 if !errorlevel! neq 0 (
     echo ERROR: Failed to build Docker image
+    popd
     pause
     exit /b 1
 )
 echo Docker image built successfully
+echo.
 
 REM Push to Docker Hub
 echo Step 5: Pushing to Docker Hub...
@@ -115,6 +122,7 @@ docker push "%VERSION_TAG%"
 if !errorlevel! neq 0 (
     echo ERROR: Failed to push version tag. Please check your Docker Hub login.
     echo Run 'docker login' and try again.
+    popd
     pause
     exit /b 1
 )
@@ -123,14 +131,18 @@ echo Pushing %LATEST_TAG_FULL%...
 docker push "%LATEST_TAG_FULL%"
 if !errorlevel! neq 0 (
     echo ERROR: Failed to push latest tag
+    popd
     pause
     exit /b 1
 )
 
 echo Images pushed successfully to Docker Hub!
+echo.
+
+REM Navigate back to original directory
+popd
 
 REM Show success information
-echo.
 echo SUCCESS! Docker images published to Docker Hub
 echo =======================================================================
 echo Image: %FULL_IMAGE_NAME%
