@@ -13,6 +13,12 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
+    "dev:stable": "concurrently \"npm run server:dev\" \"npm run client:start\"",
+    "server:dev": "cd server && npm run dev",
+    "server:start": "cd server && npm start",
+    "client:start": "cd client && npm start",
+    "client:build": "cd client && npm run build",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
     "build": "electron-builder",
     "build:win": "electron-builder --win",
     "build:linux": "electron-builder --linux",
@@ -36,7 +42,8 @@
   "devDependencies": {
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1",
-    "electron-devtools-installer": "^3.2.0"
+    "electron-devtools-installer": "^3.2.0",
+    "concurrently": "^8.2.2"
   },
   "build": {
     "appId": "com.s3migration.scheduler",
