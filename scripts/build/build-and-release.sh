@@ -19,14 +19,16 @@ NC='\033[0m' # No Color
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "${SCRIPT_DIR}")"
+PROJECT_ROOT="$(dirname "$(dirname "${SCRIPT_DIR}")")"
 
 echo -e "\n${BLUE}=========================================================================${NC}"
 echo -e "${BLUE}           S3 Migration Scheduler - Complete Build and Release          ${NC}"
 echo -e "${BLUE}                              Version ${VERSION}                              ${NC}"
 echo -e "${BLUE}=========================================================================${NC}\n"
 
-echo -e "${YELLOW}Project root: ${PROJECT_ROOT}${NC}\n"
+echo -e "${YELLOW}Project root: ${PROJECT_ROOT}${NC}"
+echo -e "${YELLOW}Scripts structure: build/, setup/, db/${NC}"
+echo
 
 # Step 1: Verify prerequisites
 echo -e "${BLUE}Step 1: Checking Prerequisites...${NC}"
@@ -111,32 +113,34 @@ npm run build
 cd "${PROJECT_ROOT}"
 echo -e "${GREEN}✓ React client built successfully${NC}\n"
 
-# Step 5: Build desktop packages
+# Step 5: Build desktop packages using specialized scripts
 echo -e "${BLUE}Step 5: Building Desktop Packages...${NC}"
 echo "====================================="
 
-cd electron-app
-
-echo "Building Linux packages..."
-npm run build:linux
-echo -e "${GREEN}✓ Linux packages built${NC}"
+# Linux packages (always build on Linux)
+echo "Calling Linux build script..."
+if bash "${SCRIPT_DIR}/linux/build-linux.sh"; then
+    echo -e "${GREEN}✓ Linux packages completed${NC}"
+else
+    echo -e "${RED}ERROR: Linux build failed${NC}"
+    exit 1
+fi
 
 # Ask if user wants to build Windows packages
 read -p "Build Windows packages? (requires Windows build tools) [y/N]: " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "Building Windows packages..."
-    if npm run build:win; then
-        echo -e "${GREEN}✓ Windows packages built${NC}"
+    echo "Calling Windows build script..."
+    if bash "${SCRIPT_DIR}/windows/build-windows.bat"; then
+        echo -e "${GREEN}✓ Windows packages completed${NC}"
     else
         echo -e "${YELLOW}⚠ Warning: Windows build failed (this is normal on Linux)${NC}"
     fi
 fi
 
-cd "${PROJECT_ROOT}"
 echo
 
-# Step 6: Docker build and push (optional)
+# Step 6: Docker build and push using specialized script
 if [ "$DOCKER_AVAILABLE" = true ]; then
     echo -e "${BLUE}Step 6: Docker Build and Push...${NC}"
     echo "================================"
@@ -145,7 +149,7 @@ if [ "$DOCKER_AVAILABLE" = true ]; then
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo "Calling Docker build script..."
-        if bash "${SCRIPT_DIR}/docker-build-and-push.sh"; then
+        if bash "${SCRIPT_DIR}/docker/docker-build-and-push.sh"; then
             echo -e "${GREEN}✓ Docker images built and pushed${NC}"
         else
             echo -e "${YELLOW}⚠ Warning: Docker build failed${NC}"

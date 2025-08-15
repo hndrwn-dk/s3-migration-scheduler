@@ -25,9 +25,10 @@ echo.
 
 REM Get script directory and project root
 set SCRIPT_DIR=%~dp0
-set PROJECT_ROOT=%SCRIPT_DIR%..
+set PROJECT_ROOT=%SCRIPT_DIR%..\..
 
 echo %YELLOW%Project root: %PROJECT_ROOT%%NC%
+echo %YELLOW%Scripts structure: build/, setup/, db/%NC%
 echo.
 
 REM Step 1: Verify prerequisites
@@ -148,37 +149,35 @@ cd /d "%PROJECT_ROOT%"
 echo %GREEN%✓ React client built successfully%NC%
 echo.
 
-REM Step 5: Build desktop packages
+REM Step 5: Build desktop packages using specialized scripts
 echo %BLUE%Step 5: Building Desktop Packages...%NC%
 echo =====================================
 
-cd electron-app
-
-echo Building Windows packages...
-npm run build:win
+REM Windows packages (always build on Windows)
+echo Calling Windows build script...
+call "%SCRIPT_DIR%windows\build-windows.bat"
 if !errorlevel! neq 0 (
-    echo %RED%ERROR: Failed to build Windows packages%NC%
+    echo %RED%ERROR: Windows build failed%NC%
     pause
     exit /b 1
 )
-echo %GREEN%✓ Windows packages built%NC%
+echo %GREEN%✓ Windows packages completed%NC%
 
 REM Ask if user wants to build Linux packages
 choice /c YN /m "Build Linux packages? (requires Linux build tools) "
 if !errorlevel! equ 1 (
-    echo Building Linux packages...
-    npm run build:linux
+    echo Calling Linux build script...
+    call "%SCRIPT_DIR%linux\build-linux.sh"
     if !errorlevel! neq 0 (
         echo %YELLOW%⚠ Warning: Linux build failed (this is normal on Windows)%NC%
     ) else (
-        echo %GREEN%✓ Linux packages built%NC%
+        echo %GREEN%✓ Linux packages completed%NC%
     )
 )
 
-cd /d "%PROJECT_ROOT%"
 echo.
 
-REM Step 6: Docker build and push (optional)
+REM Step 6: Docker build and push using specialized script
 if "%DOCKER_AVAILABLE%"=="true" (
     echo %BLUE%Step 6: Docker Build and Push...%NC%
     echo ================================
@@ -186,7 +185,7 @@ if "%DOCKER_AVAILABLE%"=="true" (
     choice /c YN /m "Build and push Docker images? "
     if !errorlevel! equ 1 (
         echo Calling Docker build script...
-        call "%SCRIPT_DIR%docker-build-and-push.bat"
+        call "%SCRIPT_DIR%docker\docker-build-and-push.bat"
         if !errorlevel! neq 0 (
             echo %YELLOW%⚠ Warning: Docker build failed%NC%
         ) else (
@@ -280,6 +279,7 @@ if !errorlevel! equ 1 (
 echo.
 echo %GREEN%=========================================================================%NC%
 echo %GREEN%                    BUILD AND RELEASE SCRIPT COMPLETED                   %NC%
+echo %GREEN%                         (Using Structured Scripts)                      %NC%
 echo %GREEN%                              Version %VERSION%                              %NC%
 echo %GREEN%=========================================================================%NC%
 echo.
