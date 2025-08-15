@@ -17,7 +17,7 @@ NC='\033[0m' # No Color
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$(dirname "${SCRIPT_DIR}")")"
+PROJECT_ROOT="$(dirname "$(dirname "$(dirname "${SCRIPT_DIR}")")")"
 
 echo -e "\n${BLUE}=========================================================================${NC}"
 echo -e "${BLUE}                  S3 Migration Scheduler - Linux Build                   ${NC}"
