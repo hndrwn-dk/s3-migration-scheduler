@@ -17,7 +17,7 @@ NC='\033[0m' # No Color
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$(dirname "$(dirname "${SCRIPT_DIR}")")")"
+PROJECT_ROOT="$(dirname "$(dirname "${SCRIPT_DIR}")")"
 
 echo -e "\n${BLUE}=========================================================================${NC}"
 echo -e "${BLUE}                  S3 Migration Scheduler - Linux Build                   ${NC}"
@@ -93,10 +93,18 @@ if [ -d "dist" ]; then
     echo -e "${GREEN}Linux Desktop Packages:${NC}"
     echo "------------------------"
     
-    ls dist/*.AppImage 2>/dev/null && echo "  ✓ $(basename dist/*.AppImage) (AppImage)"
-    ls dist/*.deb 2>/dev/null && echo "  ✓ $(basename dist/*.deb) (Debian package)"
-    ls dist/*.tar.gz 2>/dev/null && echo "  ✓ $(basename dist/*.tar.gz) (tarball)"
-    ls dist/*.rpm 2>/dev/null && echo "  ✓ $(basename dist/*.rpm) (RPM package)"
+    if ls dist/*.AppImage 1> /dev/null 2>&1; then
+        echo "  ✓ $(basename dist/*.AppImage) (AppImage)"
+    fi
+    if ls dist/*.deb 1> /dev/null 2>&1; then
+        echo "  ✓ $(basename dist/*.deb) (Debian package)"
+    fi
+    if ls dist/*.tar.gz 1> /dev/null 2>&1; then
+        echo "  ✓ $(basename dist/*.tar.gz) (tarball)"
+    fi
+    if ls dist/*.rpm 1> /dev/null 2>&1; then
+        echo "  ✓ $(basename dist/*.rpm) (RPM package)"
+    fi
     
     echo
     echo -e "${YELLOW}Built files location: ${PROJECT_ROOT}/electron-app/dist/${NC}"
