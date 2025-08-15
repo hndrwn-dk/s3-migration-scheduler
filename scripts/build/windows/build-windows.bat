@@ -39,7 +39,7 @@ if !errorlevel! neq 0 (
     pause
     exit /b 1
 )
-echo %GREEN%✓ Node.js found%NC%
+echo %GREEN%+ Node.js found%NC%
 
 REM Check npm
 npm --version >nul 2>&1
@@ -48,7 +48,7 @@ if !errorlevel! neq 0 (
     pause
     exit /b 1
 )
-echo %GREEN%✓ npm found%NC%
+echo %GREEN%+ npm found%NC%
 
 echo.
 
@@ -73,9 +73,9 @@ if not exist "build\index.html" (
         pause
         exit /b 1
     )
-    echo %GREEN%✓ React client built successfully%NC%
+    echo %GREEN%+ React client built successfully%NC%
 ) else (
-    echo %GREEN%✓ React client already built%NC%
+    echo %GREEN%+ React client already built%NC%
 )
 
 echo.
@@ -105,7 +105,7 @@ if !errorlevel! neq 0 (
     exit /b 1
 )
 
-echo %GREEN%✓ Windows packages built successfully%NC%
+echo %GREEN%+ Windows packages built successfully%NC%
 echo.
 
 REM Step 4: List built assets
@@ -120,10 +120,10 @@ if exist "dist" (
     echo %GREEN%Windows Desktop Packages:%NC%
     echo -------------------------
     dir /b "dist\*.exe" 2>nul | findstr /r ".*" >nul && (
-        for %%f in (dist\*.exe) do echo   ✓ %%~nxf ^(installer^)
+        for %%f in (dist\*.exe) do echo   + %%~nxf ^(installer^)
     )
     dir /b "dist\*.zip" 2>nul | findstr /r ".*" >nul && (
-        for %%f in (dist\*.zip) do echo   ✓ %%~nxf ^(portable^)
+        for %%f in (dist\*.zip) do echo   + %%~nxf ^(portable^)
     )
     echo.
     
