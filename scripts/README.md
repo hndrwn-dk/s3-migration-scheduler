@@ -7,8 +7,6 @@ This directory contains automated scripts organized by function for building, pa
 ```
 scripts/
 ├── build/                          # 🏗️ Build & Release Scripts
-│   ├── build-and-release.bat       # Complete automation (Windows)
-│   ├── build-and-release.sh        # Complete automation (Linux/Mac)
 │   ├── windows/
 │   │   └── build-windows.bat       # Windows desktop packages
 │   ├── linux/
@@ -16,14 +14,14 @@ scripts/
 │   └── docker/
 │       ├── docker-build-and-push.bat # Docker Hub publishing (Windows)
 │       └── docker-build-and-push.sh  # Docker Hub publishing (Linux/Mac)
-├── setup/                          # ⚙️ Setup & Configuration
+├── setup/                          # ⚙️ Setup & Configuration (00-02)
 │   ├── 00-setup-linux.sh           # Initial Linux setup
 │   ├── 00-setup-windows.bat        # Initial Windows setup
 │   ├── 01-fix-dependencies.sh      # Dependency repair (Linux)
 │   ├── 01-fix-dependencies.bat     # Dependency repair (Windows)
 │   ├── 02-start.sh                 # Development startup (Linux)
 │   └── 02-start.bat                # Development startup (Windows)
-└── db/                             # 🗄️ Database Management
+└── db/                             # 🗄️ Database Management (03-04)
     ├── 03-backup-db.sh             # Database backup (Linux)
     ├── 03-backup-db.bat            # Database backup (Windows)
     ├── 04-restore-db.sh            # Database restore (Linux)
@@ -32,34 +30,19 @@ scripts/
 
 ## 🚀 Quick Start
 
-### Complete Build & Release (Recommended)
-**One-command solution for the entire release process:**
+### Platform-Specific Builds (Recommended)
 
-```bash
-# Windows
-.\scripts\build\build-and-release.bat
-
-# Linux/Mac  
-./scripts/build/build-and-release.sh
-```
-
-## 🏗️ Build Scripts
-
-### Platform-Specific Builds
-
-#### Windows Desktop Packages
+**Windows Desktop Packages:**
 ```bash
 .\scripts\build\windows\build-windows.bat
 ```
-**Creates:** `.exe` installer and `.zip` portable
 
-#### Linux Desktop Packages
+**Linux Desktop Packages:**
 ```bash
 ./scripts/build/linux/build-linux.sh
 ```
-**Creates:** `.AppImage`, `.deb`, `.tar.gz`, `.rpm`
 
-#### Docker Hub Publishing
+**Docker Hub Publishing:**
 ```bash
 # Windows
 .\scripts\build\docker\docker-build-and-push.bat
@@ -67,7 +50,6 @@ scripts/
 # Linux/Mac
 ./scripts/build/docker/docker-build-and-push.sh
 ```
-**Creates:** Docker images on `hndrwn/s3-migration-scheduler`
 
 ## ⚙️ Setup Scripts
 
@@ -156,12 +138,14 @@ For new releases, update version numbers in:
 # 1. Backup database
 ./scripts/db/03-backup-db.sh
 
-# 2. Update version numbers in build scripts
+# 2. Update version numbers in platform scripts
 
-# 3. Complete build and release
-./scripts/build/build-and-release.sh
+# 3. Build for your platform
+./scripts/build/windows/build-windows.bat    # Windows
+./scripts/build/linux/build-linux.sh        # Linux
+./scripts/build/docker/docker-build-and-push.sh  # Docker
 
-# 4. Follow GitHub release instructions
+# 4. Create GitHub release manually
 ```
 
 ### Update Workflow
@@ -255,10 +239,9 @@ chmod +x scripts/db/*.sh
 
 | Task | Script | Platform |
 |------|--------|----------|
-| **Complete Release** | `build/build-and-release.*` | Windows/Linux |
-| **Windows Only** | `build/windows/build-windows.bat` | Windows |
-| **Linux Only** | `build/linux/build-linux.sh` | Linux |
-| **Docker Only** | `build/docker/docker-build-and-push.*` | Any |
+| **Windows Build** | `build/windows/build-windows.bat` | Windows |
+| **Linux Build** | `build/linux/build-linux.sh` | Linux |
+| **Docker Hub** | `build/docker/docker-build-and-push.*` | Any |
 | **Development** | `setup/02-start.*` | Any |
 | **Setup** | `setup/00-setup-*.*` | Platform-specific |
 | **Fix Dependencies** | `setup/01-fix-dependencies.*` | Platform-specific |
@@ -267,4 +250,4 @@ chmod +x scripts/db/*.sh
 
 ---
 
-**💡 Best Practice**: Use the complete build script (`build/build-and-release.*`) for releases and individual platform scripts for targeted builds or testing.
+**💡 Best Practice**: Use platform-specific build scripts for clean, focused builds without unnecessary complexity.
