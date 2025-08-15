@@ -44,14 +44,12 @@ echo %GREEN%+ Node.js found%NC%
 
 REM Check npm
 echo Checking npm...
-npm --version > temp_npm_version.txt 2>&1
+where npm >nul 2>&1
 if !errorlevel! neq 0 (
     echo %RED%ERROR: npm is not installed or not in PATH%NC%
-    if exist temp_npm_version.txt del temp_npm_version.txt
     pause
     exit /b 1
 )
-if exist temp_npm_version.txt del temp_npm_version.txt
 echo %GREEN%+ npm found%NC%
 
 echo.
