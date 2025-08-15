@@ -42,7 +42,7 @@ if !errorlevel! neq 0 (
     pause
     exit /b 1
 )
-echo %GREEN%✓ Node.js found%NC%
+echo %GREEN%+ Node.js found%NC%
 
 REM Check npm
 npm --version >nul 2>&1
@@ -51,7 +51,7 @@ if !errorlevel! neq 0 (
     pause
     exit /b 1
 )
-echo %GREEN%✓ npm found%NC%
+echo %GREEN%+ npm found%NC%
 
 REM Check Docker (optional)
 docker --version >nul 2>&1
@@ -59,7 +59,7 @@ if !errorlevel! neq 0 (
     echo %YELLOW%⚠ Docker not found - Docker builds will be skipped%NC%
     set DOCKER_AVAILABLE=false
 ) else (
-    echo %GREEN%✓ Docker found%NC%
+    echo %GREEN%+ Docker found%NC%
     set DOCKER_AVAILABLE=true
 )
 
@@ -87,7 +87,7 @@ if !errorlevel! equ 1 (
     if exist "electron-app\node_modules" rmdir /s /q "electron-app\node_modules"
 )
 
-echo %GREEN%✓ Cleanup completed%NC%
+echo %GREEN%+ Cleanup completed%NC%
 echo.
 
 REM Step 3: Install dependencies
@@ -130,7 +130,7 @@ if !errorlevel! neq 0 (
 )
 
 cd /d "%PROJECT_ROOT%"
-echo %GREEN%✓ All dependencies installed%NC%
+echo %GREEN%+ All dependencies installed%NC%
 echo.
 
 REM Step 4: Build client
@@ -146,7 +146,7 @@ if !errorlevel! neq 0 (
 )
 
 cd /d "%PROJECT_ROOT%"
-echo %GREEN%✓ React client built successfully%NC%
+echo %GREEN%+ React client built successfully%NC%
 echo.
 
 REM Step 5: Build desktop packages using specialized scripts
@@ -161,7 +161,7 @@ if !errorlevel! neq 0 (
     pause
     exit /b 1
 )
-echo %GREEN%✓ Windows packages completed%NC%
+echo %GREEN%+ Windows packages completed%NC%
 
 REM Ask if user wants to build Linux packages
 choice /c YN /m "Build Linux packages? (requires Linux build tools) "
@@ -171,7 +171,7 @@ if !errorlevel! equ 1 (
     if !errorlevel! neq 0 (
         echo %YELLOW%⚠ Warning: Linux build failed (this is normal on Windows)%NC%
     ) else (
-        echo %GREEN%✓ Linux packages completed%NC%
+        echo %GREEN%+ Linux packages completed%NC%
     )
 )
 
@@ -189,7 +189,7 @@ if "%DOCKER_AVAILABLE%"=="true" (
         if !errorlevel! neq 0 (
             echo %YELLOW%⚠ Warning: Docker build failed%NC%
         ) else (
-            echo %GREEN%✓ Docker images built and pushed%NC%
+            echo %GREEN%+ Docker images built and pushed%NC%
         )
     )
     echo.
@@ -208,23 +208,23 @@ echo -------------
 
 if exist "electron-app\dist" (
     echo %GREEN%Desktop Packages:%NC%
-    dir /b "electron-app\dist\*.exe" 2>nul && echo   ✓ Windows installer (.exe)
-    dir /b "electron-app\dist\*.zip" 2>nul && echo   ✓ Windows portable (.zip)
-    dir /b "electron-app\dist\*.AppImage" 2>nul && echo   ✓ Linux AppImage
-    dir /b "electron-app\dist\*.deb" 2>nul && echo   ✓ Debian package (.deb)
-    dir /b "electron-app\dist\*.dmg" 2>nul && echo   ✓ macOS disk image (.dmg)
+    dir /b "electron-app\dist\*.exe" 2>nul && echo   + Windows installer (.exe)
+    dir /b "electron-app\dist\*.zip" 2>nul && echo   + Windows portable (.zip)
+    dir /b "electron-app\dist\*.AppImage" 2>nul && echo   + Linux AppImage
+    dir /b "electron-app\dist\*.deb" 2>nul && echo   + Debian package (.deb)
+    dir /b "electron-app\dist\*.dmg" 2>nul && echo   + macOS disk image (.dmg)
     echo.
 )
 
 if "%DOCKER_AVAILABLE%"=="true" (
     echo %GREEN%Docker Images:%NC%
-    echo   ✓ %DOCKER_USERNAME%/%IMAGE_NAME%:%VERSION%
-    echo   ✓ %DOCKER_USERNAME%/%IMAGE_NAME%:latest
+    echo   + %DOCKER_USERNAME%/%IMAGE_NAME%:%VERSION%
+    echo   + %DOCKER_USERNAME%/%IMAGE_NAME%:latest
     echo.
 )
 
 echo %GREEN%React Client:%NC%
-echo   ✓ client\build\ (production build)
+echo   + client\build\ (production build)
 echo.
 
 REM Step 8: Release instructions
