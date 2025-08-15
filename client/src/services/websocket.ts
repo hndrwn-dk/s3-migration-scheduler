@@ -21,10 +21,11 @@ class WebSocketService {
     const wsUrl = process.env.REACT_APP_WS_URL || 'ws://localhost:5000';
     
     try {
+      console.log(`Attempting WebSocket connection to ${wsUrl} (attempt ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})`);
       this.ws = new WebSocket(wsUrl);
       
       this.ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('✅ WebSocket connected successfully');
         this.isConnecting = false;
         this.reconnectAttempts = 0;
         
@@ -45,28 +46,46 @@ class WebSocketService {
       };
 
       this.ws.onclose = (event) => {
-        console.log('WebSocket disconnected:', event.code, event.reason);
+        console.log(`WebSocket disconnected: code=${event.code}, reason=${event.reason || 'No reason provided'}`);
         this.isConnecting = false;
         this.ws = null;
         
-        // Attempt to reconnect if not intentionally closed
-        if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
-          setTimeout(() => {
-            this.reconnectAttempts++;
-            console.log(`🔄 Reconnecting WebSocket (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-            this.connect();
-          }, this.reconnectInterval);
+        // Enhanced error handling for corporate environments
+        if (event.code === 1006) {
+          console.warn('WebSocket connection lost unexpectedly. This might be due to corporate network policies.');
+        } else if (event.code === 1011) {
+          console.warn('WebSocket server error. The application server might be overloaded.');
+        } else if (event.code === 1012) {
+          console.warn('WebSocket service restart detected.');
         }
+        
+        this.handleReconnect();
       };
 
       this.ws.onerror = (error) => {
         console.error('WebSocket error:', error);
         this.isConnecting = false;
+        
+        // Provide user-friendly error context
+        console.warn('WebSocket connection failed. This might be due to:');
+        console.warn('• Application server still starting up');
+        console.warn('• Corporate firewall blocking WebSocket connections');
+        console.warn('• Antivirus software interfering with localhost connections');
+        console.warn('• Network proxy not configured for WebSocket protocol');
       };
 
+      // Set connection timeout for corporate environments
+      setTimeout(() => {
+        if (this.ws && this.ws.readyState === WebSocket.CONNECTING) {
+          console.warn('WebSocket connection timeout - this might be due to corporate network restrictions');
+          this.ws.close();
+        }
+      }, 10000); // 10 second timeout
+      
     } catch (error) {
       console.error('Failed to create WebSocket connection:', error);
       this.isConnecting = false;
+      this.handleReconnect();
     }
   }
 
@@ -76,6 +95,25 @@ class WebSocketService {
       this.ws = null;
     }
     this.messageHandlers.clear();
+  }
+
+  private handleReconnect() {
+    // Don't attempt reconnect if intentionally disconnected or max attempts reached
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.warn(`❌ WebSocket max reconnection attempts (${this.maxReconnectAttempts}) reached. Real-time updates disabled.`);
+      console.warn('This might be due to corporate network policies blocking WebSocket connections.');
+      console.warn('Application will continue to work, but without real-time progress updates.');
+      return;
+    }
+
+    // Exponential backoff for corporate environments (start with 3s, max 30s)
+    const delay = Math.min(this.reconnectInterval * Math.pow(1.5, this.reconnectAttempts), 30000);
+    
+    setTimeout(() => {
+      this.reconnectAttempts++;
+      console.log(`🔄 Reconnecting WebSocket (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay/1000}s`);
+      this.connect();
+    }, delay);
   }
 
   send(message: any) {

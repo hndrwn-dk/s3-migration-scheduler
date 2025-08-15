@@ -153,11 +153,25 @@ class S3MigrationApp {
 
       // Handle server output
       this.serverProcess.stdout.on('data', (data) => {
-        console.log(`Server: ${data}`);
+        const output = data.toString();
+        console.log(`Server: ${output}`);
+        
+        // Check for server ready indicators
+        if (output.includes('Server running on port') || output.includes('Dashboard available at')) {
+          console.log('✅ Server startup detected in output');
+        }
       });
 
       this.serverProcess.stderr.on('data', (data) => {
-        console.error(`Server Error: ${data}`);
+        const error = data.toString();
+        console.error(`Server Error: ${error}`);
+        
+        // Check for common error patterns
+        if (error.includes('EADDRINUSE')) {
+          console.error(`❌ Port ${SERVER_PORT} is already in use`);
+        } else if (error.includes('EACCES')) {
+          console.error(`❌ Permission denied for port ${SERVER_PORT}`);
+        }
       });
 
       this.serverProcess.on('error', (error) => {
@@ -172,40 +186,95 @@ class S3MigrationApp {
         }
       });
 
-      // Wait for server to start
+      // Give server a moment to start, then begin health checks
+      console.log('⏳ Starting server, waiting for it to be ready...');
       setTimeout(() => {
         this.checkServerHealth()
           .then(() => {
-            console.log('Server started successfully');
+            console.log('✅ Server started successfully, loading application...');
             this.loadApplication();
             resolve();
           })
-          .catch(reject);
-      }, 3000);
+          .catch((error) => {
+            console.error('❌ Server startup failed:', error.message);
+            reject(error);
+          });
+      }, 2000); // Reduced from 3000ms to 2000ms since we have retry logic
     });
   }
 
   async checkServerHealth() {
     const http = require('http');
+    const maxRetries = 10;
+    const retryDelay = 2000; // 2 seconds
     
-    return new Promise((resolve, reject) => {
-      const req = http.get(`http://localhost:${SERVER_PORT}/api/health`, (res) => {
-        if (res.statusCode === 200) {
-          resolve();
-        } else {
-          reject(new Error(`Server health check failed: ${res.statusCode}`));
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`Health check attempt ${attempt}/${maxRetries}...`);
+        
+        await new Promise((resolve, reject) => {
+          const req = http.get(`http://localhost:${SERVER_PORT}/api/health`, (res) => {
+            if (res.statusCode === 200) {
+              console.log('✅ Server health check passed');
+              resolve();
+            } else {
+              reject(new Error(`Server health check failed: ${res.statusCode}`));
+            }
+          });
+
+          req.on('error', (error) => {
+            if (error.code === 'ECONNREFUSED') {
+              reject(new Error(`Connection refused (attempt ${attempt}/${maxRetries}). Server may still be starting...`));
+            } else {
+              reject(error);
+            }
+          });
+
+          req.setTimeout(8000, () => {
+            req.destroy();
+            reject(new Error(`Health check timeout (attempt ${attempt}/${maxRetries})`));
+          });
+        });
+        
+        // If we get here, health check passed
+        return;
+        
+      } catch (error) {
+        console.log(`❌ Health check failed: ${error.message}`);
+        
+        if (attempt === maxRetries) {
+          // Show user-friendly error dialog on final failure
+          const { dialog } = require('electron');
+          const result = await dialog.showMessageBox(null, {
+            type: 'error',
+            title: 'Server Connection Error',
+            message: 'Unable to start the application server',
+            detail: `After ${maxRetries} attempts, the application server could not be reached.\n\nThis might happen in corporate environments due to:\n• Network security policies\n• Antivirus software blocking localhost connections\n• Port ${SERVER_PORT} being in use by another application\n\nWould you like to try again or exit?`,
+            buttons: ['Try Again', 'Exit Application', 'Open Troubleshooting Guide'],
+            defaultId: 0,
+            cancelId: 1
+          });
+          
+          if (result.response === 0) {
+            // Try again - recursive call
+            return this.checkServerHealth();
+          } else if (result.response === 2) {
+            // Open troubleshooting guide
+            const { shell } = require('electron');
+            shell.openExternal('https://github.com/hndrwn-dk/s3-migration-scheduler/blob/main/docs/TROUBLESHOOTING.md');
+            throw new Error('User requested troubleshooting guide');
+          } else {
+            // Exit application
+            throw new Error('User chose to exit application');
+          }
         }
-      });
-
-      req.on('error', (error) => {
-        reject(error);
-      });
-
-      req.setTimeout(5000, () => {
-        req.destroy();
-        reject(new Error('Server health check timeout'));
-      });
-    });
+        
+        // Wait before next attempt (with exponential backoff)
+        const delay = retryDelay * Math.min(attempt, 3);
+        console.log(`⏳ Waiting ${delay/1000}s before next attempt...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
   }
 
   loadApplication() {
