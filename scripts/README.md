@@ -1,198 +1,187 @@
-# Scripts Directory
+# Scripts Directory - Build & Release Automation
 
-This directory contains all setup, maintenance, and execution scripts for the S3 Management UI. Scripts are numbered for easy sequential execution.
+This directory contains automated scripts for building, packaging, and releasing the S3 Migration Scheduler.
 
-## 📋 Script Execution Order
+## 🚀 Quick Start Scripts
 
-### Initial Setup (Run Once)
+### Complete Build & Release Automation
+**One-command solution for the entire release process:**
+
 ```bash
-# 1. Setup the development environment
-# Linux/macOS:
+# Windows
+.\scripts\build-and-release.bat
+
+# Linux/Mac  
+./scripts/build-and-release.sh
+```
+
+**What it does:**
+- ✅ Checks prerequisites (Node.js, npm, Docker)
+- ✅ Cleans previous builds and node_modules
+- ✅ Installs all dependencies (root, client, server, electron)
+- ✅ Builds React client for production
+- ✅ Creates desktop packages (Windows .exe/.zip, Linux .AppImage/.deb)
+- ✅ Optionally builds and pushes Docker images
+- ✅ Lists all built assets
+- ✅ Provides GitHub release instructions
+- ✅ Opens relevant directories and web pages
+
+## 🐳 Docker Scripts
+
+### Docker Build & Push
+**Automated Docker Hub publishing:**
+
+```bash
+# Windows
+.\scripts\docker-build-and-push.bat
+
+# Linux/Mac
+./scripts/docker-build-and-push.sh
+```
+
+**Features:**
+- ✅ Builds React client automatically
+- ✅ Creates Docker images with version and latest tags
+- ✅ Pushes to Docker Hub (hndrwn/s3-migration-scheduler)
+- ✅ Enhanced error handling and retry logic
+- ✅ Corporate environment compatibility
+
+## 📦 Legacy Scripts
+
+### Development Startup
+```bash
+# Windows
+.\scripts\02-start.bat
+
+# Linux/Mac  
+./scripts/02-start.sh
+```
+Starts development servers with `npm run dev:stable`
+
+### Initial Setup
+```bash
+# Windows
+.\scripts\00-setup-windows.bat
+
+# Linux/Mac
 ./scripts/00-setup-linux.sh
-
-# Windows:
-scripts\00-setup-windows.bat
 ```
+Initial project setup and MinIO configuration
 
-### Dependency Management (If Needed)
-```bash
-# 2. Fix missing dependencies (if npm run dev fails)
-# Linux/macOS:
-./scripts/01-fix-dependencies.sh
+## 🔧 Script Configuration
 
-# Windows:
-scripts\01-fix-dependencies.bat
-```
+### Version Management
+Update version numbers in these files for new releases:
+- `build-and-release.bat` → `set VERSION=1.1.0`
+- `build-and-release.sh` → `VERSION="1.1.0"`
+- `docker-build-and-push.bat` → `set VERSION=1.1.0`
+- `docker-build-and-push.sh` → `VERSION="1.1.0"`
 
-### Application Startup (Daily Use)
-```bash
-# 3. Start the application
-# Linux/macOS:
-./scripts/02-start.sh
+### Docker Hub Configuration
+Update Docker Hub settings:
+- `DOCKER_USERNAME=hndrwn`
+- `IMAGE_NAME=s3-migration-scheduler`
 
-# Windows:
-scripts\02-start.bat
-```
+## 📋 Release Checklist
 
-### Database Management (Before/After Updates)
-```bash
-# 4. Backup database before git pull
-# Linux/macOS:
-./scripts/03-backup-db.sh
+### Using the Complete Build Script:
 
-# Windows:
-scripts\03-backup-db.bat
+1. **Update version numbers** in all package.json files
+2. **Run the complete build script**:
+   ```bash
+   .\scripts\build-and-release.bat  # Windows
+   ./scripts/build-and-release.sh   # Linux/Mac
+   ```
+3. **Follow the guided prompts** for:
+   - Cleaning node_modules
+   - Building desktop packages  
+   - Docker build and push
+   - Opening release directories
 
-# 5. Restore database after git pull (if needed)
-# Linux/macOS:
-./scripts/04-restore-db.sh
+4. **Create GitHub Release**:
+   - The script will open GitHub releases page
+   - Upload assets from `electron-app/dist/`
+   - Copy release notes from `RELEASE_NOTES_v[VERSION].md`
 
-# Windows:
-scripts\04-restore-db.bat
-```
+## 🛠️ Manual Build Process
 
-## 📝 Script Descriptions
-
-### `00-setup-linux.sh` / `00-setup-windows.bat`
-**Purpose**: Complete environment setup
-**What it does**:
-- Checks system prerequisites (Node.js, npm, git)
-- Installs all project dependencies (root, server, client)
-- Creates environment files
-- Sets up logging directories
-- Generates the start script (02-start.sh/bat)
-- Provides MinIO client installation guidance
-
-**Run when**: First time setting up the project
-
-### `01-fix-dependencies.sh` / `01-fix-dependencies.bat`
-**Purpose**: Resolve dependency installation issues
-**What it does**:
-- Reinstalls root dependencies (including `concurrently`)
-- Reinstalls server dependencies
-- Reinstalls client dependencies
-- Fixes the "concurrently is not recognized" error
-
-**Run when**: 
-- `npm run dev` fails with dependency errors
-- After pulling latest changes
-- When dependencies seem corrupted
-
-### `02-start.sh` / `02-start.bat`
-**Purpose**: Start the application in development mode
-**What it does**:
-- Navigates to project root
-- Checks for MinIO client availability
-- Starts both server and client concurrently
-- Displays access URLs
-
-**Run when**: Every time you want to start the application
-
-### `03-backup-db.sh` / `03-backup-db.bat`
-**Purpose**: Backup SQLite database before updates
-**What it does**:
-- Creates timestamped backup of `server/data/migrations.db`
-- Stores backups in `database-backups/` directory
-- Automatically cleans up old backups (keeps last 10)
-- Reports backup size and location
-
-**Run when**: 
-- Before running `git pull`
-- Before major updates
-- As a precautionary backup
-
-### `04-restore-db.sh` / `04-restore-db.bat`
-**Purpose**: Restore SQLite database from backup
-**What it does**:
-- Finds the most recent database backup
-- Safely restores database with user confirmation
-- Creates data directory if needed
-- Reports restore information
-
-**Run when**: 
-- After `git pull` if migration data was lost
-- To recover from database corruption
-- To revert to a previous database state
-
-## 🔄 Database Backup/Restore Workflow
-
-The database contains your migration history and is **not committed to git**. When updating the application:
+If you prefer manual control:
 
 ```bash
-# 1. Backup before update
-./scripts/03-backup-db.sh
+# 1. Build client
+cd client
+npm install && npm run build
 
-# 2. Update code
-git pull origin main
+# 2. Build desktop packages
+cd ../electron-app  
+npm install
+npm run build:win    # Windows
+npm run build:linux  # Linux
 
-# 3. Restore if needed (only if data was lost)
-./scripts/04-restore-db.sh
-
-# 4. Start application (data preserved!)
-./scripts/02-start.sh
+# 3. Build and push Docker
+cd ../scripts
+./docker-build-and-push.sh
 ```
 
-## 🏗️ Project Structure Context
+## 🔍 Troubleshooting
 
-The scripts work with this project structure:
-```
-s3-migration-scheduler/
-├── package.json           # Root package (monorepo management)
-├── server/
-│   ├── package.json      # Backend dependencies
-│   ├── data/             # SQLite database (gitignored)
-│   │   └── migrations.db # Your migration data
-│   └── ...
-├── client/
-│   ├── package.json      # Frontend dependencies
-│   └── ...
-├── database-backups/     # Database backups (gitignored)
-│   └── migrations_backup_*.db
-└── scripts/              # All automation scripts
-    ├── 00-setup-*.sh|bat
-    ├── 01-fix-*.sh|bat
-    ├── 02-start.sh|bat
-    ├── 03-backup-db.sh|bat
-    └── 04-restore-db.sh|bat
-```
+### Common Issues:
 
-## ❓ Why Multiple package.json Files?
+**"Node.js not found"**
+- Install Node.js 18+ from nodejs.org
+- Ensure it's in your system PATH
 
-This is a **monorepo structure**:
+**"Docker not found"**
+- Install Docker Desktop
+- Start Docker service
+- Verify with `docker --version`
 
-1. **Root `package.json`**: 
-   - Manages the overall project
-   - Contains `concurrently` for running server + client
-   - Defines workspace-level scripts
-   - Handles monorepo dependencies
+**"Build failed"**
+- Clean node_modules: Delete all node_modules directories
+- Clear npm cache: `npm cache clean --force`
+- Try the build script with clean option
 
-2. **Server `package.json`**:
-   - Backend-specific dependencies (Express, WebSocket, SQLite, etc.)
-   - Server build and run scripts
-   - Production deployment configuration
+**"Permission denied" (Linux)**
+- Make scripts executable: `chmod +x scripts/*.sh`
+- Run with sudo if needed: `sudo ./script-name.sh`
 
-3. **Client `package.json`**:
-   - Frontend-specific dependencies (React, TypeScript, etc.)
-   - Client build and development scripts
-   - Browser-specific configurations
+### Build Environments:
 
-This structure allows:
-- ✅ Independent dependency management
-- ✅ Separate build processes
-- ✅ Clear separation of concerns
-- ✅ Easy deployment of individual components
-- ✅ Development convenience (single `npm run dev` starts both)
+**Windows:**
+- Builds Windows packages natively
+- Can build Linux packages with additional tools
+- Docker builds work if Docker Desktop is installed
 
-## 🚀 Quick Start Summary
+**Linux:**
+- Builds Linux packages natively  
+- Can build Windows packages with Wine (complex setup)
+- Docker builds work natively
 
-1. **First time**: Run setup script (`00-setup-*`)
-2. **Daily use**: Run start script (`02-start.*`)
-3. **If issues**: Run fix script (`01-fix-*`), then start script
-4. **Before updates**: Run backup script (`03-backup-db.*`)
-5. **After updates**: Run restore script (`04-restore-db.*`) if needed
+**macOS:**
+- Builds macOS packages natively
+- Can build Linux packages
+- Limited Windows support
 
-## 🛡️ Data Persistence
+## 📁 Output Locations
 
-**Important**: Your migration data is stored in `server/data/migrations.db` and is **not committed to git**. Always use the backup/restore scripts when updating to preserve your migration history.
+### Built Assets:
+- **Desktop packages**: `electron-app/dist/`
+- **React build**: `client/build/`
+- **Docker images**: Docker Hub (`hndrwn/s3-migration-scheduler`)
 
-All scripts include proper error handling and user guidance!
+### Logs and Data:
+- **Application logs**: `%APPDATA%/s3-migration-scheduler/logs/`
+- **Database**: `%APPDATA%/s3-migration-scheduler/data/`
+- **Build logs**: Console output during script execution
+
+## 🔗 Related Documentation
+
+- **Main README**: `../README.md` - Project overview and features
+- **Release Notes**: `../RELEASE_NOTES_v[VERSION].md` - Version-specific changes
+- **Changelog**: `../CHANGELOG.md` - Complete version history
+- **Troubleshooting**: `../docs/TROUBLESHOOTING.md` - Corporate environment issues
+- **Docker Guide**: `../docs/DOCKER.md` - Docker deployment details
+
+---
+
+**💡 Tip**: Use the complete build script (`build-and-release.bat/.sh`) for the easiest and most reliable release process. It handles all the complexity and provides clear guidance for GitHub release creation.
