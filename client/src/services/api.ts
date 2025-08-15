@@ -12,6 +12,7 @@ import {
   ScheduledMigrationStats,
   SystemStatsResponse
 } from '../types';
+import { AxiosError } from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -41,17 +42,44 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    console.error('API Response Error:', error);
-    if (error.response?.status === 404) {
-      throw new Error('Resource not found');
-    } else if (error.response?.status >= 500) {
-      throw new Error('Server error occurred');
-    } else if (error.code === 'ECONNREFUSED') {
-      throw new Error('Cannot connect to server');
-    }
-    throw error;
+    return handleApiError(error);
   }
 );
+
+const handleApiError = (error: AxiosError): never => {
+  console.error('API Error:', error);
+  
+  if (error.response) {
+    // Server responded with error status
+    if (error.response.status === 404) {
+      throw new Error('Resource not found');
+    } else if (error.response.status >= 500) {
+      throw new Error('Server error occurred');
+    } else if (error.response.status === 403) {
+      throw new Error('Access denied - please check your permissions');
+    } else if (error.response.status === 401) {
+      throw new Error('Authentication required');
+    } else {
+      throw new Error(`Request failed: ${error.response.status}`);
+    }
+  } else if (error.request) {
+    // Network or connection errors
+    if (error.code === 'ECONNREFUSED') {
+      throw new Error('Cannot connect to server. The application may still be starting up - please wait a moment and try again.');
+    } else if (error.code === 'ETIMEDOUT') {
+      throw new Error('Request timed out. This might be due to network restrictions in corporate environments.');
+    } else if (error.code === 'ENOTFOUND') {
+      throw new Error('Server not found. Please check your network connection.');
+    } else if (error.code === 'NETWORK_ERROR') {
+      throw new Error('Network error. This might be blocked by corporate firewall or proxy settings.');
+    } else {
+      throw new Error(`Connection failed: ${error.message}. This might be due to corporate network policies.`);
+    }
+  } else {
+    // Something else happened
+    throw new Error(`Request failed: ${error.message}`);
+  }
+};
 
 export const bucketService = {
   // Check MinIO client health
