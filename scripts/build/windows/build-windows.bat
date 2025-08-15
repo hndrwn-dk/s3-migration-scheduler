@@ -33,6 +33,7 @@ echo %BLUE%Step 1: Checking Prerequisites...%NC%
 echo ======================================
 
 REM Check Node.js
+echo Checking Node.js...
 node --version >nul 2>&1
 if !errorlevel! neq 0 (
     echo %RED%ERROR: Node.js is not installed or not in PATH%NC%
@@ -42,15 +43,21 @@ if !errorlevel! neq 0 (
 echo %GREEN%+ Node.js found%NC%
 
 REM Check npm
+echo Checking npm...
 npm --version >nul 2>&1
-if !errorlevel! neq 0 (
+set NPM_ERROR=!errorlevel!
+echo npm check returned: !NPM_ERROR!
+if !NPM_ERROR! neq 0 (
     echo %RED%ERROR: npm is not installed or not in PATH%NC%
+    echo Trying to show npm version for debugging...
+    npm --version
     pause
     exit /b 1
 )
 echo %GREEN%+ npm found%NC%
 
 echo.
+echo Continuing to Step 2...
 
 REM Step 2: Build React client (if not already built)
 echo %BLUE%Step 2: Ensuring React Client is Built...%NC%
