@@ -9,64 +9,57 @@ set VERSION=1.1.0
 set DOCKER_USERNAME=hndrwn
 set IMAGE_NAME=s3-migration-scheduler
 
-REM Colors for output (if supported)
-set GREEN=[92m
-set RED=[91m
-set YELLOW=[93m
-set BLUE=[94m
-set NC=[0m
-
 echo.
-echo %BLUE%=========================================================================%NC%
-echo %BLUE%           S3 Migration Scheduler - Complete Build and Release          %NC%
-echo %BLUE%                              Version %VERSION%                              %NC%
-echo %BLUE%=========================================================================%NC%
+echo =========================================================================
+echo           S3 Migration Scheduler - Complete Build and Release          
+echo                              Version %VERSION%                              
+echo =========================================================================
 echo.
 
 REM Get script directory and project root
 set SCRIPT_DIR=%~dp0
 set PROJECT_ROOT=%SCRIPT_DIR%..\..
 
-echo %YELLOW%Project root: %PROJECT_ROOT%%NC%
-echo %YELLOW%Scripts structure: build/, setup/, db/%NC%
+echo Project root: %PROJECT_ROOT%
+echo Scripts structure: build/, setup/, db/
 echo.
 
 REM Step 1: Verify prerequisites
-echo %BLUE%Step 1: Checking Prerequisites...%NC%
+echo Step 1: Checking Prerequisites...
 echo ======================================
 
 REM Check Node.js
 node --version >nul 2>&1
 if !errorlevel! neq 0 (
-    echo %RED%ERROR: Node.js is not installed or not in PATH%NC%
+    echo ERROR: Node.js is not installed or not in PATH
     pause
     exit /b 1
 )
-echo %GREEN%+ Node.js found%NC%
+echo + Node.js found
 
 REM Check npm
 npm --version >nul 2>&1
 if !errorlevel! neq 0 (
-    echo %RED%ERROR: npm is not installed or not in PATH%NC%
+    echo ERROR: npm is not installed or not in PATH
     pause
     exit /b 1
 )
-echo %GREEN%+ npm found%NC%
+echo + npm found
 
 REM Check Docker (optional)
 docker --version >nul 2>&1
 if !errorlevel! neq 0 (
-    echo %YELLOW%⚠ Docker not found - Docker builds will be skipped%NC%
+    echo WARNING: Docker not found - Docker builds will be skipped
     set DOCKER_AVAILABLE=false
 ) else (
-    echo %GREEN%+ Docker found%NC%
+    echo + Docker found
     set DOCKER_AVAILABLE=true
 )
 
 echo.
 
 REM Step 2: Clean previous builds
-echo %BLUE%Step 2: Cleaning Previous Builds...%NC%
+echo Step 2: Cleaning Previous Builds...
 echo ====================================
 
 cd /d "%PROJECT_ROOT%"
@@ -87,17 +80,17 @@ if !errorlevel! equ 1 (
     if exist "electron-app\node_modules" rmdir /s /q "electron-app\node_modules"
 )
 
-echo %GREEN%+ Cleanup completed%NC%
+echo + Cleanup completed
 echo.
 
 REM Step 3: Install dependencies
-echo %BLUE%Step 3: Installing Dependencies...%NC%
+echo Step 3: Installing Dependencies...
 echo ===================================
 
 echo Installing root dependencies...
 npm install
 if !errorlevel! neq 0 (
-    echo %RED%ERROR: Failed to install root dependencies%NC%
+    echo ERROR: Failed to install root dependencies
     pause
     exit /b 1
 )
@@ -106,7 +99,7 @@ echo Installing client dependencies...
 cd client
 npm install
 if !errorlevel! neq 0 (
-    echo %RED%ERROR: Failed to install client dependencies%NC%
+    echo ERROR: Failed to install client dependencies
     pause
     exit /b 1
 )
@@ -115,7 +108,7 @@ echo Installing server dependencies...
 cd ..\server
 npm install
 if !errorlevel! neq 0 (
-    echo %RED%ERROR: Failed to install server dependencies%NC%
+    echo ERROR: Failed to install server dependencies
     pause
     exit /b 1
 )
@@ -124,44 +117,44 @@ echo Installing electron app dependencies...
 cd ..\electron-app
 npm install
 if !errorlevel! neq 0 (
-    echo %RED%ERROR: Failed to install electron app dependencies%NC%
+    echo ERROR: Failed to install electron app dependencies
     pause
     exit /b 1
 )
 
 cd /d "%PROJECT_ROOT%"
-echo %GREEN%+ All dependencies installed%NC%
+echo + All dependencies installed
 echo.
 
 REM Step 4: Build client
-echo %BLUE%Step 4: Building React Client...%NC%
+echo Step 4: Building React Client...
 echo =================================
 
 cd client
 npm run build
 if !errorlevel! neq 0 (
-    echo %RED%ERROR: Failed to build React client%NC%
+    echo ERROR: Failed to build React client
     pause
     exit /b 1
 )
 
 cd /d "%PROJECT_ROOT%"
-echo %GREEN%+ React client built successfully%NC%
+echo + React client built successfully
 echo.
 
 REM Step 5: Build desktop packages using specialized scripts
-echo %BLUE%Step 5: Building Desktop Packages...%NC%
+echo Step 5: Building Desktop Packages...
 echo =====================================
 
 REM Windows packages (always build on Windows)
 echo Calling Windows build script...
 call "%SCRIPT_DIR%windows\build-windows.bat"
 if !errorlevel! neq 0 (
-    echo %RED%ERROR: Windows build failed%NC%
+    echo ERROR: Windows build failed
     pause
     exit /b 1
 )
-echo %GREEN%+ Windows packages completed%NC%
+echo + Windows packages completed
 
 REM Ask if user wants to build Linux packages
 choice /c YN /m "Build Linux packages? (requires Linux build tools) "
@@ -169,9 +162,9 @@ if !errorlevel! equ 1 (
     echo Calling Linux build script...
     call "%SCRIPT_DIR%linux\build-linux.sh"
     if !errorlevel! neq 0 (
-        echo %YELLOW%⚠ Warning: Linux build failed (this is normal on Windows)%NC%
+        echo WARNING: Linux build failed (this is normal on Windows)
     ) else (
-        echo %GREEN%+ Linux packages completed%NC%
+        echo + Linux packages completed
     )
 )
 
@@ -179,7 +172,7 @@ echo.
 
 REM Step 6: Docker build and push using specialized script
 if "%DOCKER_AVAILABLE%"=="true" (
-    echo %BLUE%Step 6: Docker Build and Push...%NC%
+    echo Step 6: Docker Build and Push...
     echo ================================
     
     choice /c YN /m "Build and push Docker images? "
@@ -187,27 +180,27 @@ if "%DOCKER_AVAILABLE%"=="true" (
         echo Calling Docker build script...
         call "%SCRIPT_DIR%docker\docker-build-and-push.bat"
         if !errorlevel! neq 0 (
-            echo %YELLOW%⚠ Warning: Docker build failed%NC%
+            echo WARNING: Docker build failed
         ) else (
-            echo %GREEN%+ Docker images built and pushed%NC%
+            echo + Docker images built and pushed
         )
     )
     echo.
 )
 
 REM Step 7: List built assets
-echo %BLUE%Step 7: Build Summary...%NC%
+echo Step 7: Build Summary...
 echo ========================
 
 echo.
-echo %GREEN%BUILD COMPLETED SUCCESSFULLY!%NC%
+echo BUILD COMPLETED SUCCESSFULLY!
 echo.
 
-echo %YELLOW%Built Assets:%NC%
+echo Built Assets:
 echo -------------
 
 if exist "electron-app\dist" (
-    echo %GREEN%Desktop Packages:%NC%
+    echo Desktop Packages:
     dir /b "electron-app\dist\*.exe" 2>nul && echo   + Windows installer (.exe)
     dir /b "electron-app\dist\*.zip" 2>nul && echo   + Windows portable (.zip)
     dir /b "electron-app\dist\*.AppImage" 2>nul && echo   + Linux AppImage
@@ -217,30 +210,30 @@ if exist "electron-app\dist" (
 )
 
 if "%DOCKER_AVAILABLE%"=="true" (
-    echo %GREEN%Docker Images:%NC%
+    echo Docker Images:
     echo   + %DOCKER_USERNAME%/%IMAGE_NAME%:%VERSION%
     echo   + %DOCKER_USERNAME%/%IMAGE_NAME%:latest
     echo.
 )
 
-echo %GREEN%React Client:%NC%
+echo React Client:
 echo   + client\build\ (production build)
 echo.
 
 REM Step 8: Release instructions
-echo %BLUE%Step 8: Next Steps for GitHub Release...%NC%
+echo Step 8: Next Steps for GitHub Release...
 echo =========================================
 
 echo.
-echo %YELLOW%Ready for GitHub Release!%NC%
+echo Ready for GitHub Release!
 echo.
-echo %GREEN%1. Create GitHub Release:%NC%
+echo 1. Create GitHub Release:
 echo    • Go to: https://github.com/hndrwn-dk/s3-migration-scheduler/releases
 echo    • Click "Create a new release"
 echo    • Tag version: v%VERSION%
 echo    • Title: S3 Migration Scheduler v%VERSION% - Docker Hub Integration ^& Enhanced Features
 echo.
-echo %GREEN%2. Upload Release Assets:%NC%
+echo 2. Upload Release Assets:
 if exist "electron-app\dist" (
     echo    Upload these files from electron-app\dist\:
     for %%f in ("electron-app\dist\*.exe" "electron-app\dist\*.zip" "electron-app\dist\*.AppImage" "electron-app\dist\*.deb" "electron-app\dist\*.dmg") do (
@@ -248,18 +241,18 @@ if exist "electron-app\dist" (
     )
 )
 echo.
-echo %GREEN%3. Release Notes:%NC%
+echo 3. Release Notes:
 echo    • Copy from: RELEASE_NOTES_v%VERSION%.md
 echo    • Include Docker Hub deployment instructions
 echo    • Mention corporate environment fixes
 echo.
-echo %GREEN%4. Docker Hub:%NC%
+echo 4. Docker Hub:
 echo    • Images already available at: %DOCKER_USERNAME%/%IMAGE_NAME%:%VERSION%
 echo    • Test deployment: docker run -d -p 5000:5000 %DOCKER_USERNAME%/%IMAGE_NAME%:%VERSION%
 echo.
 
 REM Step 9: Open useful directories
-echo %BLUE%Step 9: Opening Build Directories...%NC%
+echo Step 9: Opening Build Directories...
 echo =====================================
 
 choice /c YN /m "Open electron-app\dist directory in Explorer? "
@@ -267,7 +260,7 @@ if !errorlevel! equ 1 (
     if exist "electron-app\dist" (
         start explorer "electron-app\dist"
     ) else (
-        echo %RED%ERROR: electron-app\dist directory not found%NC%
+        echo ERROR: electron-app\dist directory not found
     )
 )
 
@@ -277,11 +270,11 @@ if !errorlevel! equ 1 (
 )
 
 echo.
-echo %GREEN%=========================================================================%NC%
-echo %GREEN%                    BUILD AND RELEASE SCRIPT COMPLETED                   %NC%
-echo %GREEN%                         (Using Structured Scripts)                      %NC%
-echo %GREEN%                              Version %VERSION%                              %NC%
-echo %GREEN%=========================================================================%NC%
+echo =========================================================================
+echo                    BUILD AND RELEASE SCRIPT COMPLETED                   
+echo                         (Using Structured Scripts)                      
+echo                              Version %VERSION%                              
+echo =========================================================================
 echo.
 
 pause
