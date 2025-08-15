@@ -7,56 +7,49 @@ setlocal enabledelayedexpansion
 REM Configuration
 set VERSION=1.1.0
 
-REM Colors for output
-set GREEN=[92m
-set RED=[91m
-set YELLOW=[93m
-set BLUE=[94m
-set NC=[0m
-
 echo.
-echo %BLUE%=========================================================================%NC%
-echo %BLUE%                  S3 Migration Scheduler - Windows Build                  %NC%
-echo %BLUE%                              Version %VERSION%                              %NC%
-echo %BLUE%=========================================================================%NC%
+echo =========================================================================
+echo                  S3 Migration Scheduler - Windows Build                  
+echo                              Version %VERSION%                              
+echo =========================================================================
 echo.
 
 REM Get script directory and project root
 set SCRIPT_DIR=%~dp0
 set PROJECT_ROOT=%SCRIPT_DIR%..\..\..
 
-echo %YELLOW%Project root: %PROJECT_ROOT%%NC%
+echo Project root: %PROJECT_ROOT%
 echo.
 
 REM Step 1: Verify prerequisites
-echo %BLUE%Step 1: Checking Prerequisites...%NC%
+echo Step 1: Checking Prerequisites...
 echo ======================================
 
 REM Check Node.js
 echo Checking Node.js...
 node --version >nul 2>&1
 if !errorlevel! neq 0 (
-    echo %RED%ERROR: Node.js is not installed or not in PATH%NC%
+    echo ERROR: Node.js is not installed or not in PATH
     pause
     exit /b 1
 )
-echo %GREEN%+ Node.js found%NC%
+echo + Node.js found
 
 REM Check npm
 echo Checking npm...
 where npm >nul 2>&1
 if !errorlevel! neq 0 (
-    echo %RED%ERROR: npm is not installed or not in PATH%NC%
+    echo ERROR: npm is not installed or not in PATH
     pause
     exit /b 1
 )
-echo %GREEN%+ npm found%NC%
+echo + npm found
 
 echo.
 echo Continuing to Step 2...
 
 REM Step 2: Build React client (if not already built)
-echo %BLUE%Step 2: Ensuring React Client is Built...%NC%
+echo Step 2: Ensuring React Client is Built...
 echo ===========================================
 
 cd /d "%PROJECT_ROOT%\client"
@@ -65,26 +58,26 @@ if not exist "build\index.html" (
     echo React client not found, building...
     npm install
     if !errorlevel! neq 0 (
-        echo %RED%ERROR: Failed to install client dependencies%NC%
+        echo ERROR: Failed to install client dependencies
         pause
         exit /b 1
     )
     
     npm run build
     if !errorlevel! neq 0 (
-        echo %RED%ERROR: Failed to build React client%NC%
+        echo ERROR: Failed to build React client
         pause
         exit /b 1
     )
-    echo %GREEN%+ React client built successfully%NC%
+    echo + React client built successfully
 ) else (
-    echo %GREEN%+ React client already built%NC%
+    echo + React client already built
 )
 
 echo.
 
 REM Step 3: Build Windows desktop packages
-echo %BLUE%Step 3: Building Windows Desktop Packages...%NC%
+echo Step 3: Building Windows Desktop Packages...
 echo =============================================
 
 cd /d "%PROJECT_ROOT%\electron-app"
@@ -94,7 +87,7 @@ if not exist "node_modules" (
     echo Installing electron app dependencies...
     npm install
     if !errorlevel! neq 0 (
-        echo %RED%ERROR: Failed to install electron app dependencies%NC%
+        echo ERROR: Failed to install electron app dependencies
         pause
         exit /b 1
     )
@@ -103,24 +96,24 @@ if not exist "node_modules" (
 echo Building Windows packages...
 npm run build:win
 if !errorlevel! neq 0 (
-    echo %RED%ERROR: Failed to build Windows packages%NC%
+    echo ERROR: Failed to build Windows packages
     pause
     exit /b 1
 )
 
-echo %GREEN%+ Windows packages built successfully%NC%
+echo + Windows packages built successfully
 echo.
 
 REM Step 4: List built assets
-echo %BLUE%Step 4: Build Results...%NC%
+echo Step 4: Build Results...
 echo ========================
 
 echo.
-echo %GREEN%BUILD COMPLETED SUCCESSFULLY!%NC%
+echo BUILD COMPLETED SUCCESSFULLY!
 echo.
 
 if exist "dist" (
-    echo %GREEN%Windows Desktop Packages:%NC%
+    echo Windows Desktop Packages:
     echo -------------------------
     dir /b "dist\*.exe" 2>nul | findstr /r ".*" >nul && (
         for %%f in (dist\*.exe) do echo   + %%~nxf ^(installer^)
@@ -130,7 +123,7 @@ if exist "dist" (
     )
     echo.
     
-    echo %YELLOW%Built files location: %PROJECT_ROOT%\electron-app\dist\%NC%
+    echo Built files location: %PROJECT_ROOT%\electron-app\dist%
     echo.
     
     choice /c YN /m "Open dist directory in Explorer? "
@@ -138,14 +131,14 @@ if exist "dist" (
         start explorer "dist"
     )
 ) else (
-    echo %RED%ERROR: No dist directory found%NC%
+    echo ERROR: No dist directory found
 )
 
 echo.
-echo %GREEN%=========================================================================%NC%
-echo %GREEN%                     WINDOWS BUILD SCRIPT COMPLETED                     %NC%
-echo %GREEN%                              Version %VERSION%                              %NC%
-echo %GREEN%=========================================================================%NC%
+echo =========================================================================
+echo                     WINDOWS BUILD SCRIPT COMPLETED                     
+echo                              Version %VERSION%                              
+echo =========================================================================
 echo.
 
 pause
