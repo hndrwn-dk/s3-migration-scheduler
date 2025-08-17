@@ -20,8 +20,8 @@ echo =======================================================================
 
 REM Get the directory where this script is located
 set SCRIPT_DIR=%~dp0
-REM Get the project root (parent of scripts directory)
-set PROJECT_ROOT=%SCRIPT_DIR%..
+REM Get the project root (go up 3 levels: docker -> build -> scripts -> project root)
+set PROJECT_ROOT=%SCRIPT_DIR%..\..\..
 REM Get the client directory
 set CLIENT_DIR=%PROJECT_ROOT%\client
 
