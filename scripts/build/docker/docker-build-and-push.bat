@@ -7,7 +7,7 @@ setlocal enabledelayedexpansion
 REM Configuration
 set DOCKER_USERNAME=hndrwn
 set IMAGE_NAME=s3-migration-scheduler
-set VERSION=1.1.0
+set VERSION=v1.1.0
 set LATEST_TAG=latest
 
 REM Full image names
