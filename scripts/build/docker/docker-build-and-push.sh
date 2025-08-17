@@ -8,7 +8,7 @@ set -e  # Exit on any error
 # Configuration
 DOCKER_USERNAME="hndrwn"
 IMAGE_NAME="s3-migration-scheduler"
-VERSION="1.1.0"
+VERSION="v1.1.0"
 LATEST_TAG="latest"
 
 # Full image names
