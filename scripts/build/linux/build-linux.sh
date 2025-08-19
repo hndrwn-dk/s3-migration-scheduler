@@ -75,6 +75,14 @@ if [ ! -d "node_modules" ]; then
     npm install
 fi
 
+# Ensure server dependencies are installed
+echo "Installing server dependencies..."
+cd "${PROJECT_ROOT}/server"
+npm install --production
+echo -e "${GREEN}✓ Server dependencies installed${NC}"
+
+cd "${PROJECT_ROOT}/electron-app"
+
 echo "Building Linux packages..."
 npm run build:linux
 
