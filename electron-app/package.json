@@ -13,13 +13,15 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
+    "prebuild": "npm run install-server-deps",
     "build": "electron-builder",
-    "build:win": "electron-builder --win",
-    "build:linux": "electron-builder --linux",
-    "build:mac": "electron-builder --mac",
-    "build:all": "electron-builder --win --linux --mac",
+    "build:win": "npm run prebuild && electron-builder --win",
+    "build:linux": "npm run prebuild && electron-builder --linux",
+    "build:mac": "npm run prebuild && electron-builder --mac",
+    "build:all": "npm run prebuild && electron-builder --win --linux --mac",
     "dist": "npm run build",
     "pack": "electron-builder --dir",
+    "install-server-deps": "cd ../server && npm install --production",
     "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
@@ -81,12 +83,18 @@
         "from": "../server",
         "to": "server",
         "filter": [
-          "**/*"
+          "**/*",
+          "!**/test/**",
+          "!**/tests/**",
+          "!**/*.test.js",
+          "!**/*.spec.js",
+          "!**/coverage/**",
+          "!**/.nyc_output/**"
         ]
       },
       {
         "from": "../client/build",
-        "to": "client/build",
+        "to": "client",
         "filter": [
           "**/*"
         ]

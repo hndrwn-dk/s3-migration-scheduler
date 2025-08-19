@@ -125,11 +125,41 @@ class S3MigrationApp {
     return new Promise((resolve, reject) => {
       const serverScript = path.join(this.serverPath, 'index.js');
       
+      // Debug: Log paths
+      console.log('🔍 Server startup debug info:');
+      console.log('  - isDev:', this.isDev);
+      console.log('  - serverPath:', this.serverPath);
+      console.log('  - serverScript:', serverScript);
+      console.log('  - resourcesPath:', this.resourcesPath);
+      
       // Check if server script exists
       if (!fs.existsSync(serverScript)) {
-        console.error('Server script not found:', serverScript);
-        reject(new Error('Server script not found'));
+        console.error('❌ Server script not found:', serverScript);
+        
+        // Debug: List contents of server directory
+        try {
+          if (fs.existsSync(this.serverPath)) {
+            console.log('📁 Server directory contents:');
+            const files = fs.readdirSync(this.serverPath);
+            files.forEach(file => console.log(`  - ${file}`));
+          } else {
+            console.error('❌ Server directory does not exist:', this.serverPath);
+          }
+        } catch (error) {
+          console.error('❌ Error reading server directory:', error.message);
+        }
+        
+        reject(new Error(`Server script not found: ${serverScript}`));
         return;
+      }
+      
+      // Check if server has node_modules
+      const serverNodeModules = path.join(this.serverPath, 'node_modules');
+      if (!fs.existsSync(serverNodeModules)) {
+        console.warn('⚠️ Server node_modules not found:', serverNodeModules);
+        console.warn('⚠️ This may cause server startup issues');
+      } else {
+        console.log('✅ Server node_modules found');
       }
 
       // Environment variables for the server

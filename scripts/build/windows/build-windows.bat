@@ -93,6 +93,19 @@ if not exist "node_modules" (
     )
 )
 
+REM Ensure server dependencies are installed
+echo Installing server dependencies...
+cd /d "%PROJECT_ROOT%\server"
+npm install --production
+if !errorlevel! neq 0 (
+    echo ERROR: Failed to install server dependencies
+    pause
+    exit /b 1
+)
+echo + Server dependencies installed
+
+cd /d "%PROJECT_ROOT%\electron-app"
+
 echo Building Windows packages...
 npm run build:win
 if !errorlevel! neq 0 (
