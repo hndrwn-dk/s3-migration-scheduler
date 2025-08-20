@@ -37,7 +37,7 @@ echo + Node.js found
 
 REM Check npm
 echo Checking npm...
-where npm >nul 2>&1
+npm --version >nul 2>&1
 if !errorlevel! neq 0 (
     echo ERROR: npm is not installed or not in PATH
     pause

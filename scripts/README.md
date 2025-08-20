@@ -30,11 +30,29 @@ scripts/
 
 ## 🚀 Quick Start
 
-### Platform-Specific Builds (Recommended)
+### Universal Build Script (Recommended)
+
+**Build for Current Platform:**
+```bash
+./scripts/build/build-all.sh all
+```
+
+**Build Specific Platform:**
+```bash
+./scripts/build/build-all.sh linux    # Linux packages
+./scripts/build/build-all.sh windows  # Windows packages (requires Windows)
+./scripts/build/build-all.sh docker   # Docker image
+```
+
+### Platform-Specific Builds (Alternative)
 
 **Windows Desktop Packages:**
 ```bash
+# On Windows:
 .\scripts\build\windows\build-windows.bat
+
+# Cross-platform (Linux/Mac):
+./scripts/build/windows/build-windows-crossplatform.sh
 ```
 
 **Linux Desktop Packages:**
