@@ -191,11 +191,12 @@ list_linux_packages() {
         echo "------------------------"
         
         cd "${PROJECT_ROOT}/electron-app/dist"
-        for file in *.AppImage *.deb *.tar.gz; do
+        for file in *.AppImage *.deb *.rpm *.tar.gz; do
             if [ -f "$file" ]; then
                 case "$file" in
                     *.AppImage) echo "  ✓ $file (Linux AppImage)" ;;
                     *.deb) echo "  ✓ $file (Debian package)" ;;
+                    *.rpm) echo "  ✓ $file (RPM package)" ;;
                     *.tar.gz) echo "  ✓ $file (Tarball)" ;;
                 esac
             fi
