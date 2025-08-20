@@ -56,15 +56,18 @@ cd /d "%PROJECT_ROOT%\client"
 
 if not exist "build\index.html" (
     echo React client not found, building...
-    npm install
-    if !errorlevel! neq 0 (
+    echo Installing client dependencies...
+    call npm install
+    if errorlevel 1 (
         echo ERROR: Failed to install client dependencies
         pause
         exit /b 1
     )
+    echo + Client dependencies installed successfully
     
-    npm run build
-    if !errorlevel! neq 0 (
+    echo Building React client...
+    call npm run build
+    if errorlevel 1 (
         echo ERROR: Failed to build React client
         pause
         exit /b 1
@@ -85,19 +88,20 @@ cd /d "%PROJECT_ROOT%\electron-app"
 REM Install electron dependencies if needed
 if not exist "node_modules" (
     echo Installing electron app dependencies...
-    npm install
-    if !errorlevel! neq 0 (
+    call npm install
+    if errorlevel 1 (
         echo ERROR: Failed to install electron app dependencies
         pause
         exit /b 1
     )
+    echo + Electron app dependencies installed successfully
 )
 
 REM Ensure server dependencies are installed
 echo Installing server dependencies...
 cd /d "%PROJECT_ROOT%\server"
-npm install --production
-if !errorlevel! neq 0 (
+call npm install --production
+if errorlevel 1 (
     echo ERROR: Failed to install server dependencies
     pause
     exit /b 1
@@ -107,8 +111,8 @@ echo + Server dependencies installed
 cd /d "%PROJECT_ROOT%\electron-app"
 
 echo Building Windows packages...
-npm run build:win
-if !errorlevel! neq 0 (
+call npm run build:win
+if errorlevel 1 (
     echo ERROR: Failed to build Windows packages
     pause
     exit /b 1
