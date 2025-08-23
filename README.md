@@ -13,56 +13,23 @@ A comprehensive, enterprise-grade fullstack application for S3 bucket migrations
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)
 ![Real-time](https://img.shields.io/badge/Real--time-WebSocket%2BSSE-orange)
 
+## 📑 Table of Contents
+- [☕ Support Me](#support-me)
+- [🚀 Quick Start](#quick-start)
+- [🎯 What's New in v1.1.0](#whats-new-in-v110)
+- [📸 Screenshots](#screenshots)
+- [🌟 Major Accomplishments](#major-accomplishments)
+- [📦 Installation Guides](#installation-guides)
+- [🏗️ Architecture](#architecture)
+- [🛠️ Development](#development)
+- [🏷️ API Reference](#api-reference)
+- [📄 License](#license)
+
 ## ☕ Support Me
 
 If you find this project helpful, you can support me here:
 
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-yellow?style=for-the-badge&logo=buymeacoffee&logoColor=white)](https://buymeacoffee.com/hendrawan)
-
-## 🚀 **Quick Start - New in v1.1.0!**
-
-### 🐳 **Docker Hub Deployment (Recommended)**
-Get started in seconds with our pre-built Docker images:
-
-```bash
-# One-command deployment
-docker run -d -p 5000:5000 -v ./data:/app/data hndrwn/s3-migration-scheduler:1.1.0
-
-# Or use docker-compose for full stack
-git clone https://github.com/hndrwn-dk/s3-migration-scheduler
-cd s3-migration-scheduler
-docker-compose up -d
-```
-
-**🌐 Access at**: http://localhost:5000
-
-### 📦 **Traditional Installation**
-```bash
-# Clone and install
-git clone https://github.com/hndrwn-dk/s3-migration-scheduler
-cd s3-migration-scheduler
-
-# One command to install all dependencies
-npm run install:all
-
-# Start development with new concurrent mode
-npm run dev:stable
-```
-
-## 📑 Table of Contents
-- [☕ Support Me](#-support-me)
-- [🚀 Quick Start](#-quick-start)
-- [🎯 What's New in v1.1.0](#-whats-new-in-v110)
-- [📸 Screenshots](#-screenshots)
-- [🌟 Major Accomplishments](#-major-accomplishments)
-- [📦 Installation Guides](#-installation-guides)
-- [🏗️ Architecture](#️-architecture)
-- [🛠️ Development](#️-development)
-- [📚 Documentation](#-documentation)
-- [🌟 Features in Detail](#-features-in-detail)
-- [🏷️ API Reference](#️-api-reference)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
 
 ## 🎯 **What's New in v1.1.0**
 
@@ -129,59 +96,53 @@ npm run dev:stable
 ![Migration Logs](https://github.com/hndrwn-dk/s3-migration-scheduler/blob/main/docs/images/log-viewer.png?raw=true)
 > 📊 **Logs Tab** - Real-time migration monitoring with enhanced logs including detailed reconciliation reports, bucket comparison analysis, file-by-file transfer tracking, and comprehensive error handling.
 
-## 🌟 **Major Accomplishments**
+## 🚀 **Quick Start**
 
-### ✅ **Docker Production Ready** (🆕 v1.1.0)
-- **Docker Hub Images**: Pre-built containers for instant deployment
-- **Docker Compose**: Full stack with MinIO testing environment
-- **Health Checks**: Production monitoring capabilities
-- **Volume Mounting**: Persistent data and configuration
-
-### ✅ **Desktop Application Ready**
-- **Windows**: Full desktop app with installer, portable, and ZIP packages 
-- **Cross-platform**: Electron-based for Windows, Linux, and macOS
-- **Professional UI**: Modern React interface with real-time updates
-
-### ✅ **Enterprise-grade Reconciliation**
-- **Handles millions of objects** efficiently with streaming technology
-- **3-tier detection system** for accurate object counting
-- **Database-driven comparison** for lightning-fast difference analysis
-- **Memory-efficient processing** for massive S3 buckets
-
-### ✅ **Enhanced Development Experience** (🆕 v1.1.0)
-- **Concurrent Development**: New `npm run dev:stable` for client+server
-- **Automated Builds**: Cross-platform Docker build scripts
-- **Better Dependencies**: Unified dependency management with `npm run install:all`
-
-## 📦 Installation Guides
-
-### 🐳 **Docker (✅ READY - v1.1.0)**
-**Recommended for production deployments**
+### 🐳 **Docker Hub Deployment (Recommended)**
+Get started in seconds with our pre-built Docker images:
 
 ```bash
-# Quick start with Docker Hub
-docker run -d -p 5000:5000 hndrwn/s3-migration-scheduler:1.1.0
+# One-command deployment
+docker run -d -p 8080:8080 -v ./data:/app/data hndrwn/s3-migration-scheduler:1.1.0
 
-# Full stack with docker-compose
+# Or use docker-compose for full stack
 git clone https://github.com/hndrwn-dk/s3-migration-scheduler
 cd s3-migration-scheduler
 docker-compose up -d
 ```
 
-- **[Docker Hub Repository](https://hub.docker.com/r/hndrwn/s3-migration-scheduler)** - Pre-built images
-- **[Docker Deployment Guide](docs/DOCKER.md)** - Complete deployment documentation
-- **[Build Scripts](scripts/)** - Automated build and push tools
+**🌐 Access at**: http://localhost:8080
 
-### 🪟 **Windows (✅ READY)**
+## 📦 Installation Guides
+
+### 📦 **Traditional Installation**
+**Recommended for production deployments**
+
+```bash
+# Clone and install
+git clone https://github.com/hndrwn-dk/s3-migration-scheduler
+cd s3-migration-scheduler
+
+# One command to install all dependencies
+npm run install:all
+
+# Start development with new concurrent mode
+npm run dev:stable
+```
+### 🐳 **Docker**
+- **[Docker Hub Repository](https://hub.docker.com/r/hndrwn/s3-migration-scheduler)** - Pre-built images
+- **[Docker Deployment Guide](docs/docker/DOCKER.md)** - Complete deployment documentation
+- **[Build Scripts](scripts/build/docker/)** - Automated build and push tools
+
+### 🪟 **Windows**
 - **[Quick Installation Guide](docs/windows/README.md)** - ZIP, installer, and portable options
 - **[Download v1.1.0 from Releases](https://github.com/hndrwn-dk/s3-migration-scheduler/releases)** - Ready-to-use packages
-- **[Packaging Guide](docs/windows/WINDOWS_PACKAGING_GUIDE.md)** - For developers
-- **[Troubleshooting](docs/windows/WINDOWS_BUILD_TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Packaging Guide](docs/windows/BUILD.md)** - For developers
+- **[Build Scripts](scripts/build/windows/)** - Automated build and push tools
 
 ### 🐧 **Linux**  
 - **[Installation Guide](docs/linux/README.md)** - AppImage, DEB, RPM, TAR.GZ
-- **[System Service Setup](docs/linux/README.md#systemd-service-system-wide)** - Run as daemon
-- **[Build from Source](docs/linux/README.md#build-from-source)** - Development setup
+- **[Build from Source](docs/linux/BUILD.md)** - Development setup
 
 ### 📥 **Current Releases**
 - **✅ Latest v1.1.0** - [Available on GitHub Releases](https://github.com/hndrwn-dk/s3-migration-scheduler/releases)
@@ -273,65 +234,18 @@ npm run server:dev      # Start Express server in development
 npm run client:build    # Build React production bundle
 ```
 
-## 📚 Documentation
-
-### 🔧 Technical Documentation
-- **[Large Scale Reconciliation](docs/development/LARGE_SCALE_RECONCILIATION.md)** - **✅ IMPLEMENTED** Advanced reconciliation system
-- **[Docker Deployment Guide](docs/DOCKER.md)** - **🆕 v1.1.0** Complete containerization guide
-- **[Concurrent Users & Detection](docs/development/CONCURRENT_USERS_AND_DETECTION.md)** - Multi-user management
-- **[Migration Workflow](docs/development/MIGRATION_WORKFLOW_DIAGRAM.md)** - Process diagrams
-- **[Local Testing Guide](docs/development/LOCAL_TESTING_GUIDE.md)** - Development and testing
-
-### 🚀 CI/CD & Deployment
-- **[CI/CD Workflows](docs/ci-cd/)** - GitHub Actions automation
-- **[Docker Hub Publishing](scripts/)** - **🆕 v1.1.0** Automated build scripts
-
-## 🌟 Features in Detail
-
-### Migration Management
-- **Enhanced Bucket Selection** - **🆕 v1.1.0** Optimized for large-scale deployments
-- **Source/Destination Configuration** - Support for any S3-compatible storage
-- **Object Filtering** - Include/exclude patterns for selective migration
-- **Bandwidth Throttling** - Control transfer speed to avoid overwhelming networks
-- **Error Handling** - Automatic retry with exponential backoff
-- **Progress Tracking** - Real-time updates with detailed statistics
-
-### Scheduling & Automation
-- **Cron Expressions** - Flexible scheduling with standard cron syntax
-- **One-time Migrations** - Immediate execution option
-- **Recurring Migrations** - Daily, weekly, monthly, or custom intervals
-- **Timezone Support** - Schedule migrations in any timezone
-- **Migration Queuing** - Smart queue management for multiple migrations
-
-### **🏆 Advanced Reconciliation** (✅ **ENTERPRISE-GRADE SOLUTION**)
-- **✅ Handles millions of objects** efficiently with streaming technology
-- **✅ Smart Object Detection** - 3-tier approach for accurate object count estimation
-- **✅ Streaming Inventory** - Memory-efficient processing of large buckets (1M+ objects)
-- **✅ Database-driven Comparison** - Lightning-fast difference detection using SQL
-- **✅ Detailed Reports** - Comprehensive reconciliation results with actionable insights
-- **✅ Progressive Verification** - Checkpoint-based resumable reconciliation
-- **✅ Scalable Architecture** - Designed for enterprise-scale S3 migrations
-
-### Monitoring & Logging
-- **Real-time Dashboard** - Live migration status and statistics
-- **WebSocket Updates** - Instant progress notifications
-- **Health Check Endpoints** - **🆕 v1.1.0** Production monitoring
-- **Detailed Logging** - Migration-specific log files
-- **Error Reporting** - Comprehensive error tracking and analysis
-- **Historical Data** - Complete migration history with searchable records
-
 ## 🏷️ API Reference
 
 ### REST Endpoints
 ```
-GET    /api/migrations          # List all migrations
-POST   /api/migrations          # Create new migration
-GET    /api/migrations/:id      # Get migration details
-PUT    /api/migrations/:id      # Update migration
-DELETE /api/migrations/:id      # Delete migration
+GET    /api/migrations           # List all migrations
+POST   /api/migrations           # Create new migration
+GET    /api/migrations/:id       # Get migration details
+PUT    /api/migrations/:id       # Update migration
+DELETE /api/migrations/:id       # Delete migration
 POST   /api/migrations/:id/start # Start migration
 POST   /api/migrations/:id/stop  # Stop migration
-GET    /api/health              # Health check (🆕 v1.1.0)
+GET    /api/health               # Health check (🆕 v1.1.0)
 ```
 
 ### WebSocket Events
@@ -349,27 +263,6 @@ ws.on('reconciliation-update', (data) => {
   console.log('Reconciliation progress:', data);
 });
 ```
-
-## 🤝 Contributing
-
-### Ways to Contribute
-- 🐛 **Report Bugs** - [Open an issue](https://github.com/hndrwn-dk/s3-migration-scheduler/issues)
-- 💡 **Request Features** - [Suggest enhancements](https://github.com/hndrwn-dk/s3-migration-scheduler/issues)
-- 📖 **Improve Documentation** - Help make docs clearer
-- 🔧 **Submit Pull Requests** - Fix bugs or add features
-
-### Development Workflow
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
-
-### Code Standards
-- **ESLint** configuration for consistent code style
-- **Prettier** for code formatting
-- **Jest** for unit testing
-- **Conventional Commits** for commit messages
 
 ## 📄 License
 
