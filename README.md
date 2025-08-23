@@ -14,16 +14,16 @@ A comprehensive, enterprise-grade fullstack application for S3 bucket migrations
 ![Real-time](https://img.shields.io/badge/Real--time-WebSocket%2BSSE-orange)
 
 ## 📑 Table of Contents
-- [☕ Support Me](#support-me)
-- [🚀 Quick Start](#quick-start)
-- [🎯 What's New in v1.1.0](#whats-new-in-v110)
-- [📸 Screenshots](#screenshots)
-- [🌟 Major Accomplishments](#major-accomplishments)
-- [📦 Installation Guides](#installation-guides)
-- [🏗️ Architecture](#architecture)
-- [🛠️ Development](#development)
-- [🏷️ API Reference](#api-reference)
-- [📄 License](#license)
+- [☕ Support Me](#-support-me)
+- [🚀 Quick Start](#-quick-start)
+- [🎯 What's New in v1.1.0](#-whats-new-in-v110)
+- [📸 Screenshots](#-screenshots)
+- [📦 Installation Guides](#-installation-guides)
+- [🏗️ Architecture](#-architecture)
+- [🛠️ Development](#-development)
+- [🏷️ API Reference](#-api-reference)
+- [📄 License](#-license)
+- [🆘 Support](#-support)
 
 ## ☕ Support Me
 
@@ -282,14 +282,6 @@ When reporting issues, please include:
 - **Error messages** and logs
 - **Steps to reproduce** the issue
 - **Expected vs actual behavior**
-
-## 🔗 Links
-
-- **[GitHub Repository](https://github.com/hndrwn-dk/s3-migration-scheduler)**
-- **[Releases](https://github.com/hndrwn-dk/s3-migration-scheduler/releases)**
-- **[Docker Hub](https://hub.docker.com/r/hndrwn/s3-migration-scheduler)** - **🆕 v1.1.0**
-- **[Issue Tracker](https://github.com/hndrwn-dk/s3-migration-scheduler/issues)**
-- **[Documentation](docs/)**
 
 ---
 
