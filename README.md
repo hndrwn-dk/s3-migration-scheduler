@@ -150,40 +150,7 @@ npm run dev:stable
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Electron UI   │    │   Web Browser   │    │   Docker Hub    │
-│   (Desktop)     │    │   (Development) │    │   (Production)  │
-└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
-          │                      │                      │
-          └──────────────────────┼──────────────────────┘
-                                 │
-                    ┌─────────────▼───────────────┐
-                    │      Express Server        │
-                    │   • REST API              │
-                    │   • WebSocket Server      │
-                    │   • Health Endpoints      │
-                    │   • Cron Scheduler        │
-                    │   • Migration Engine      │
-                    │   • Reconciliation Engine │
-                    └─────────────┬───────────────┘
-                                 │
-                    ┌─────────────▼───────────────┐
-                    │     SQLite Database        │
-                    │   • Migration History     │
-                    │   • Configuration         │
-                    │   • Reconciliation Data   │
-                    │   • Large-scale Tracking  │
-                    └─────────────┬───────────────┘
-                                 │
-                    ┌─────────────▼───────────────┐
-                    │      MinIO Client          │
-                    │   • S3 Operations         │
-                    │   • Multi-cloud Support   │
-                    │   • Stream Processing     │
-                    │   • Massive Object Handling│
-                    └─────────────────────────────┘
-```
+![Architecture](https://github.com/hndrwn-dk/s3-migration-scheduler/blob/main/docs/images/arhictecture.png?raw=true)
 
 ## 🛠️ Development
 
@@ -193,16 +160,16 @@ npm run dev:stable
 - **Git**
 - **Docker** (optional, for containerization)
 
-### Local Development Setup (🆕 Enhanced in v1.1.0)
+### Local Development Setup
 ```bash
 # Clone repository
 git clone https://github.com/hndrwn-dk/s3-migration-scheduler.git
 cd s3-migration-scheduler
 
-# Install all dependencies (new unified command)
+# Install all dependencies
 npm run install:all
 
-# Start concurrent development (new in v1.1.0)
+# Start concurrent development
 npm run dev:stable  # Runs client and server simultaneously
 ```
 
@@ -211,13 +178,13 @@ npm run dev:stable  # Runs client and server simultaneously
 # Build client
 npm run client:build
 
-# Build Windows app (✅ TESTED & WORKING)
+# Build Windows app
 cd electron-app && npm run build:win
 
 # Build Linux app  
 cd electron-app && npm run build:linux
 
-# Build and push Docker image (🆕 v1.1.0)
+# Build and push Docker image)
 # Windows
 .\scripts\docker-build-and-push.bat
 
@@ -225,7 +192,7 @@ cd electron-app && npm run build:linux
 ./scripts/docker-build-and-push.sh
 ```
 
-### 🆕 **New Development Commands (v1.1.0)**
+### 🆕 **New Development Commands**
 ```bash
 npm run dev:stable      # Concurrent client + server development
 npm run install:all     # Install all project dependencies
@@ -246,22 +213,6 @@ DELETE /api/migrations/:id       # Delete migration
 POST   /api/migrations/:id/start # Start migration
 POST   /api/migrations/:id/stop  # Stop migration
 GET    /api/health               # Health check (🆕 v1.1.0)
-```
-
-### WebSocket Events
-```javascript
-// Connect to WebSocket
-const ws = new WebSocket('ws://localhost:5000');
-
-// Listen for migration updates
-ws.on('migration-update', (data) => {
-  console.log('Migration progress:', data);
-});
-
-// Listen for reconciliation updates
-ws.on('reconciliation-update', (data) => {
-  console.log('Reconciliation progress:', data);
-});
 ```
 
 ## 📄 License
