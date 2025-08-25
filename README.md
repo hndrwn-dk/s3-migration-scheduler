@@ -150,7 +150,7 @@ npm run dev:stable
 
 ## 🏗️ Architecture
 
-![Architecture](https://github.com/hndrwn-dk/s3-migration-scheduler/blob/main/docs/images/arhictecture.png?raw=true)
+![Architecture](https://raw.githubusercontent.com/hndrwn-dk/s3-migration-scheduler/refs/heads/main/docs/images/architecture.png)
 
 ## 🛠️ Development
 
