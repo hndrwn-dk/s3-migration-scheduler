@@ -19,9 +19,9 @@ A comprehensive, enterprise-grade fullstack application for S3 bucket migrations
 - [🎯 What's New in v1.1.0](#-whats-new-in-v110)
 - [📸 Screenshots](#-screenshots)
 - [📦 Installation Guides](#-installation-guides)
-- [🏗️ Architecture](#architecture)
-- [🛠️ Development](#development)
-- [🏷️ API Reference](#api-reference)
+- [🏗️ Architecture](#-architecture)
+- [🛠️ Development](#-development)
+- [🏷️ API Reference](#-api-reference)
 - [📄 License](#-license)
 - [🆘 Support](#-support)
 
@@ -148,11 +148,11 @@ npm run dev:stable
 - **✅ Latest v1.1.0** - [Available on GitHub Releases](https://github.com/hndrwn-dk/s3-migration-scheduler/releases)
 - **✅ Docker Images** - [Available on Docker Hub](https://hub.docker.com/r/hndrwn/s3-migration-scheduler)
 
-## 🏗️ Architecture
+## 🏗 Architecture
 
 ![Architecture](https://raw.githubusercontent.com/hndrwn-dk/s3-migration-scheduler/refs/heads/main/docs/images/architecture.png)
 
-## 🛠️ Development
+## 🛠 Development
 
 ### Prerequisites
 - **Node.js** 18+ 
@@ -201,7 +201,7 @@ npm run server:dev      # Start Express server in development
 npm run client:build    # Build React production bundle
 ```
 
-## 🏷️ API Reference
+## 🏷 API Reference
 
 ### REST Endpoints
 ```
