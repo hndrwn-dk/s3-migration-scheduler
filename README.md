@@ -19,9 +19,9 @@ A comprehensive, enterprise-grade fullstack application for S3 bucket migrations
 - [🎯 What's New in v1.1.0](#-whats-new-in-v110)
 - [📸 Screenshots](#-screenshots)
 - [📦 Installation Guides](#-installation-guides)
-- [🏗️ Architecture](#-architecture)
-- [🛠️ Development](#-development)
-- [🏷️ API Reference](#-api-reference)
+- [🏗️ Architecture](#architecture)
+- [🛠️ Development](#development)
+- [🏷️ API Reference](#api-reference)
 - [📄 License](#-license)
 - [🆘 Support](#-support)
 
