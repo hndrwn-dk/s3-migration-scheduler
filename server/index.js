@@ -84,7 +84,7 @@ console.log('Cron migration scheduler initialized');
 
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Dashboard available at http://localhost:${PORT}`);
   console.log(`WebSocket server initialized`);
