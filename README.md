@@ -131,7 +131,8 @@ npm run dev:stable
 ```
 ### 🐳 **Docker**
 - **[Docker Hub Repository](https://hub.docker.com/r/hndrwn/s3-migration-scheduler)** - Pre-built images
-- **[Docker Deployment Guide](docs/docker/DOCKER.md)** - Complete deployment documentation
+- **[Docker Deployment Guide](docs/docker/README.md)** - Complete deployment documentation
+- **[Windows 11 Docker Guide](docs/docker/WINDOWS_DEPLOYMENT.md)** - Windows-specific deployment guide
 - **[Build Scripts](scripts/build/docker/)** - Automated build and push tools
 
 ### 🪟 **Windows**
