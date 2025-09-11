@@ -1,16 +1,17 @@
 # Docker Deployment Guide for Windows 11
 
-This guide will help you test your S3 Migration Scheduler Docker setup locally and push it to Docker Hub.
+This guide will help you test your S3 Migration Scheduler Docker setup locally on Windows 11 and push it to Docker Hub.
 
 ## Prerequisites
 
-- Windows 11 with Docker Desktop installed
+- Windows 11 with Docker Desktop installed and running
 - Git (for version control)
 - Docker Hub account (for pushing images)
+- PowerShell or Command Prompt
 
 ## Step 1: Resolve Git Conflicts (if any)
 
-If you have unmerged files, resolve them first:
+If you have unmerged files from your git pull, resolve them first:
 
 ```powershell
 # Check git status
@@ -64,11 +65,11 @@ docker-compose logs -f
 
 ```powershell
 # Run the container directly
-docker run -d \
-  --name s3-migration-scheduler-test \
-  -p 5000:5000 \
-  -v ${PWD}/data:/app/data \
-  -v ${PWD}/logs:/app/logs \
+docker run -d `
+  --name s3-migration-scheduler-test `
+  -p 5000:5000 `
+  -v ${PWD}/data:/app/data `
+  -v ${PWD}/logs:/app/logs `
   s3-migration-scheduler:local
 
 # Check container status
@@ -129,11 +130,11 @@ docker rmi yourusername/s3-migration-scheduler:latest
 docker pull yourusername/s3-migration-scheduler:latest
 
 # Test the pulled image
-docker run -d \
-  --name s3-migration-scheduler-hub-test \
-  -p 5000:5000 \
-  -v ${PWD}/data:/app/data \
-  -v ${PWD}/logs:/app/logs \
+docker run -d `
+  --name s3-migration-scheduler-hub-test `
+  -p 5000:5000 `
+  -v ${PWD}/data:/app/data `
+  -v ${PWD}/logs:/app/logs `
   yourusername/s3-migration-scheduler:latest
 
 # Test the application
@@ -195,17 +196,53 @@ docker-compose -f docker-compose.prod.yml ps
 
 ```powershell
 # Production deployment with Docker run
-docker run -d \
-  --name s3-migration-scheduler-prod \
-  --restart unless-stopped \
-  -p 5000:5000 \
-  -v C:\Users\hendr\Deployment\s3-migration-scheduler\data:/app/data \
-  -v C:\Users\hendr\Deployment\s3-migration-scheduler\logs:/app/logs \
-  -e NODE_ENV=production \
-  -e PORT=5000 \
-  -e FRONTEND_URL=http://localhost:5000 \
+docker run -d `
+  --name s3-migration-scheduler-prod `
+  --restart unless-stopped `
+  -p 5000:5000 `
+  -v C:\Users\hendr\Deployment\s3-migration-scheduler\data:/app/data `
+  -v C:\Users\hendr\Deployment\s3-migration-scheduler\logs:/app/logs `
+  -e NODE_ENV=production `
+  -e PORT=5000 `
+  -e FRONTEND_URL=http://localhost:5000 `
   yourusername/s3-migration-scheduler:1.1.0
 ```
+
+## Automated Testing Scripts
+
+We've created automated scripts to test and deploy your Docker setup. Choose the one that works best for your environment:
+
+### Option 1: PowerShell Script (Recommended for Windows 11)
+```powershell
+# Run the PowerShell script with default settings
+.\docs\docker\scripts\docker-test-and-deploy.ps1
+
+# Or with custom parameters
+.\docs\docker\scripts\docker-test-and-deploy.ps1 -DockerHubUsername "yourusername" -Version "1.1.0"
+
+# Skip tests and only build/push
+.\docs\docker\scripts\docker-test-and-deploy.ps1 -SkipTests
+
+# Build and test but don't push to Docker Hub
+.\docs\docker\scripts\docker-test-and-deploy.ps1 -SkipPush
+```
+
+### Option 2: Batch Script (Legacy Windows support)
+```cmd
+# Run the batch script
+.\docs\docker\scripts\docker-test-and-deploy.bat
+```
+
+Both scripts will:
+1. Check Docker status
+2. Build the image
+3. Test with docker-compose
+4. Test individual container
+5. Tag images for Docker Hub
+6. Push to Docker Hub
+7. Optionally test the pushed image
+
+The PowerShell script offers better error handling and Windows 11 integration.
 
 ## Troubleshooting
 
@@ -244,6 +281,12 @@ docker run -d \
    curl http://localhost:5000/api/health
    ```
 
+5. **Docker Desktop Not Running**
+   ```powershell
+   # Start Docker Desktop from Start Menu or:
+   Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+   ```
+
 ### Useful Commands
 
 ```powershell
@@ -264,6 +307,9 @@ docker stats
 
 # Clean up unused resources
 docker system prune
+
+# Check Docker Desktop status
+docker version
 ```
 
 ## Security Considerations
@@ -309,3 +355,5 @@ docker logs -t <container_name>
 ---
 
 **Note**: Replace `yourusername` with your actual Docker Hub username throughout this guide.
+
+For the main Docker documentation, see [README.md](README.md).

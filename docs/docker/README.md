@@ -211,6 +211,7 @@ curl http://localhost:5000/api/migration
 ## 📚 Additional Resources
 
 - **[Main Documentation](../../README.md)** - Complete project overview
+- **[Windows 11 Docker Deployment](WINDOWS_DEPLOYMENT.md)** - Windows-specific Docker guide
 - **[Windows Installation](../windows/README.md)** - Desktop application
 - **[Linux Installation](../linux/README.md)** - Native Linux packages
 
