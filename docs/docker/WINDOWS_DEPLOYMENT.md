@@ -45,7 +45,7 @@ docker build -t s3-migration-scheduler:local .
 docker images | findstr s3-migration-scheduler
 ```
 
-### 2.2 Test with Docker Compose
+### 2.2 Test with Docker Compose (Recommended)
 
 ```powershell
 # Start the application with docker-compose
@@ -60,6 +60,8 @@ docker-compose logs -f
 # Test the application
 # Open browser to: http://localhost:5000
 ```
+
+**Note**: Docker Compose is the recommended method as it properly handles volume mounting and environment variables.
 
 ### 2.3 Test Individual Container
 
