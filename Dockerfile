@@ -1,4 +1,4 @@
-﻿# S3 Migration Scheduler - Production Docker Build (Clean Install)
+# S3 Migration Scheduler - Production Docker Build (Clean Install)
 FROM node:20-slim
 
 # Install system dependencies
