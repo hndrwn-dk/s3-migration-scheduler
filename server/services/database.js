@@ -3,8 +3,8 @@ const path = require('path');
 const fs = require('fs-extra');
 
 class DatabaseService {
-  constructor() {
-    this.dbPath = path.join(__dirname, '../data/migrations.db');
+  constructor(dbPath) {
+    this.dbPath = dbPath || path.join(__dirname, '../data/migrations.db');
     this.ensureDataDirectory();
     this.db = new Database(this.dbPath);
     
@@ -69,6 +69,16 @@ class DatabaseService {
     this.migrateSchemaIfNeeded();
 
     // Create indexes for better performance (after schema migration)
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS ai_settings (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        base_url TEXT,
+        model TEXT,
+        api_key TEXT,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     this.db.exec(`
       CREATE INDEX IF NOT EXISTS idx_migrations_status ON migrations(status);
       CREATE INDEX IF NOT EXISTS idx_migrations_start_time ON migrations(start_time);
@@ -528,6 +538,39 @@ class DatabaseService {
     return stmt.get();
   }
 
+  getAiSettings() {
+    const row = this.db.prepare(`
+      SELECT base_url, model, api_key
+      FROM ai_settings
+      WHERE id = 1
+    `).get();
+
+    if (!row) return null;
+
+    return {
+      baseUrl: row.base_url || '',
+      model: row.model || '',
+      apiKey: row.api_key || ''
+    };
+  }
+
+  saveAiSettings({ baseUrl, model, apiKey }) {
+    const existing = this.getAiSettings();
+    const nextKey = apiKey ? apiKey : (existing?.apiKey || null);
+
+    this.db.prepare(`
+      INSERT INTO ai_settings (id, base_url, model, api_key, updated_at)
+      VALUES (1, ?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(id) DO UPDATE SET
+        base_url = excluded.base_url,
+        model = excluded.model,
+        api_key = excluded.api_key,
+        updated_at = CURRENT_TIMESTAMP
+    `).run(baseUrl, model, nextKey);
+
+    return this.getAiSettings();
+  }
+
   close() {
     if (this.db) {
       this.db.close();
@@ -536,4 +579,6 @@ class DatabaseService {
   }
 }
 
-module.exports = new DatabaseService();
+const databaseService = new DatabaseService();
+module.exports = databaseService;
+module.exports.DatabaseService = DatabaseService;

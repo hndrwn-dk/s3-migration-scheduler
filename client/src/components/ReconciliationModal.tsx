@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   XMarkIcon,
   ExclamationTriangleIcon,
   DocumentDuplicateIcon,
   TrashIcon,
   ScaleIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
-import { Migration } from '../types';
-import { migrationService } from '../services/api';
+import { AiInsight, Migration } from '../types';
+import { aiService } from '../services/api';
 import { toast } from 'react-toastify';
+import AssistantCard from './AssistantCard';
 
 interface ReconciliationModalProps {
   migration: Migration | null;
@@ -20,6 +22,14 @@ interface ReconciliationModalProps {
 
 const ReconciliationModal: React.FC<ReconciliationModalProps> = ({ migration, isOpen, onClose, onMigrationUpdate }) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [summary, setSummary] = useState<AiInsight | null>(null);
+  const [summarizing, setSummarizing] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSummary(null);
+    setSummaryError(null);
+  }, [migration?.id]);
 
   if (!isOpen || !migration?.reconciliation) {
     return null;
@@ -50,6 +60,22 @@ const ReconciliationModal: React.FC<ReconciliationModalProps> = ({ migration, is
         return <ScaleIcon className="w-5 h-5 text-orange-500" />;
       default:
         return <ExclamationTriangleIcon className="w-5 h-5 text-yellow-500" />;
+    }
+  };
+
+  const summarizeDifferences = async () => {
+    if (!migration) return;
+    setSummarizing(true);
+    setSummaryError(null);
+    try {
+      const insight = await aiService.summarizeReconciliation(migration.id);
+      setSummary(insight);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to summarize differences';
+      setSummaryError(message);
+      toast.error(message);
+    } finally {
+      setSummarizing(false);
     }
   };
 
@@ -113,8 +139,27 @@ const ReconciliationModal: React.FC<ReconciliationModalProps> = ({ migration, is
               : "Migration completed successfully with no differences found."
             }
           </p>
-          <div className="mt-3 text-xs text-orange-600">
-            <span className="font-medium">Migration ID:</span> {migration.id}
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="text-xs text-orange-600">
+              <span className="font-medium">Migration ID:</span> {migration.id}
+            </div>
+            <button
+              type="button"
+              onClick={summarizeDifferences}
+              disabled={summarizing}
+              className="inline-flex items-center rounded-md border border-primary-200 bg-white px-3 py-1.5 text-sm font-medium text-primary-700 hover:bg-primary-50 disabled:opacity-50"
+            >
+              <SparklesIcon className="mr-2 h-4 w-4" />
+              {summarizing ? 'Summarizing...' : 'Summarize differences'}
+            </button>
+          </div>
+          <div className="mt-3">
+            <AssistantCard
+              title="Reconciliation summary"
+              insight={summary}
+              loading={summarizing}
+              error={summaryError}
+            />
           </div>
         </div>
 

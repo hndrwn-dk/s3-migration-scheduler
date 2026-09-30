@@ -6,7 +6,8 @@ import {
   ArrowRightIcon,
   ClockIcon,
   DocumentTextIcon,
-  CalendarIcon
+  CalendarIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 import { TabType } from '../types';
 
@@ -52,11 +53,17 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
       label: 'Scheduled',
       icon: CalendarIcon,
       description: 'Manage scheduled migrations'
+    },
+    {
+      id: 'settings' as TabType,
+      label: 'Settings',
+      icon: SparklesIcon,
+      description: 'AI provider connection'
     }
   ];
 
   return (
-    <aside className="w-64 bg-white shadow-lg border-r border-gray-200">
+    <aside className="w-64 border-r border-gray-200 bg-white shadow-soft">
       <nav className="p-4">
         <ul className="space-y-2">
           {menuItems.map((item) => {
@@ -70,20 +77,20 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
                   className={classNames(
                     'w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200',
                     isActive
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                      ? 'border border-primary-200 bg-primary-50 text-primary-700'
                       : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                   )}
                 >
                   <Icon 
                     className={classNames(
                       'w-5 h-5 mr-3',
-                      isActive ? 'text-blue-600' : 'text-gray-500'
+                      isActive ? 'text-primary-600' : 'text-gray-500'
                     )} 
                   />
                   <div>
                     <div className={classNames(
                       'font-medium',
-                      isActive ? 'text-blue-700' : 'text-gray-900'
+                      isActive ? 'text-primary-700' : 'text-gray-900'
                     )}>
                       {item.label}
                     </div>

@@ -7,12 +7,14 @@ import {
   StopIcon,
   EyeIcon,
   ArrowPathIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
-import { Migration } from '../types';
-import { migrationService } from '../services/api';
+import { AiInsight, Migration } from '../types';
+import { aiService, migrationService } from '../services/api';
 import ReconciliationModal from './ReconciliationModal';
+import AssistantCard from './AssistantCard';
 
 interface HistoryTabProps {
   migrations: Migration[];
@@ -27,6 +29,9 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [reconciliationModalOpen, setReconciliationModalOpen] = useState(false);
   const [selectedReconciliation, setSelectedReconciliation] = useState<Migration | null>(null);
+  const [failureInsight, setFailureInsight] = useState<AiInsight | null>(null);
+  const [explaining, setExplaining] = useState(false);
+  const [explainError, setExplainError] = useState<string | null>(null);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -138,6 +143,23 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
   const handleViewReconciliation = (migration: Migration) => {
     setSelectedReconciliation(migration);
     setReconciliationModalOpen(true);
+  };
+
+  const explainFailure = async (migration: Migration) => {
+    setSelectedMigration(migration);
+    setFailureInsight(null);
+    setExplainError(null);
+    setExplaining(true);
+    try {
+      const insight = await aiService.explainFailure(migration.id);
+      setFailureInsight(insight);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to explain migration';
+      setExplainError(message);
+      toast.error(message);
+    } finally {
+      setExplaining(false);
+    }
   };
 
   const formatDuration = (seconds: number | undefined) => {
@@ -312,12 +334,25 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
                         <button
-                          onClick={() => setSelectedMigration(migration)}
+                          onClick={() => {
+                            setFailureInsight(null);
+                            setExplainError(null);
+                            setSelectedMigration(migration);
+                          }}
                           className="text-blue-600 hover:text-blue-900"
                           title="View details"
                         >
                           <EyeIcon className="w-4 h-4" />
                         </button>
+                        {migration.status === 'failed' && (
+                          <button
+                            onClick={() => explainFailure(migration)}
+                            className="text-primary-600 hover:text-primary-800"
+                            title="Explain failure"
+                          >
+                            <SparklesIcon className="w-4 h-4" />
+                          </button>
+                        )}
                         {migration.status === 'completed_with_differences' && migration.reconciliation && (
                           <button
                             onClick={() => handleViewReconciliation(migration)}
@@ -447,6 +482,26 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
               </div>
 
 
+
+              {selectedMigration.status === 'failed' && (
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => explainFailure(selectedMigration)}
+                    disabled={explaining}
+                    className="inline-flex items-center rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-medium text-primary-700 hover:bg-primary-100 disabled:opacity-50"
+                  >
+                    <SparklesIcon className="mr-2 h-4 w-4" />
+                    {explaining ? 'Explaining...' : 'Explain failure'}
+                  </button>
+                  <AssistantCard
+                    title="Failure explanation"
+                    insight={failureInsight}
+                    loading={explaining}
+                    error={explainError}
+                  />
+                </div>
+              )}
 
               {/* Errors */}
               {selectedMigration.errors.length > 0 && (

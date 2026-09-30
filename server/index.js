@@ -9,6 +9,7 @@ require('dotenv').config();
 
 const migrationRoutes = require('./routes/migration');
 const bucketsRoutes = require('./routes/buckets');
+const { createAiRouter } = require('./routes/ai');
 const { initializeWebSocket } = require('./services/websocket');
 
 const app = express();
@@ -35,6 +36,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // API routes
 app.use('/api/migration', migrationRoutes);
 app.use('/api/buckets', bucketsRoutes);
+app.use('/api/ai', createAiRouter());
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

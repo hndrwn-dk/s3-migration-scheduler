@@ -5,12 +5,14 @@ import {
   ArrowDownIcon,
   ArrowPathIcon,
   ClipboardDocumentIcon,
-  FunnelIcon
+  FunnelIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 import LoadingSpinner from './LoadingSpinner';
-import { Migration } from '../types';
-import { migrationService } from '../services/api';
+import AssistantCard from './AssistantCard';
+import { AiInsight, Migration } from '../types';
+import { aiService, migrationService } from '../services/api';
 
 interface LogsTabProps {
   migrations: Migration[];
@@ -25,6 +27,9 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
   const logsContainerRef = useRef<HTMLDivElement>(null);
+  const [failureInsight, setFailureInsight] = useState<AiInsight | null>(null);
+  const [explaining, setExplaining] = useState(false);
+  const [explainError, setExplainError] = useState<string | null>(null);
 
   // Check for pre-selected migration from Dashboard
   useEffect(() => {
@@ -110,6 +115,30 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
     } finally {
       setLoading(false);
     }
+  }, [selectedMigration]);
+
+  const selectedRecord = migrations.find(migration => migration.id === selectedMigration);
+
+  const explainFailure = async () => {
+    if (!selectedMigration) return;
+    setExplaining(true);
+    setExplainError(null);
+    setFailureInsight(null);
+    try {
+      const insight = await aiService.explainFailure(selectedMigration);
+      setFailureInsight(insight);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to explain migration';
+      setExplainError(message);
+      toast.error(message);
+    } finally {
+      setExplaining(false);
+    }
+  };
+
+  useEffect(() => {
+    setFailureInsight(null);
+    setExplainError(null);
   }, [selectedMigration]);
 
   useEffect(() => {
@@ -270,6 +299,17 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
                 })()}
               </div>
               
+              {selectedRecord?.status === 'failed' && (
+                <button
+                  type="button"
+                  onClick={explainFailure}
+                  disabled={explaining}
+                  className="inline-flex items-center rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-medium text-primary-700 hover:bg-primary-100 disabled:opacity-50"
+                >
+                  <SparklesIcon className="mr-2 h-4 w-4" />
+                  {explaining ? 'Explaining...' : 'Explain failure'}
+                </button>
+              )}
               <button
                 onClick={() => loadLogs(true)}
                 disabled={loading}
@@ -286,6 +326,15 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
           )}
         </div>
       </div>
+
+      {(explaining || explainError || failureInsight) && (
+        <AssistantCard
+          title="Failure explanation"
+          insight={failureInsight}
+          loading={explaining}
+          error={explainError}
+        />
+      )}
 
       {/* Logs Viewer */}
       {selectedMigration && (

@@ -10,6 +10,7 @@ import MigrateTab from './components/MigrateTab';
 import HistoryTab from './components/HistoryTab';
 import LogsTab from './components/LogsTab';
 import ScheduledTab from './components/ScheduledTab';
+import SettingsTab from './components/SettingsTab';
 import LoadingSpinner from './components/LoadingSpinner';
 
 import { TabType, Migration } from './types';
@@ -171,6 +172,8 @@ function App() {
         return <LogsTab migrations={migrations} />;
       case 'scheduled':
         return <ScheduledTab onRefresh={() => initializeApp()} />;
+      case 'settings':
+        return <SettingsTab />;
       default:
         return <Dashboard migrations={migrations} />;
     }
@@ -186,12 +189,16 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header connected={connected} connectionType={connectionType} />
+      <Header
+        connected={connected}
+        connectionType={connectionType}
+        onOpenSettings={() => setActiveTab('settings')}
+      />
       
       <div className="flex">
         <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
         
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 lg:p-8">
           {renderActiveTab()}
         </main>
       </div>

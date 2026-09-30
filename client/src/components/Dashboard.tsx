@@ -170,16 +170,16 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
       <div>
         <h2 className="text-3xl font-bold text-gray-900">Dashboard</h2>
-        <p className="text-gray-600 mt-2">Overview of your S3 bucket migrations</p>
+        <p className="mt-1 text-gray-600">Overview of your S3 bucket migrations</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-soft">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <DocumentDuplicateIcon className="h-8 w-8 text-blue-600" />
@@ -191,7 +191,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-soft">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <CheckCircleIcon className="h-8 w-8 text-green-600" />
@@ -204,7 +204,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-soft">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <ArrowPathIcon className="h-8 w-8 text-blue-600" />
@@ -217,7 +217,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-soft">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <ClockIcon className="h-8 w-8 text-purple-600" />
@@ -232,9 +232,9 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Migration Trend */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-soft">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Migration Trend (Last 7 Days)</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData}>
@@ -250,7 +250,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
         </div>
 
         {/* Status Distribution */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-soft">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Distribution</h3>
           {statusDistribution.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
@@ -281,7 +281,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
       </div>
 
       {/* Recent Migrations */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-soft">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">Recent Migrations</h3>

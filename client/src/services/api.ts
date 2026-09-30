@@ -10,7 +10,9 @@ import {
   HealthCheck,
   ScheduledMigrationsResponse,
   ScheduledMigrationStats,
-  SystemStatsResponse
+  SystemStatsResponse,
+  AiPublicSettings,
+  AiInsight
 } from '../types';
 import { AxiosError } from 'axios';
 
@@ -50,6 +52,11 @@ const handleApiError = (error: AxiosError): never => {
   console.error('API Error:', error);
   
   if (error.response) {
+    const data = error.response.data as { error?: string | { message?: string } } | undefined;
+    const serverMessage = typeof data?.error === 'string' ? data.error : data?.error?.message;
+    if (serverMessage) {
+      throw new Error(serverMessage);
+    }
     // Server responded with error status
     if (error.response.status === 404) {
       throw new Error('Resource not found');
@@ -253,6 +260,55 @@ export const migrationService = {
       throw new Error(response.data.error || 'Failed to get scheduler stats');
     }
     return response.data.data!;
+  },
+};
+
+export const aiService = {
+  getSettings: async (): Promise<AiPublicSettings> => {
+    const response = await api.get<ApiResponse<AiPublicSettings>>('/ai/settings');
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error || 'Failed to load AI settings');
+    }
+    return response.data.data;
+  },
+
+  saveSettings: async (settings: { baseUrl: string; model: string; apiKey?: string }): Promise<AiPublicSettings> => {
+    const response = await api.put<ApiResponse<AiPublicSettings>>('/ai/settings', settings);
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error || 'Failed to save AI settings');
+    }
+    return response.data.data;
+  },
+
+  testConnection: async (): Promise<void> => {
+    const response = await api.post<ApiResponse<{ ok: boolean }>>('/ai/test');
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'AI connection test failed');
+    }
+  },
+
+  explainFailure: async (migrationId: string): Promise<AiInsight> => {
+    const response = await api.post<ApiResponse<AiInsight>>('/ai/explain-failure', { migrationId });
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error || 'Failed to explain migration');
+    }
+    return response.data.data;
+  },
+
+  summarizeReconciliation: async (migrationId: string): Promise<AiInsight> => {
+    const response = await api.post<ApiResponse<AiInsight>>('/ai/summarize-reconciliation', { migrationId });
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error || 'Failed to summarize reconciliation');
+    }
+    return response.data.data;
+  },
+
+  suggestMigration: async (aliasName: string, bucketName: string): Promise<AiInsight> => {
+    const response = await api.post<ApiResponse<AiInsight>>('/ai/suggest-migration', { aliasName, bucketName });
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error || 'Failed to suggest migration settings');
+    }
+    return response.data.data;
   },
 };
 

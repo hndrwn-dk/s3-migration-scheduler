@@ -8,11 +8,13 @@ import {
   CheckCircleIcon,
   PlusIcon,
   TrashIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 import LoadingSpinner from './LoadingSpinner';
-import { Migration, S3Alias, S3Bucket, MigrationFormData } from '../types';
-import { bucketService, migrationService } from '../services/api';
+import AssistantCard from './AssistantCard';
+import { AiInsight, Migration, S3Alias, S3Bucket, MigrationFormData } from '../types';
+import { aiService, bucketService, migrationService } from '../services/api';
 
 interface MigrateTabProps {
   onMigrationStart: (migration: Migration) => void;
@@ -361,6 +363,9 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
   const [destinationBuckets, setDestinationBuckets] = useState<S3Bucket[]>([]);
   const [loading, setLoading] = useState(false);
   const [validating, setValidating] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestion, setSuggestion] = useState<AiInsight | null>(null);
+  const [suggestionError, setSuggestionError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState<MigrationFormData>({
     sourceAlias: '',
@@ -577,6 +582,36 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
       ...prev,
       exclude: prev.exclude.filter(p => p !== pattern)
     }));
+  };
+
+  const suggestSettings = async () => {
+    if (!formData.sourceAlias || !formData.sourceBucket) return;
+    setSuggesting(true);
+    setSuggestionError(null);
+    try {
+      const insight = await aiService.suggestMigration(formData.sourceAlias, formData.sourceBucket);
+      setSuggestion(insight);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to suggest settings';
+      setSuggestionError(message);
+      toast.error(message);
+    } finally {
+      setSuggesting(false);
+    }
+  };
+
+  const applySuggestion = (insight: AiInsight) => {
+    if (!insight.settings) return;
+    setFormData(prev => ({
+      ...prev,
+      overwrite: insight.settings?.overwrite ?? prev.overwrite,
+      preserve: insight.settings?.preserve ?? prev.preserve,
+      checksum: insight.settings?.checksum || undefined,
+      exclude: insight.settings?.exclude?.length ? insight.settings.exclude : prev.exclude,
+      dryRun: insight.settings?.dryRun ?? prev.dryRun,
+      retry: insight.settings?.retry ?? prev.retry
+    }));
+    toast.success('Suggested settings applied. Review them before starting.');
   };
 
   return (
@@ -901,6 +936,35 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
             )}
           </div>
         </div>
+
+        {formData.sourceAlias && formData.sourceBucket && (
+          <div className="space-y-3 rounded-xl border border-gray-100 bg-white p-5 shadow-soft">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Assistant suggestion</h3>
+                <p className="text-sm text-gray-600">
+                  Reads bucket size and object count, then proposes settings. It does not start the migration.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={suggestSettings}
+                disabled={suggesting}
+                className="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+              >
+                <SparklesIcon className="mr-2 h-4 w-4" />
+                {suggesting ? 'Suggesting...' : 'Suggest settings'}
+              </button>
+            </div>
+            <AssistantCard
+              title="Suggested migration plan"
+              insight={suggestion}
+              loading={suggesting}
+              error={suggestionError}
+              onApply={applySuggestion}
+            />
+          </div>
+        )}
 
         {/* Command Preview */}
         {formData.sourceAlias && formData.sourceBucket && formData.destinationAlias && formData.destinationBucket && (

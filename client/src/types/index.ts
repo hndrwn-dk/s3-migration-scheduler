@@ -173,7 +173,32 @@ export interface MigrationFormData {
   scheduledTime: string;
 }
 
-export type TabType = 'dashboard' | 'configure' | 'migrate' | 'history' | 'logs' | 'scheduled';
+export type TabType = 'dashboard' | 'configure' | 'migrate' | 'history' | 'logs' | 'scheduled' | 'settings';
+
+export interface AiPublicSettings {
+  baseUrl: string;
+  model: string;
+  configured: boolean;
+  keyHint: string | null;
+}
+
+export interface AiMigrationSettings {
+  overwrite: boolean;
+  preserve: boolean;
+  checksum: 'CRC64NVME' | 'CRC32' | 'CRC32C' | 'SHA1' | 'SHA256' | null;
+  exclude: string[];
+  dryRun: boolean;
+  retry: boolean;
+  scheduleHint: string;
+}
+
+export interface AiInsight {
+  cause: string;
+  checks: string[];
+  category: string;
+  suggestedAction: string;
+  settings?: AiMigrationSettings;
+}
 
 export interface LogEntry {
   id: string;
