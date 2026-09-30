@@ -158,6 +158,26 @@ function App() {
     }
   };
 
+  const handleMigrationPause = async (migrationId: string) => {
+    try {
+      await migrationService.pauseMigration(migrationId);
+      toast.info(`Migration ${migrationId.slice(0, 8)} paused`);
+    } catch (error) {
+      toast.error(`Failed to pause migration: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleMigrationResume = async (migrationId: string) => {
+    try {
+      const result = await migrationService.resumeMigration(migrationId);
+      const refreshed = await migrationService.getAllMigrations();
+      setMigrations(refreshed);
+      toast.success(`Resumed as ${result.migrationId.slice(0, 8)}. Existing objects are skipped.`);
+    } catch (error) {
+      toast.error(`Failed to resume migration: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   const renderActiveTab = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -167,7 +187,7 @@ function App() {
       case 'migrate':
         return <MigrateTab onMigrationStart={handleMigrationStart} />;
       case 'history':
-        return <HistoryTab migrations={migrations} onCancel={handleMigrationCancel} />;
+        return <HistoryTab migrations={migrations} onCancel={handleMigrationCancel} onPause={handleMigrationPause} onResume={handleMigrationResume} />;
       case 'logs':
         return <LogsTab migrations={migrations} />;
       case 'scheduled':

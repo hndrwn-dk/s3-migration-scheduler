@@ -229,6 +229,7 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
       'completed': 'bg-green-100 text-green-800',
       'failed': 'bg-red-100 text-red-800',
       'cancelled': 'bg-gray-100 text-gray-800',
+      'paused': 'bg-amber-100 text-amber-800',
       'reconciling': 'bg-purple-100 text-purple-800',
       'verified': 'bg-green-100 text-green-800'
     };
@@ -241,7 +242,7 @@ const LogsTab: React.FC<LogsTabProps> = ({ migrations }) => {
   ).sort((a, b) => new Date(b.startTime || 0).getTime() - new Date(a.startTime || 0).getTime()); // Latest first
   
   const completedMigrations = migrations.filter(m => 
-    m.config && m.id && (m.status === 'completed' || m.status === 'failed' || m.status === 'cancelled' || m.status === 'verified' || m.status === 'completed_with_differences')
+    m.config && m.id && (m.status === 'completed' || m.status === 'failed' || m.status === 'cancelled' || m.status === 'paused' || m.status === 'verified' || m.status === 'completed_with_differences')
   ).sort((a, b) => new Date(b.startTime || 0).getTime() - new Date(a.startTime || 0).getTime()); // Latest first
 
   return (

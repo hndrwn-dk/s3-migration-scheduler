@@ -13,7 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import LoadingSpinner from './LoadingSpinner';
 import AssistantCard from './AssistantCard';
-import { AiInsight, Migration, S3Alias, S3Bucket, MigrationFormData } from '../types';
+import { AiInsight, BucketInfo, Migration, MigrationTemplate, S3Alias, S3Bucket, MigrationFormData } from '../types';
 import { aiService, bucketService, migrationService } from '../services/api';
 
 interface MigrateTabProps {
@@ -388,10 +388,27 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
 
   const [excludePattern, setExcludePattern] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [templates, setTemplates] = useState<MigrationTemplate[]>([]);
+  const [templateName, setTemplateName] = useState('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [bucketAnalysis, setBucketAnalysis] = useState<BucketInfo | null>(null);
+  const [analyzingBucket, setAnalyzingBucket] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  const loadTemplates = useCallback(async () => {
+    try {
+      const saved = await migrationService.listTemplates();
+      setTemplates(saved);
+    } catch (error) {
+      console.error('Failed to load templates:', error);
+    }
+  }, []);
 
   useEffect(() => {
     loadAliases();
-  }, []);
+    loadTemplates();
+  }, [loadTemplates]);
 
   const loadAliases = () => {
     try {
@@ -424,6 +441,112 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
       setDestinationBuckets([]);
     }
   }, [formData.destinationAlias]);
+
+  useEffect(() => {
+    if (!formData.sourceAlias || !formData.sourceBucket) {
+      setBucketAnalysis(null);
+      setAnalysisError(null);
+      return;
+    }
+
+    let cancelled = false;
+    setAnalyzingBucket(true);
+    setAnalysisError(null);
+
+    bucketService.analyzeBucket(formData.sourceAlias, formData.sourceBucket)
+      .then((analysis) => {
+        if (!cancelled) setBucketAnalysis(analysis);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setBucketAnalysis(null);
+          setAnalysisError(error instanceof Error ? error.message : 'Failed to analyze bucket');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setAnalyzingBucket(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [formData.sourceAlias, formData.sourceBucket]);
+
+  const applyTemplate = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    const template = templates.find(item => item.id === templateId);
+    if (!template) return;
+
+    setTemplateName(template.name);
+    setFormData(prev => ({
+      ...prev,
+      sourceAlias: template.sourceAlias,
+      sourceBucket: template.sourceBucket,
+      destinationAlias: template.destinationAlias,
+      destinationBucket: template.destinationBucket,
+      overwrite: template.options.overwrite,
+      remove: template.options.remove,
+      exclude: template.options.exclude || [],
+      checksum: template.options.checksum,
+      preserve: template.options.preserve,
+      retry: template.options.retry,
+      dryRun: template.options.dryRun,
+      watch: template.options.watch
+    }));
+  };
+
+  const saveTemplate = async () => {
+    const name = templateName.trim();
+    if (!name) {
+      toast.error('Enter a template name');
+      return;
+    }
+    if (!formData.sourceAlias || !formData.sourceBucket || !formData.destinationAlias || !formData.destinationBucket) {
+      toast.error('Select a source and destination before saving a template');
+      return;
+    }
+
+    setSavingTemplate(true);
+    try {
+      const saved = await migrationService.saveTemplate({
+        name,
+        sourceAlias: formData.sourceAlias,
+        sourceBucket: formData.sourceBucket,
+        destinationAlias: formData.destinationAlias,
+        destinationBucket: formData.destinationBucket,
+        options: {
+          overwrite: formData.overwrite,
+          remove: formData.remove,
+          exclude: formData.exclude,
+          checksum: formData.checksum,
+          preserve: formData.preserve,
+          retry: formData.retry,
+          dryRun: formData.dryRun,
+          watch: formData.watch
+        }
+      });
+      await loadTemplates();
+      setSelectedTemplateId(saved.id);
+      toast.success(`Template "${saved.name}" saved`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to save template');
+    } finally {
+      setSavingTemplate(false);
+    }
+  };
+
+  const deleteSelectedTemplate = async () => {
+    if (!selectedTemplateId) return;
+    try {
+      await migrationService.deleteTemplate(selectedTemplateId);
+      setSelectedTemplateId('');
+      setTemplateName('');
+      await loadTemplates();
+      toast.success('Template deleted');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete template');
+    }
+  };
 
   useEffect(() => {
     if (formData.sourceAlias) {
@@ -637,6 +760,56 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Migration Template</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Save the current source, destination, and mirror options, or fill the form from a saved template. Saving a template does not start a job.
+          </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Saved templates</label>
+              <select
+                value={selectedTemplateId}
+                onChange={(e) => applyTemplate(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="">Select a template...</option>
+                {templates.map(template => (
+                  <option key={template.id} value={template.id}>{template.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Template name</label>
+              <input
+                type="text"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="e.g. Nightly mirror"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <div className="mt-4 flex space-x-3">
+            <button
+              type="button"
+              onClick={saveTemplate}
+              disabled={savingTemplate}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            >
+              {savingTemplate ? 'Saving...' : 'Save template'}
+            </button>
+            <button
+              type="button"
+              onClick={deleteSelectedTemplate}
+              disabled={!selectedTemplateId}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 disabled:opacity-50"
+            >
+              Delete template
+            </button>
+          </div>
+        </div>
+
         {/* Source and Destination Selection */}
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Source and Destination</h3>
@@ -963,6 +1136,34 @@ const MigrateTab: React.FC<MigrateTabProps> = ({ onMigrationStart }) => {
               error={suggestionError}
               onApply={applySuggestion}
             />
+          </div>
+        )}
+
+        {(analyzingBucket || bucketAnalysis || analysisError) && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Source bucket analysis</h3>
+            {analyzingBucket && (
+              <p className="text-sm text-gray-600">Estimating duration and recommendations...</p>
+            )}
+            {analysisError && (
+              <p className="text-sm text-red-600">{analysisError}</p>
+            )}
+            {bucketAnalysis && !analyzingBucket && (
+              <div className="space-y-2 text-sm text-gray-700">
+                {bucketAnalysis.estimatedMigrationTime && (
+                  <p>
+                    <span className="font-medium">Estimated duration:</span> {bucketAnalysis.estimatedMigrationTime}
+                  </p>
+                )}
+                {bucketAnalysis.recommendations && bucketAnalysis.recommendations.length > 0 && (
+                  <ul className="list-disc pl-5 space-y-1">
+                    {bucketAnalysis.recommendations.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
         )}
 

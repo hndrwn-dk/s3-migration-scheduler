@@ -96,7 +96,7 @@ export interface Reconciliation {
 export interface Migration {
   id: string;
   config: MigrationConfig;
-  status: 'starting' | 'running' | 'completed' | 'failed' | 'cancelled' | 'reconciling' | 'verified' | 'completed_with_differences' | 'scheduled';
+  status: 'starting' | 'running' | 'completed' | 'failed' | 'cancelled' | 'paused' | 'reconciling' | 'verified' | 'completed_with_differences' | 'scheduled';
   progress: number;
   startTime: string | null;
   endTime?: string;
@@ -198,6 +198,25 @@ export interface AiInsight {
   category: string;
   suggestedAction: string;
   settings?: AiMigrationSettings;
+}
+
+export interface MigrationTemplate {
+  id: string;
+  name: string;
+  sourceAlias: string;
+  sourceBucket: string;
+  destinationAlias: string;
+  destinationBucket: string;
+  options: {
+    overwrite: boolean;
+    remove: boolean;
+    exclude: string[];
+    checksum?: 'CRC64NVME' | 'CRC32' | 'CRC32C' | 'SHA1' | 'SHA256';
+    preserve: boolean;
+    retry: boolean;
+    dryRun: boolean;
+    watch: boolean;
+  };
 }
 
 export interface LogEntry {

@@ -169,6 +169,14 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
     return migrationTime > tenMinutesAgo;
   };
 
+  const formatBytes = (bytes: number) => {
+    const value = Number(bytes) || 0;
+    if (value === 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const index = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
+    return `${parseFloat((value / Math.pow(1024, index)).toFixed(2))} ${units[index]}`;
+  };
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -178,7 +186,7 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-soft">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -226,6 +234,32 @@ const Dashboard: React.FC<DashboardProps> = ({ migrations, onTabChange }) => {
               <p className="text-sm font-medium text-gray-600">Scheduled</p>
               <p className="text-2xl font-bold text-gray-900">{stats.scheduled}</p>
               <p className="text-sm text-purple-600">Awaiting execution</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-soft">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <ArrowPathIcon className="h-8 w-8 text-indigo-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Average Speed</p>
+              <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.averageSpeed)}/s</p>
+              <p className="text-sm text-indigo-600">Across recorded jobs</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-soft">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <DocumentDuplicateIcon className="h-8 w-8 text-teal-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Data Transferred</p>
+              <p className="text-2xl font-bold text-gray-900">{formatBytes(stats.totalDataTransferred)}</p>
+              <p className="text-sm text-teal-600">Total recorded volume</p>
             </div>
           </div>
         </div>

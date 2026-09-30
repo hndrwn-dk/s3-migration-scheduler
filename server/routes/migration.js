@@ -312,6 +312,42 @@ router.get('/scheduler/info', async (req, res) => {
   }
 });
 
+router.get('/templates', (req, res) => {
+  try {
+    const database = require('../services/database');
+    res.json({ success: true, data: database.listTemplates() });
+  } catch (error) {
+    console.error('Error listing migration templates:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/templates', (req, res) => {
+  try {
+    const database = require('../services/database');
+    const saved = database.saveTemplate(req.body || {});
+    res.json({ success: true, data: saved });
+  } catch (error) {
+    const status = /required/.test(error.message) ? 400 : 500;
+    console.error('Error saving migration template:', error);
+    res.status(status).json({ success: false, error: error.message });
+  }
+});
+
+router.delete('/templates/:id', (req, res) => {
+  try {
+    const database = require('../services/database');
+    const deleted = database.deleteTemplate(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, error: 'Template not found' });
+    }
+    res.json({ success: true, data: { success: true } });
+  } catch (error) {
+    console.error('Error deleting migration template:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Fix stuck migrations manually
 router.post('/fix-stuck', async (req, res) => {
   try {
@@ -404,6 +440,26 @@ router.post('/:id/cancel', async (req, res) => {
     res.json({ success: true, data: result });
   } catch (error) {
     res.status(404).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/:id/pause', async (req, res) => {
+  try {
+    const result = await minioClient.pauseMigration(req.params.id);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    const status = /not found/i.test(error.message) ? 404 : 400;
+    res.status(status).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/:id/resume', async (req, res) => {
+  try {
+    const result = await minioClient.resumeMigration(req.params.id);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    const status = /not found/i.test(error.message) ? 404 : 400;
+    res.status(status).json({ success: false, error: error.message });
   }
 });
 

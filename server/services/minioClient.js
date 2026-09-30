@@ -4,6 +4,7 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { broadcast } = require('./websocket');
 const database = require('./database');
+const { resolveProcessExitStatus, canResumeMigration } = require('./migrationExitStatus');
 const streamingReconciliation = require('./streamingReconciliation');
 
 class MinioClientService {
@@ -578,15 +579,15 @@ class MinioClientService {
       logStream.write(`==========================================\n`);
       logStream.end();
 
-      migration.status = code === 0 ? 'completed' : 'failed';
-      migration.endTime = new Date().toISOString();
-      migration.progress = code === 0 ? 100 : migration.progress;
+      const nextStatus = resolveProcessExitStatus(code, migration.stopIntent);
+      migration.status = nextStatus;
+      migration.endTime = migration.endTime || new Date().toISOString();
+      migration.progress = nextStatus === 'completed' ? 100 : migration.progress;
       migration.duration = (new Date().getTime() - new Date(migration.startTime).getTime()) / 1000;
       
       this.broadcastMigrationUpdate(migration);
       
-      // Start reconciliation if migration succeeded
-      if (code === 0) {
+      if (nextStatus === 'completed') {
         this.startReconciliation(migration);
       }
     });
@@ -1930,12 +1931,57 @@ class MinioClientService {
     }
 
     if (migration.process) {
-      migration.process.kill('SIGTERM');
+      migration.stopIntent = 'cancel';
       migration.status = 'cancelled';
+      migration.endTime = new Date().toISOString();
+      migration.process.kill('SIGTERM');
       this.broadcastMigrationUpdate(migration);
     }
 
     return { success: true };
+  }
+
+  async pauseMigration(migrationId) {
+    const migration = this.activeMigrations.get(migrationId) || database.getMigration(migrationId);
+    if (!migration) {
+      throw new Error('Migration not found');
+    }
+    if (!['starting', 'running', 'reconciling'].includes(migration.status)) {
+      throw new Error('Only a running migration can be paused');
+    }
+
+    migration.stopIntent = 'pause';
+    migration.status = 'paused';
+    migration.endTime = new Date().toISOString();
+
+    if (migration.process) {
+      migration.process.kill('SIGTERM');
+    }
+
+    this.activeMigrations.set(migrationId, migration);
+    this.broadcastMigrationUpdate(migration);
+    return { success: true, status: 'paused' };
+  }
+
+  async resumeMigration(migrationId) {
+    const migration = database.getMigration(migrationId);
+    if (!migration) {
+      throw new Error('Migration not found');
+    }
+    if (!canResumeMigration(migration.status)) {
+      throw new Error('Only paused, failed, or cancelled migrations can be resumed');
+    }
+    if (!migration.config?.source || !migration.config?.destination || migration.config.source === 'Unknown') {
+      throw new Error('Migration config is missing and cannot be resumed');
+    }
+
+    const result = await this.startMigration({
+      source: migration.config.source,
+      destination: migration.config.destination,
+      options: migration.config.options || {}
+    });
+
+    return { ...result, resumedFrom: migrationId };
   }
 
   getMigrationStatus(migrationId) {

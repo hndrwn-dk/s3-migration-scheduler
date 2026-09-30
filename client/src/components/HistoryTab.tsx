@@ -5,6 +5,8 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   StopIcon,
+  PauseIcon,
+  PlayIcon,
   EyeIcon,
   ArrowPathIcon,
   ExclamationTriangleIcon,
@@ -19,9 +21,11 @@ import AssistantCard from './AssistantCard';
 interface HistoryTabProps {
   migrations: Migration[];
   onCancel: (migrationId: string) => void;
+  onPause: (migrationId: string) => void;
+  onResume: (migrationId: string) => void;
 }
 
-const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
+const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel, onPause, onResume }) => {
   const [filter, setFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'startTime' | 'status' | 'progress'>('startTime');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -116,6 +120,8 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
         return <ArrowPathIcon className="w-5 h-5 text-blue-500 animate-spin" />;
       case 'cancelled':
         return <StopIcon className="w-5 h-5 text-gray-500" />;
+      case 'paused':
+        return <PauseIcon className="w-5 h-5 text-amber-500" />;
       default:
         return <ClockIcon className="w-5 h-5 text-yellow-500" />;
     }
@@ -135,6 +141,8 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
         return 'bg-blue-100 text-blue-800';
       case 'cancelled':
         return 'bg-gray-100 text-gray-800';
+      case 'paused':
+        return 'bg-amber-100 text-amber-800';
       default:
         return 'bg-yellow-100 text-yellow-800';
     }
@@ -210,6 +218,7 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
                 <option value="completed_with_differences">Completed with Differences</option>
                 <option value="failed">Failed</option>
                 <option value="cancelled">Cancelled</option>
+                <option value="paused">Paused</option>
               </select>
             </div>
 
@@ -362,6 +371,15 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
                             <ExclamationTriangleIcon className="w-4 h-4" />
                           </button>
                         )}
+                        {(migration.status === 'running' || migration.status === 'reconciling' || migration.status === 'starting') && (
+                          <button
+                            onClick={() => onPause(migration.id)}
+                            className="text-amber-600 hover:text-amber-900"
+                            title="Pause migration"
+                          >
+                            <PauseIcon className="w-4 h-4" />
+                          </button>
+                        )}
                         {(migration.status === 'running' || migration.status === 'reconciling') && (
                           <button
                             onClick={() => onCancel(migration.id)}
@@ -369,6 +387,15 @@ const HistoryTab: React.FC<HistoryTabProps> = ({ migrations, onCancel }) => {
                             title="Cancel migration"
                           >
                             <StopIcon className="w-4 h-4" />
+                          </button>
+                        )}
+                        {(migration.status === 'paused' || migration.status === 'failed' || migration.status === 'cancelled') && (
+                          <button
+                            onClick={() => onResume(migration.id)}
+                            className="text-green-600 hover:text-green-900"
+                            title="Resume migration"
+                          >
+                            <PlayIcon className="w-4 h-4" />
                           </button>
                         )}
                       </div>

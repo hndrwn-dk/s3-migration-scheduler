@@ -12,7 +12,8 @@ import {
   ScheduledMigrationStats,
   SystemStatsResponse,
   AiPublicSettings,
-  AiInsight
+  AiInsight,
+  MigrationTemplate
 } from '../types';
 import { AxiosError } from 'axios';
 
@@ -202,6 +203,45 @@ export const migrationService = {
       throw new Error(response.data.error || 'Failed to cancel migration');
     }
     return response.data.data!;
+  },
+
+  pauseMigration: async (migrationId: string): Promise<{ success: boolean; status: string }> => {
+    const response = await api.post<ApiResponse<{ success: boolean; status: string }>>(`/migration/${migrationId}/pause`);
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to pause migration');
+    }
+    return response.data.data!;
+  },
+
+  resumeMigration: async (migrationId: string): Promise<{ migrationId: string; status: string; resumedFrom: string }> => {
+    const response = await api.post<ApiResponse<{ migrationId: string; status: string; resumedFrom: string }>>(`/migration/${migrationId}/resume`);
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to resume migration');
+    }
+    return response.data.data!;
+  },
+
+  listTemplates: async (): Promise<MigrationTemplate[]> => {
+    const response = await api.get<ApiResponse<MigrationTemplate[]>>('/migration/templates');
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to load templates');
+    }
+    return response.data.data || [];
+  },
+
+  saveTemplate: async (template: Omit<MigrationTemplate, 'id'>): Promise<MigrationTemplate> => {
+    const response = await api.post<ApiResponse<MigrationTemplate>>('/migration/templates', template);
+    if (!response.data.success || !response.data.data) {
+      throw new Error(response.data.error || 'Failed to save template');
+    }
+    return response.data.data;
+  },
+
+  deleteTemplate: async (templateId: string): Promise<void> => {
+    const response = await api.delete<ApiResponse>(`/migration/templates/${templateId}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to delete template');
+    }
   },
 
   // Validate migration configuration

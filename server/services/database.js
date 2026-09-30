@@ -80,6 +80,20 @@ class DatabaseService {
     `);
 
     this.db.exec(`
+      CREATE TABLE IF NOT EXISTS migration_templates (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        source_alias TEXT NOT NULL,
+        source_bucket TEXT NOT NULL,
+        destination_alias TEXT NOT NULL,
+        destination_bucket TEXT NOT NULL,
+        options TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    this.db.exec(`
       CREATE INDEX IF NOT EXISTS idx_migrations_status ON migrations(status);
       CREATE INDEX IF NOT EXISTS idx_migrations_start_time ON migrations(start_time);
       CREATE INDEX IF NOT EXISTS idx_migrations_updated_at ON migrations(updated_at);
@@ -569,6 +583,85 @@ class DatabaseService {
     `).run(baseUrl, model, nextKey);
 
     return this.getAiSettings();
+  }
+
+  listTemplates() {
+    const rows = this.db.prepare(`
+      SELECT * FROM migration_templates
+      ORDER BY name COLLATE NOCASE ASC
+    `).all();
+    return rows.map(row => this.formatTemplateRow(row));
+  }
+
+  getTemplate(id) {
+    const row = this.db.prepare(`
+      SELECT * FROM migration_templates WHERE id = ?
+    `).get(id);
+    return row ? this.formatTemplateRow(row) : null;
+  }
+
+  getTemplateByName(name) {
+    const row = this.db.prepare(`
+      SELECT * FROM migration_templates WHERE name = ?
+    `).get(name);
+    return row ? this.formatTemplateRow(row) : null;
+  }
+
+  saveTemplate(template) {
+    const name = typeof template.name === 'string' ? template.name.trim() : '';
+    const sourceAlias = typeof template.sourceAlias === 'string' ? template.sourceAlias.trim() : '';
+    const sourceBucket = typeof template.sourceBucket === 'string' ? template.sourceBucket.trim() : '';
+    const destinationAlias = typeof template.destinationAlias === 'string' ? template.destinationAlias.trim() : '';
+    const destinationBucket = typeof template.destinationBucket === 'string' ? template.destinationBucket.trim() : '';
+
+    if (!name) {
+      throw new Error('Template name is required');
+    }
+    if (!sourceAlias || !sourceBucket || !destinationAlias || !destinationBucket) {
+      throw new Error('Template source and destination alias and bucket are required');
+    }
+
+    const options = JSON.stringify(template.options || {});
+    const existing = this.getTemplateByName(name);
+
+    if (existing) {
+      this.db.prepare(`
+        UPDATE migration_templates
+        SET source_alias = ?, source_bucket = ?, destination_alias = ?, destination_bucket = ?,
+            options = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).run(sourceAlias, sourceBucket, destinationAlias, destinationBucket, options, existing.id);
+      return this.getTemplate(existing.id);
+    }
+
+    const id = require('crypto').randomUUID();
+    this.db.prepare(`
+      INSERT INTO migration_templates (
+        id, name, source_alias, source_bucket, destination_alias, destination_bucket, options
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(id, name, sourceAlias, sourceBucket, destinationAlias, destinationBucket, options);
+    return this.getTemplate(id);
+  }
+
+  deleteTemplate(id) {
+    const result = this.db.prepare(`
+      DELETE FROM migration_templates WHERE id = ?
+    `).run(id);
+    return result.changes > 0;
+  }
+
+  formatTemplateRow(row) {
+    return {
+      id: row.id,
+      name: row.name,
+      sourceAlias: row.source_alias,
+      sourceBucket: row.source_bucket,
+      destinationAlias: row.destination_alias,
+      destinationBucket: row.destination_bucket,
+      options: JSON.parse(row.options || '{}'),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
   }
 
   close() {
