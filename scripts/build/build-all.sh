@@ -6,7 +6,7 @@
 set -e
 
 # Configuration
-VERSION="1.1.0"
+VERSION="1.2.0"
 
 # Colors for output
 RED='\033[0;31m'
@@ -31,9 +31,10 @@ show_usage() {
     echo "Usage: $0 [platform]"
     echo ""
     echo "Platforms:"
-    echo "  linux    - Build Linux packages (AppImage, deb, tar.gz)"
-    echo "  windows  - Build Windows packages (exe, portable zip) - requires Windows or Wine"
-    echo "  docker   - Build and push Docker image"
+    echo "  linux    - Build Linux packages (AppImage, deb, rpm, tar.gz)"
+    echo "  windows  - Build Windows packages (exe, portable, zip) - requires Windows or Wine"
+    echo "  macos    - Build macOS packages (dmg, zip) - requires macOS"
+    echo "  docker   - Build Docker image tagged 1.2.0, v1.2.0, and latest"
     echo "  all      - Build for current platform only"
     echo ""
     echo "Examples:"
@@ -177,7 +178,7 @@ build_docker() {
     cd "${PROJECT_ROOT}"
     
     echo "Building Docker image..."
-    docker build -t "hndrwn/s3-migration-scheduler:${VERSION}" -t "hndrwn/s3-migration-scheduler:latest" .
+    docker build -t "hndrwn/s3-migration-scheduler:${VERSION}" -t "hndrwn/s3-migration-scheduler:v${VERSION}" -t "hndrwn/s3-migration-scheduler:latest" .
     echo -e "${GREEN}✓ Docker image built successfully${NC}"
     
     echo -e "${YELLOW}Docker image ready: hndrwn/s3-migration-scheduler:${VERSION}${NC}"
@@ -240,6 +241,15 @@ main() {
             build_client
             prepare_electron
             build_windows
+            ;;
+        "macos")
+            check_prerequisites
+            build_client
+            prepare_electron
+            echo -e "${BLUE}Building macOS Desktop Packages...${NC}"
+            cd "${PROJECT_ROOT}/electron-app"
+            npm run build:mac
+            echo -e "${GREEN}macOS packages built successfully${NC}"
             ;;
         "docker")
             build_client

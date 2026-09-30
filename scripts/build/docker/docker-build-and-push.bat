@@ -7,12 +7,13 @@ setlocal enabledelayedexpansion
 REM Configuration
 set DOCKER_USERNAME=hndrwn
 set IMAGE_NAME=s3-migration-scheduler
-set VERSION=v1.1.0
+set VERSION=1.2.0
 set LATEST_TAG=latest
 
 REM Full image names
 set FULL_IMAGE_NAME=%DOCKER_USERNAME%/%IMAGE_NAME%
 set VERSION_TAG=%FULL_IMAGE_NAME%:%VERSION%
+set V_VERSION_TAG=%FULL_IMAGE_NAME%:v%VERSION%
 set LATEST_TAG_FULL=%FULL_IMAGE_NAME%:%LATEST_TAG%
 
 echo Building and pushing S3 Migration Scheduler v%VERSION% to Docker Hub
@@ -105,7 +106,7 @@ REM Build Docker image
 echo Step 4: Building Docker image...
 echo Current directory: %CD%
 echo Building image: %VERSION_TAG%
-docker build -t "%VERSION_TAG%" -t "%LATEST_TAG_FULL%" .
+docker build -t "%VERSION_TAG%" -t "%V_VERSION_TAG%" -t "%LATEST_TAG_FULL%" .
 if !errorlevel! neq 0 (
     echo ERROR: Failed to build Docker image
     popd
@@ -119,6 +120,16 @@ REM Push to Docker Hub
 echo Step 5: Pushing to Docker Hub...
 echo Pushing %VERSION_TAG%...
 docker push "%VERSION_TAG%"
+if !errorlevel! neq 0 (
+    echo ERROR: Failed to push version tag. Please check your Docker Hub login.
+    echo Run 'docker login' and try again.
+    popd
+    pause
+    exit /b 1
+)
+
+echo Pushing %V_VERSION_TAG%...
+docker push "%V_VERSION_TAG%"
 if !errorlevel! neq 0 (
     echo ERROR: Failed to push version tag. Please check your Docker Hub login.
     echo Run 'docker login' and try again.
@@ -146,7 +157,7 @@ REM Show success information
 echo SUCCESS! Docker images published to Docker Hub
 echo =======================================================================
 echo Image: %FULL_IMAGE_NAME%
-echo Tags: %VERSION%, %LATEST_TAG%
+echo Tags: %VERSION%, v%VERSION%, %LATEST_TAG%
 echo.
 echo Quick deployment commands:
 echo    docker run -d -p 5000:5000 %VERSION_TAG%

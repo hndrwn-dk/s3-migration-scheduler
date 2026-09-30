@@ -11,6 +11,8 @@ scripts/
 │   │   └── build-windows.bat       # Windows desktop packages
 │   ├── linux/
 │   │   └── build-linux.sh          # Linux desktop packages
+│   ├── macos/
+│   │   └── build-macos.sh          # macOS desktop packages
 │   └── docker/
 │       ├── docker-build-and-push.bat # Docker Hub publishing (Windows)
 │       └── docker-build-and-push.sh  # Docker Hub publishing (Linux/Mac)
@@ -41,6 +43,7 @@ scripts/
 ```bash
 ./scripts/build/build-all.sh linux    # Linux packages
 ./scripts/build/build-all.sh windows  # Windows packages (requires Windows)
+./scripts/build/build-all.sh macos    # macOS packages (requires macOS)
 ./scripts/build/build-all.sh docker   # Docker image
 ```
 
@@ -58,6 +61,11 @@ scripts/
 **Linux Desktop Packages:**
 ```bash
 ./scripts/build/linux/build-linux.sh
+```
+
+**macOS Desktop Packages:**
+```bash
+./scripts/build/macos/build-macos.sh
 ```
 
 **Docker Hub Publishing:**

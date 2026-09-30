@@ -4,7 +4,7 @@
 A comprehensive, enterprise-grade fullstack application for S3 bucket migrations with persistent SQLite database, scheduled migration support, real-time monitoring, and detailed reconciliation tracking. Features a modern React dashboard with TypeScript, node-cron scheduling, dual real-time connections (WebSocket + SSE), and comprehensive migration difference analysis.
 
 ![S3 Bucket Migration UI](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
-![Version](https://img.shields.io/badge/Version-1.1.0-blue)
+![Version](https://img.shields.io/badge/Version-1.2.0-blue)
 ![Database](https://img.shields.io/badge/Database-SQLite-blue)
 ![Scheduling](https://img.shields.io/badge/Scheduling-node--cron-purple)
 ![Docker](https://img.shields.io/badge/Docker-Hub%20Ready-blue)
@@ -16,6 +16,7 @@ A comprehensive, enterprise-grade fullstack application for S3 bucket migrations
 ## 📑 Table of Contents
 - [☕ Support Me](#-support-me)
 - [🚀 Quick Start](#-quick-start)
+- [🎯 What's New in v1.2.0](#-whats-new-in-v120)
 - [🎯 What's New in v1.1.0](#-whats-new-in-v110)
 - [📸 Screenshots](#-screenshots)
 - [📦 Installation Guides](#-installation-guides)
@@ -30,6 +31,12 @@ A comprehensive, enterprise-grade fullstack application for S3 bucket migrations
 If you find this project helpful, you can support me here:
 
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Me-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/hendrawandaryonokarso)
+
+## 🎯 **What's New in v1.2.0**
+
+- OpenAI-compatible assistant. Configure any `/v1/chat/completions` provider in Settings. The key stays on the server.
+- Explain a failed migration, summarize reconciliation differences, and apply suggested mirror settings without starting a job.
+- Release packaging for Linux, Windows, macOS, and Docker at version 1.2.0.
 
 ## 🎯 **What's New in v1.1.0**
 
@@ -47,7 +54,7 @@ If you find this project helpful, you can support me here:
 
 ### 🌐 **Docker Hub Repository**
 - **Repository**: [hndrwn/s3-migration-scheduler](https://hub.docker.com/r/hndrwn/s3-migration-scheduler)
-- **Tags**: `1.1.0`, `latest`
+- **Tags**: `1.2.0`, `v1.2.0`, `latest`
 - **Architecture**: `linux/amd64`
 
 ## 📸 Screenshots
@@ -103,7 +110,7 @@ Get started in seconds with our pre-built Docker images:
 
 ```bash
 # One-command deployment
-docker run -d -p 8080:8080 -v ./data:/app/data hndrwn/s3-migration-scheduler:1.1.0
+docker run -d -p 8080:8080 -v ./data:/app/data hndrwn/s3-migration-scheduler:1.2.0
 
 # Or use docker-compose for full stack
 git clone https://github.com/hndrwn-dk/s3-migration-scheduler
@@ -136,7 +143,7 @@ npm run dev:stable
 
 ### 🪟 **Windows**
 - **[Quick Installation Guide](docs/windows/README.md)** - ZIP, installer, and portable options
-- **[Download v1.1.0 from Releases](https://github.com/hndrwn-dk/s3-migration-scheduler/releases)** - Ready-to-use packages
+- **[Download releases](https://github.com/hndrwn-dk/s3-migration-scheduler/releases)** - Ready-to-use packages
 - **[Packaging Guide](docs/windows/BUILD.md)** - For developers
 - **[Build Scripts](scripts/build/windows/)** - Automated build and push tools
 
@@ -145,7 +152,7 @@ npm run dev:stable
 - **[Build from Source](docs/linux/BUILD.md)** - Development setup
 
 ### 📥 **Current Releases**
-- **✅ Latest v1.1.0** - [Available on GitHub Releases](https://github.com/hndrwn-dk/s3-migration-scheduler/releases)
+- **Latest v1.2.0** - [Available on GitHub Releases](https://github.com/hndrwn-dk/s3-migration-scheduler/releases) after the release packages are published
 - **✅ Docker Images** - [Available on Docker Hub](https://hub.docker.com/r/hndrwn/s3-migration-scheduler)
 
 ## 🏗 Architecture
@@ -229,7 +236,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### Reporting Issues
 When reporting issues, please include:
 - **Operating System** and version
-- **Application version** (now v1.1.0) or commit hash
+- **Application version** (now v1.2.0) or commit hash
 - **Error messages** and logs
 - **Steps to reproduce** the issue
 - **Expected vs actual behavior**
@@ -238,4 +245,4 @@ When reporting issues, please include:
 
 **Built with ❤️ for the S3 migration community**
 
-*Latest Release: v1.1.0 with Docker Hub integration and enhanced deployment options*
+*Latest Release: v1.2.0 with an OpenAI-compatible migration assistant*

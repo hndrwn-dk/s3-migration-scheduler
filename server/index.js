@@ -43,7 +43,7 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'healthy', 
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.2.0'
   });
 });
 

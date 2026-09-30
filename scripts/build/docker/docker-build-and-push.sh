@@ -8,12 +8,13 @@ set -e  # Exit on any error
 # Configuration
 DOCKER_USERNAME="hndrwn"
 IMAGE_NAME="s3-migration-scheduler"
-VERSION="v1.1.0"
+VERSION="1.2.0"
 LATEST_TAG="latest"
 
 # Full image names
 FULL_IMAGE_NAME="${DOCKER_USERNAME}/${IMAGE_NAME}"
 VERSION_TAG="${FULL_IMAGE_NAME}:${VERSION}"
+V_VERSION_TAG="${FULL_IMAGE_NAME}:v${VERSION}"
 LATEST_TAG_FULL="${FULL_IMAGE_NAME}:${LATEST_TAG}"
 
 echo "Building and pushing S3 Migration Scheduler v${VERSION} to Docker Hub"
@@ -85,7 +86,7 @@ build_image() {
     echo "Step 3: Building Docker image..."
     echo "Current directory: $(pwd)"
     echo "Building image: ${VERSION_TAG}"
-    docker build -t "${VERSION_TAG}" -t "${LATEST_TAG_FULL}" .
+    docker build -t "${VERSION_TAG}" -t "${V_VERSION_TAG}" -t "${LATEST_TAG_FULL}" .
     echo "Docker image built successfully"
 }
 
@@ -94,6 +95,8 @@ push_image() {
     echo "Step 4: Pushing to Docker Hub..."
     echo "Pushing ${VERSION_TAG}..."
     docker push "${VERSION_TAG}"
+    echo "Pushing ${V_VERSION_TAG}..."
+    docker push "${V_VERSION_TAG}"
     echo "Pushing ${LATEST_TAG_FULL}..."
     docker push "${LATEST_TAG_FULL}"
     echo "Images pushed successfully to Docker Hub!"
@@ -105,7 +108,7 @@ show_usage() {
     echo "SUCCESS! Docker images published to Docker Hub"
     echo "======================================================================="
     echo "Image: ${FULL_IMAGE_NAME}"
-    echo "Tags: ${VERSION}, ${LATEST_TAG}"
+    echo "Tags: ${VERSION}, v${VERSION}, ${LATEST_TAG}"
     echo ""
     echo "Quick deployment commands:"
     echo "   docker run -d -p 5000:5000 ${VERSION_TAG}"

@@ -5,7 +5,7 @@ REM This script builds Windows desktop packages (.exe installer and .zip portabl
 setlocal enabledelayedexpansion
 
 REM Configuration
-set VERSION=1.1.0
+set VERSION=1.2.0
 
 echo.
 echo =========================================================================
