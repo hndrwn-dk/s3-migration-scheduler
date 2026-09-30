@@ -46,20 +46,18 @@ echo -e "${GREEN}✓ npm found: $(npm --version)${NC}"
 
 echo
 
-# Step 2: Build React client (if not already built)
-echo -e "${BLUE}Step 2: Ensuring React Client is Built...${NC}"
+# Step 2: Rebuild the React client so UI changes are included
+echo -e "${BLUE}Step 2: Building React Client...${NC}"
 echo "==========================================="
 
 cd "${PROJECT_ROOT}/client"
 
-if [ ! -f "build/index.html" ]; then
-    echo "React client not found, building..."
+if [ ! -d "node_modules" ]; then
+    echo "Installing client dependencies..."
     npm install
-    npm run build
-    echo -e "${GREEN}✓ React client built successfully${NC}"
-else
-    echo -e "${GREEN}✓ React client already built${NC}"
 fi
+npm run build
+echo -e "${GREEN}✓ React client built successfully${NC}"
 
 echo
 

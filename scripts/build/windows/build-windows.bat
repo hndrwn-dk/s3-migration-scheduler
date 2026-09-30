@@ -48,14 +48,13 @@ echo + npm found
 echo.
 echo Continuing to Step 2...
 
-REM Step 2: Build React client (if not already built)
-echo Step 2: Ensuring React Client is Built...
+REM Step 2: Rebuild the React client so UI changes are included
+echo Step 2: Building React Client...
 echo ===========================================
 
 cd /d "%PROJECT_ROOT%\client"
 
-if not exist "build\index.html" (
-    echo React client not found, building...
+if not exist "node_modules" (
     echo Installing client dependencies...
     call npm install
     if errorlevel 1 (
@@ -64,18 +63,16 @@ if not exist "build\index.html" (
         exit /b 1
     )
     echo + Client dependencies installed successfully
-    
-    echo Building React client...
-    call npm run build
-    if errorlevel 1 (
-        echo ERROR: Failed to build React client
-        pause
-        exit /b 1
-    )
-    echo + React client built successfully
-) else (
-    echo + React client already built
 )
+
+echo Building React client...
+call npm run build
+if errorlevel 1 (
+    echo ERROR: Failed to build React client
+    pause
+    exit /b 1
+)
+echo + React client built successfully
 
 echo.
 

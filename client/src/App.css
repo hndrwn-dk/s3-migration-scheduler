@@ -109,48 +109,94 @@
   background-color: rgba(59, 130, 246, 0.1);
 }
 
-/* Toast notification styles */
-.Toastify__toast {
-  font-family: system-ui, -apple-system, sans-serif;
+/* Toast notification styles.
+   The library and older builds paint a solid status color and then inherit
+   gray or white text, which disappears on that background. These selectors
+   match every theme class react-toastify adds and force dark text. */
+.Toastify__toast-container {
+  --toastify-toast-width: 420px;
+  width: 420px;
+  color: #111827;
 }
 
-.Toastify__toast-body {
-  color: inherit;
+.Toastify__toast {
+  font-family: system-ui, -apple-system, sans-serif;
+  width: 420px;
+}
+
+.Toastify__toast .Toastify__toast-body,
+.Toastify__toast .Toastify__toast-body div {
   line-height: 1.45;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
-.Toastify__toast--success {
-  background-color: #d1fae5;
-  color: #065f46;
+.Toastify__toast.Toastify__toast--success,
+.Toastify__toast-theme--light.Toastify__toast--success,
+.Toastify__toast-theme--colored.Toastify__toast--success,
+.Toastify__toast-theme--dark.Toastify__toast--success {
+  background: #d1fae5 !important;
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
   border: 1px solid #6ee7b7;
 }
 
-.Toastify__toast--error {
-  background-color: #fee2e2;
-  color: #7f1d1d;
+.Toastify__toast.Toastify__toast--error,
+.Toastify__toast-theme--light.Toastify__toast--error,
+.Toastify__toast-theme--colored.Toastify__toast--error,
+.Toastify__toast-theme--dark.Toastify__toast--error {
+  background: #fee2e2 !important;
+  background-color: #fee2e2 !important;
+  color: #7f1d1d !important;
   border: 1px solid #fca5a5;
 }
 
-.Toastify__toast--warning {
-  background-color: #fef3c7;
-  color: #78350f;
+.Toastify__toast.Toastify__toast--warning,
+.Toastify__toast-theme--light.Toastify__toast--warning,
+.Toastify__toast-theme--colored.Toastify__toast--warning,
+.Toastify__toast-theme--dark.Toastify__toast--warning {
+  background: #fef3c7 !important;
+  background-color: #fef3c7 !important;
+  color: #78350f !important;
   border: 1px solid #fcd34d;
 }
 
-.Toastify__toast--info {
-  background-color: #dbeafe;
-  color: #1e3a8a;
+.Toastify__toast.Toastify__toast--info,
+.Toastify__toast-theme--light.Toastify__toast--info,
+.Toastify__toast-theme--colored.Toastify__toast--info,
+.Toastify__toast-theme--dark.Toastify__toast--info {
+  background: #dbeafe !important;
+  background-color: #dbeafe !important;
+  color: #1e3a8a !important;
   border: 1px solid #93c5fd;
 }
 
-.Toastify__toast--success .Toastify__close-button,
-.Toastify__toast--error .Toastify__close-button,
-.Toastify__toast--warning .Toastify__close-button,
+.Toastify__toast--success .Toastify__toast-body,
+.Toastify__toast--success .Toastify__toast-body div,
+.Toastify__toast--success .Toastify__close-button {
+  color: #065f46 !important;
+  opacity: 1;
+}
+
+.Toastify__toast--error .Toastify__toast-body,
+.Toastify__toast--error .Toastify__toast-body div,
+.Toastify__toast--error .Toastify__close-button {
+  color: #7f1d1d !important;
+  opacity: 1;
+}
+
+.Toastify__toast--warning .Toastify__toast-body,
+.Toastify__toast--warning .Toastify__toast-body div,
+.Toastify__toast--warning .Toastify__close-button {
+  color: #78350f !important;
+  opacity: 1;
+}
+
+.Toastify__toast--info .Toastify__toast-body,
+.Toastify__toast--info .Toastify__toast-body div,
 .Toastify__toast--info .Toastify__close-button {
-  color: inherit;
-  opacity: 0.75;
+  color: #1e3a8a !important;
+  opacity: 1;
 }
 
 /* Loading spinner improvements */

@@ -312,14 +312,37 @@ export const aiService = {
   },
 };
 
+export function readServerHealth(body: {
+  success?: boolean;
+  error?: string;
+  status?: string;
+  timestamp?: string;
+  version?: string;
+  data?: { status?: string; timestamp?: string; version?: string };
+} | null | undefined): { status: string; timestamp: string; version: string } {
+  if (body?.status === 'healthy') {
+    return {
+      status: body.status,
+      timestamp: body.timestamp || '',
+      version: body.version || ''
+    };
+  }
+  if (body?.success && body.data?.status) {
+    return {
+      status: body.data.status,
+      timestamp: body.data.timestamp || '',
+      version: body.data.version || ''
+    };
+  }
+  throw new Error(body?.error || 'Health check failed');
+}
+
 export const healthService = {
-  // General health check
+  // General health check. The server returns { status, timestamp, version }
+  // directly, without the { success, data } envelope used by other routes.
   checkHealth: async (): Promise<{ status: string; timestamp: string; version: string }> => {
-    const response = await api.get<ApiResponse<{ status: string; timestamp: string; version: string }>>('/health');
-    if (!response.data.success) {
-      throw new Error(response.data.error || 'Health check failed');
-    }
-    return response.data.data!;
+    const response = await api.get('/health');
+    return readServerHealth(response?.data);
   },
 };
 

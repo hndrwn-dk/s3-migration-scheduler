@@ -54,14 +54,12 @@ echo "==========================================="
 
 cd "${PROJECT_ROOT}/client"
 
-if [ ! -f "build/index.html" ]; then
-    echo "React client not found, building..."
+if [ ! -d "node_modules" ]; then
+    echo "Installing client dependencies..."
     npm install
-    npm run build
-    echo -e "${GREEN}React client built successfully${NC}"
-else
-    echo -e "${GREEN}React client already built${NC}"
 fi
+npm run build
+echo -e "${GREEN}React client built successfully${NC}"
 
 echo
 
