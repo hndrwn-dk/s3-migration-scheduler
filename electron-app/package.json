@@ -97,7 +97,7 @@
       },
       {
         "from": "../client/build",
-        "to": "client",
+        "to": "client/build",
         "filter": [
           "**/*"
         ]

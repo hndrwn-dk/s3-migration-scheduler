@@ -49,7 +49,7 @@ class S3MigrationApp {
       // Production paths
       this.resourcesPath = process.resourcesPath;
       this.serverPath = path.join(this.resourcesPath, 'server');
-      this.clientPath = path.join(this.resourcesPath, 'client');
+      this.clientPath = path.join(this.resourcesPath, 'client', 'build');
       this.mcPath = path.join(this.resourcesPath, process.platform === 'win32' ? 'mc.exe' : 'mc');
     }
 
@@ -170,6 +170,7 @@ class S3MigrationApp {
         DB_PATH: path.join(this.dataPath, 'migrations.db'),
         LOG_PATH: this.logsPath,
         MC_PATH: this.mcPath,
+        CLIENT_BUILD_PATH: this.clientPath,
         FRONTEND_URL: `http://localhost:${SERVER_PORT}`,
         ELECTRON_APP: 'true'
       };

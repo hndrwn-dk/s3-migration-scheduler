@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit');
 const WebSocket = require('ws');
 const http = require('http');
 const path = require('path');
+const { resolveClientBuildPath } = require('./services/clientBuildPath');
 require('dotenv').config();
 
 const migrationRoutes = require('./routes/migration');
@@ -47,13 +48,22 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Serve static files from React build (for production)
+// Serve static files from React build (for production).
+// Docker keeps the files in ../client/build. The desktop package copies them to ../client.
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+  const clientBuildPath = resolveClientBuildPath({
+    serverDir: __dirname,
+    envPath: process.env.CLIENT_BUILD_PATH
   });
+
+  if (clientBuildPath) {
+    app.use(express.static(clientBuildPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(clientBuildPath, 'index.html'));
+    });
+  } else {
+    console.error('React build was not found. Expected client/build/index.html or client/index.html next to the server.');
+  }
 }
 
 // Error handling middleware
